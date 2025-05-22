@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Laravel POS</title>
     @include('includes.style')
+    @stack('addon-style')
 
 </head>
 
@@ -23,6 +24,7 @@
         </div>
     </div>
     @include('includes.script')
+    @stack('addon-script')
 </body>
 
 </html>
