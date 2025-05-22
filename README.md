@@ -4,6 +4,7 @@ POS web application dengan Laravel + Autentikasi + Role-based Access (Admin & Ka
 
 ---
 
+
 ## 🚀 Fitur Awal
 
 - Autentikasi (Login, Register)
@@ -80,11 +81,15 @@ Seeder akan otomatis:
 │   ├── Http/
 │       ├── Controllers/
 │       ├── Middleware/
+|   |── Repositories/
+|       |── Interfaces/
+|   |── Services/
+|       |── Interfaces/
 │
 ├── database/
 │   ├── migrations/
 │   ├── seeders/
-│       └── RoleSeeder.php
+│    
 │
 ├── routes/
 │   └── web.php
@@ -98,16 +103,22 @@ Seeder akan otomatis:
 
 - [Laravel Breeze](https://laravel.com/docs/starter-kits#laravel-breeze) – Auth starter kit
 - [Spatie Laravel Permission](https://github.com/spatie/laravel-permission) – Role & permission management
+- [DataTables](https://datatables.net/) - DataTables
 
 ---
 
 ## 🛠️ TODO Selanjutnya
 
+- ✅ Manajemen Hak Akses
+- [ ] Manajemen Kategori
 - [ ] Manajemen Produk
+- [ ] Manajemen Supplier
+- [ ] Manajemen Konsumen
+- [ ] Manajemen Stok
+- [ ] Transaksi Pembelian (Stok)
+- [ ] Laporan Pembelian (Stok)
 - [ ] Transaksi Penjualan
 - [ ] Laporan Penjualan
-- [ ] UI terpisah untuk admin & kasir
-- [ ] Modul modular dengan folder terpisah
 
 ---
 
