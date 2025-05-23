@@ -1,4 +1,4 @@
-<aside class="navbar navbar-vertical navbar-expand-lg" >
+<aside class="navbar navbar-vertical navbar-expand-lg">
     <div class="container-fluid">
         <!-- BEGIN NAVBAR TOGGLER -->
         <button class="navbar-toggler collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu"
@@ -30,7 +30,8 @@
                         <span class="nav-link-title"> Dashboard </span>
                     </a>
                 </li>
-                <li class="nav-item dropdown {{ request()->is('roles*') || request()->is('kategori*') ? 'active' : '' }}">
+                <li
+                    class="nav-item dropdown {{ request()->is('roles*') || request()->is('kategori*') || request()->is('supplier*') ? 'active' : '' }}">
                     <a class="nav-link dropdown-toggle" href="#navbar-base" data-bs-toggle="dropdown"
                         data-bs-auto-close="false" role="button" aria-expanded="false">
                         <span class="nav-link-icon d-md-none d-lg-inline-block">
@@ -45,18 +46,24 @@
                             </svg></span>
                         <span class="nav-link-title"> Master Data </span>
                     </a>
-                    <div class="dropdown-menu {{ request()->is('roles*') || request()->is('kategori*') ? 'show' : '' }}">
+                    <div
+                        class="dropdown-menu {{ request()->is('roles*') || request()->is('kategori*') || request()->is('supplier*') ? 'show' : '' }}">
                         <div class="dropdown-menu-columns">
                             <div class="dropdown-menu-column">
                                 @can('category.view')
-                                    <a class="dropdown-item {{ request()->is('kategori*') ? 'active' : '' }}" href="{{ route('category.index') }}"> Kategori </a>
+                                    <a class="dropdown-item {{ request()->is('kategori*') ? 'active' : '' }}"
+                                        href="{{ route('category.index') }}"> Kategori </a>
                                 @endcan
                                 <a class="dropdown-item" href="./markdown.html"> Produk </a>
                                 <a class="dropdown-item" href="./markdown.html"> User </a>
                                 <a class="dropdown-item" href="./markdown.html"> Konsumen </a>
-                                <a class="dropdown-item" href="./markdown.html"> Supplier </a>
+                                @can('supplier.view')
+                                    <a class="dropdown-item {{ request()->is('supplier*') ? 'active' : '' }}"
+                                        href="{{ route('supplier.index') }}"> Supplier </a>
+                                @endcan
                                 @can('role.view')
-                                    <a class="dropdown-item {{ request()->is('roles*') ? 'active' : '' }}" href="{{ route('roles.index') }}"> Hak Akses </a>
+                                    <a class="dropdown-item {{ request()->is('roles*') ? 'active' : '' }}"
+                                        href="{{ route('roles.index') }}"> Hak Akses </a>
                                 @endcan
                             </div>
                         </div>

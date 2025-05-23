@@ -23,6 +23,12 @@ class PermissionSeeder extends Seeder
             'category.edit',
             'category.update',
             'category.delete',
+            'supplier.view',
+            'supplier.create',
+            'supplier.store',
+            'supplier.edit',
+            'supplier.update',
+            'supplier.delete',
         ];
 
         foreach ($permissions as $permission) {
