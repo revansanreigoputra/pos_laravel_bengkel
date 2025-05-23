@@ -12,6 +12,7 @@ POS web application dengan Laravel + Autentikasi + Role-based Access (Admin & Ka
   - `admin`
   - `kasir`
 - CRUD Kategori
+- CRUD Supplier
 
 ---
 
@@ -103,13 +104,13 @@ Seeder akan otomatis:
 - [Laravel Breeze](https://laravel.com/docs/starter-kits#laravel-breeze) – Auth starter kit
 - [Spatie Laravel Permission](https://github.com/spatie/laravel-permission) – Role & permission management
 - [DataTables](https://datatables.net/) - DataTables
+- [Phone Validation](https://github.com/Propaganistas/Laravel-Phone) - Phone validation number
 
 ---
 
 ## 🛠️ TODO Selanjutnya
 
 - [ ] Manajemen Produk
-- [ ] Manajemen Supplier
 - [ ] Manajemen Konsumen
 - [ ] Manajemen Stok
 - [ ] Transaksi Pembelian (Supplier)
