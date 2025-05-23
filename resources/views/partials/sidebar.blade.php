@@ -30,7 +30,7 @@
                         <span class="nav-link-title"> Dashboard </span>
                     </a>
                 </li>
-                <li class="nav-item dropdown {{ request()->is('roles*') ? 'active' : '' }}">
+                <li class="nav-item dropdown {{ request()->is('roles*') || request()->is('kategori*') ? 'active' : '' }}">
                     <a class="nav-link dropdown-toggle" href="#navbar-base" data-bs-toggle="dropdown"
                         data-bs-auto-close="false" role="button" aria-expanded="false">
                         <span class="nav-link-icon d-md-none d-lg-inline-block">
@@ -45,15 +45,19 @@
                             </svg></span>
                         <span class="nav-link-title"> Master Data </span>
                     </a>
-                    <div class="dropdown-menu {{ request()->is('roles*') ? 'show' : '' }}">
+                    <div class="dropdown-menu {{ request()->is('roles*') || request()->is('kategori*') ? 'show' : '' }}">
                         <div class="dropdown-menu-columns">
                             <div class="dropdown-menu-column">
-                                <a class="dropdown-item" href="./markdown.html"> Kategori </a>
+                                @can('category.view')
+                                    <a class="dropdown-item {{ request()->is('kategori*') ? 'active' : '' }}" href="{{ route('category.index') }}"> Kategori </a>
+                                @endcan
                                 <a class="dropdown-item" href="./markdown.html"> Produk </a>
                                 <a class="dropdown-item" href="./markdown.html"> User </a>
                                 <a class="dropdown-item" href="./markdown.html"> Konsumen </a>
                                 <a class="dropdown-item" href="./markdown.html"> Supplier </a>
-                                <a class="dropdown-item {{ request()->is('roles*') ? 'active' : '' }}" href="{{ route('roles.index') }}"> Hak Akses </a>
+                                @can('role.view')
+                                    <a class="dropdown-item {{ request()->is('roles*') ? 'active' : '' }}" href="{{ route('roles.index') }}"> Hak Akses </a>
+                                @endcan
                             </div>
                         </div>
                     </div>
