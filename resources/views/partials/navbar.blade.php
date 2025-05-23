@@ -6,10 +6,10 @@
             <span class="navbar-toggler-icon"></span>
         </button>
         <!-- END NAVBAR TOGGLER -->
-        <div class="navbar-nav flex-row order-md-last">
+        <div class="flex-row navbar-nav order-md-last">
             <div class="d-none d-md-flex">
                 <div class="nav-item dropdown d-none d-md-flex">
-                    <a href="#" class="nav-link px-0" data-bs-toggle="dropdown" tabindex="-1"
+                    <a href="#" class="px-0 nav-link" data-bs-toggle="dropdown" tabindex="-1"
                         aria-label="Show notifications" data-bs-auto-close="outside" aria-expanded="false">
                         <!-- Download SVG icon from http://tabler.io/icons/icon/bell -->
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
@@ -139,12 +139,12 @@
                 </div>
             </div>
             <div class="nav-item dropdown">
-                <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown"
+                <a href="#" class="p-0 px-2 nav-link d-flex lh-1" data-bs-toggle="dropdown"
                     aria-label="Open user menu">
                     <span class="avatar avatar-sm" style="background-image: url(./static/avatars/000m.jpg)"> </span>
                     <div class="d-none d-xl-block ps-2">
-                        <div>{{ auth()->user()->name }}</div>
-                        <div class="mt-1 small text-secondary">{{ auth()->user()->getRoleNames()->first() }}</div>
+                        <div>{{ auth()->user() ? auth()->user()->name : '' }}</div>
+                        <div class="mt-1 small text-secondary">{{ auth()->user() ? auth()->user()->getRoleNames()->first() : ''  }}</div>
                     </div>
                 </a>
                 <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">

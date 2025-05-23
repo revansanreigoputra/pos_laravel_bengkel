@@ -17,6 +17,12 @@ class PermissionSeeder extends Seeder
         $permissions = [
             'role.view',
             'role.update',
+            'category.view',
+            'category.create',
+            'category.store',
+            'category.edit',
+            'category.update',
+            'category.delete',
         ];
 
         foreach ($permissions as $permission) {
