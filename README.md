@@ -11,8 +11,7 @@ POS web application dengan Laravel + Autentikasi + Role-based Access (Admin & Ka
 - Role-based access:
   - `admin`
   - `kasir`
-- Auto-generate user per role
-- Role disimpan dan dikelola menggunakan [Spatie Laravel Permission](https://spatie.be/docs/laravel-permission)
+- CRUD Kategori
 
 ---
 
@@ -109,14 +108,12 @@ Seeder akan otomatis:
 
 ## 🛠️ TODO Selanjutnya
 
-- ✅ Manajemen Hak Akses
-- [ ] Manajemen Kategori
 - [ ] Manajemen Produk
 - [ ] Manajemen Supplier
 - [ ] Manajemen Konsumen
 - [ ] Manajemen Stok
-- [ ] Transaksi Pembelian (Stok)
-- [ ] Laporan Pembelian (Stok)
+- [ ] Transaksi Pembelian (Supplier)
+- [ ] Laporan Pembelian (Supplier)
 - [ ] Transaksi Penjualan
 - [ ] Laporan Penjualan
 
