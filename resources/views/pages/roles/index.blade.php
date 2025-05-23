@@ -6,7 +6,7 @@
     <div class="card">
         <div class="card-body">
             <div id="table-default" class="table-responsive">
-                <table id="roles-table" class="table">
+                <table id="roles-table" class="table table-striped">
                     <thead>
                         <tr>
                             <th>No</th>
