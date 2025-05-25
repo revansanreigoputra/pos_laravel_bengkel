@@ -6,14 +6,18 @@ use App\Repositories\CategoryRepository;
 use App\Repositories\Interface\CategoryRepositoryInterface;
 use App\Repositories\Interface\RoleRepositoryInterface;
 use App\Repositories\Interface\SupplierRepositoryInterface;
+use App\Repositories\Interface\UserRepositoryInterface;
 use App\Repositories\RoleRepository;
 use App\Repositories\SupplierRepository;
+use App\Repositories\UserRepository;
 use App\Services\CategoryService;
 use App\Services\Interface\CategoryServiceInterface;
 use App\Services\Interface\RoleServiceInterface;
 use App\Services\Interface\SupplierServiceInterface;
+use App\Services\Interface\UserServiceInterface;
 use App\Services\RoleService;
 use App\Services\SupplierService;
+use App\Services\UserService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -23,12 +27,20 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->bind(RoleServiceInterface::class, RoleService::class);
-        $this->app->bind(RoleRepositoryInterface::class, RoleRepository::class);
-        $this->app->bind(CategoryServiceInterface::class, CategoryService::class);
-        $this->app->bind(CategoryRepositoryInterface::class, CategoryRepository::class);
-        $this->app->bind(SupplierServiceInterface::class, SupplierService::class);
-        $this->app->bind(SupplierRepositoryInterface::class, SupplierRepository::class);
+        $bindings = [
+            RoleServiceInterface::class => RoleService::class,
+            RoleRepositoryInterface::class => RoleRepository::class,
+            CategoryServiceInterface::class => CategoryService::class,
+            CategoryRepositoryInterface::class => CategoryRepository::class,
+            SupplierServiceInterface::class => SupplierService::class,
+            SupplierRepositoryInterface::class => SupplierRepository::class,
+            UserServiceInterface::class => UserService::class,
+            UserRepositoryInterface::class => UserRepository::class,
+        ];
+
+        foreach ($bindings as $interface => $implementation) {
+            $this->app->bind($interface, $implementation);
+        }
     }
 
     /**
