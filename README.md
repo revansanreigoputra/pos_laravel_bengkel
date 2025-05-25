@@ -13,6 +13,7 @@ POS web application dengan Laravel + Autentikasi + Role-based Access (Admin & Ka
   - `kasir`
 - CRUD Kategori
 - CRUD Supplier
+- CRUD User
 
 ---
 
@@ -21,8 +22,8 @@ POS web application dengan Laravel + Autentikasi + Role-based Access (Admin & Ka
 ### 1. Clone Project
 
 ```bash
-git clone https://github.com/username/nama-project.git
-cd nama-project
+git clone https://github.com/lacsapadnan/pos-laravel.git
+cd pos-laravel
 ```
 
 ### 2. Install Dependency
@@ -51,7 +52,7 @@ DB_PASSWORD=
 
 ```bash
 php artisan migrate
-php artisan db:seed --class=RoleSeeder
+php artisan db:seed
 ```
 
 Seeder akan otomatis:
@@ -110,6 +111,8 @@ Seeder akan otomatis:
 
 ## 🛠️ TODO Selanjutnya
 
+- [ ] Pengaturan Website
+- [ ] Manajemen Satuan
 - [ ] Manajemen Produk
 - [ ] Manajemen Konsumen
 - [ ] Manajemen Stok
