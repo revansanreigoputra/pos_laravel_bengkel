@@ -4,16 +4,16 @@ POS web application dengan Laravel + Autentikasi + Role-based Access (Admin & Ka
 
 ---
 
-
 ## 🚀 Fitur Awal
 
-- Autentikasi (Login, Register)
-- Role-based access:
-  - `admin`
-  - `kasir`
-- CRUD Kategori
-- CRUD Supplier
-- CRUD User
+-   Autentikasi (Login, Register)
+-   Role-based access:
+    -   `admin`
+    -   `kasir`
+-   CRUD Kategori
+-   CRUD Supplier
+-   CRUD Konsumen
+-   CRUD User
 
 ---
 
@@ -57,20 +57,20 @@ php artisan db:seed
 
 Seeder akan otomatis:
 
-- Membuat role `admin` dan `kasir`
-- Membuat user:
-  - **admin@mail.com / password**
-  - **kasir@mail.com / password**
-- Assign role ke user yang sesuai
+-   Membuat role `admin` dan `kasir`
+-   Membuat user:
+    -   **admin@mail.com / password**
+    -   **kasir@mail.com / password**
+-   Assign role ke user yang sesuai
 
 ---
 
 ## 🔐 Login Test Akun
 
-| Role  | Email             | Password  |
-|-------|-------------------|-----------|
-| Admin | `admin@mail.com`  | `password` |
-| Kasir | `kasir@mail.com`  | `password` |
+| Role  | Email            | Password   |
+| ----- | ---------------- | ---------- |
+| Admin | `admin@mail.com` | `password` |
+| Kasir | `kasir@mail.com` | `password` |
 
 ---
 
@@ -90,7 +90,7 @@ Seeder akan otomatis:
 ├── database/
 │   ├── migrations/
 │   ├── seeders/
-│    
+│
 │
 ├── routes/
 │   └── web.php
@@ -102,24 +102,24 @@ Seeder akan otomatis:
 
 ## 📌 Packages Digunakan
 
-- [Laravel Breeze](https://laravel.com/docs/starter-kits#laravel-breeze) – Auth starter kit
-- [Spatie Laravel Permission](https://github.com/spatie/laravel-permission) – Role & permission management
-- [DataTables](https://datatables.net/) - DataTables
-- [Phone Validation](https://github.com/Propaganistas/Laravel-Phone) - Phone validation number
+-   [Laravel Breeze](https://laravel.com/docs/starter-kits#laravel-breeze) – Auth starter kit
+-   [Spatie Laravel Permission](https://github.com/spatie/laravel-permission) – Role & permission management
+-   [DataTables](https://datatables.net/) - DataTables
+-   [Phone Validation](https://github.com/Propaganistas/Laravel-Phone) - Phone validation number
 
 ---
 
 ## 🛠️ TODO Selanjutnya
 
-- [ ] Pengaturan Website
-- [ ] Manajemen Satuan
-- [ ] Manajemen Produk
-- [ ] Manajemen Konsumen
-- [ ] Manajemen Stok
-- [ ] Transaksi Pembelian (Supplier)
-- [ ] Laporan Pembelian (Supplier)
-- [ ] Transaksi Penjualan
-- [ ] Laporan Penjualan
+-   [ ] Pengaturan Website
+-   [ ] Manajemen Satuan
+-   [ ] Manajemen Produk
+-   [x] Manajemen Konsumen
+-   [ ] Manajemen Stok
+-   [ ] Transaksi Pembelian (Supplier)
+-   [ ] Laporan Pembelian (Supplier)
+-   [ ] Transaksi Penjualan
+-   [ ] Laporan Penjualan
 
 ---
 
