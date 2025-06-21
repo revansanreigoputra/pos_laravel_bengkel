@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SupplierController;
@@ -33,6 +34,13 @@ Route::middleware('auth')->group(function () {
         Route::middleware('permission:supplier.store')->post('/', [SupplierController::class, 'store'])->name('supplier.store');
         Route::middleware('permission:supplier.update')->put('/{supplier}', [SupplierController::class, 'update'])->name('supplier.update');
         Route::middleware('permission:supplier.delete')->delete('/{supplier}', [SupplierController::class, 'destroy'])->name('supplier.destroy');
+    });
+
+    Route::prefix('konsumen')->group(function () {
+        Route::middleware('permission:customer.view')->get('/', [CustomerController::class, 'index'])->name('customer.index');
+        Route::middleware('permission:customer.store')->post('/', [CustomerController::class, 'store'])->name('customer.store');
+        Route::middleware('permission:customer.update')->put('/{customer}', [CustomerController::class, 'update'])->name('customer.update');
+        Route::middleware('permission:customer.delete')->delete('/{customer}', [CustomerController::class, 'destroy'])->name('customer.destroy');
     });
 
     Route::prefix('user')->group(function () {
