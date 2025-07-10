@@ -9,7 +9,7 @@
         <!-- BEGIN NAVBAR LOGO -->
         <div class="navbar-brand navbar-brand-autodark">
             <a href="#" aria-label="Tabler">
-                Laravel POS
+                BengkelKu
             </a>
         </div>
         <!-- END NAVBAR LOGO -->
