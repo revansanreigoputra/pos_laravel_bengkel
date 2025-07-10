@@ -8,8 +8,11 @@
         <!-- END NAVBAR TOGGLER -->
         <!-- BEGIN NAVBAR LOGO -->
         <div class="navbar-brand navbar-brand-autodark">
-            <a href="#" aria-label="Tabler">
-                BengkelKu
+            <a href="#" aria-label="Tabler" class="d-flex align-items-center">
+                <!-- Logo Image -->
+                <img src="{{ asset('assets/logo.png') }}" alt="Logo BengkelKu" class="me-2" style="height: 50px;">
+                <!-- Text -->
+                <span>BengkelKu</span>
             </a>
         </div>
         <!-- END NAVBAR LOGO -->
