@@ -15,6 +15,9 @@ class PermissionSeeder extends Seeder
     public function run(): void
     {
         $permissions = [
+            'service.create',
+            'service.update',
+            'service.delete',
             'role.view',
             'role.update',
             'category.view',

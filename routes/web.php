@@ -5,6 +5,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -38,6 +39,13 @@ Route::middleware('auth')->group(function () {
         Route::middleware('permission:category.delete')->delete('/{category}', [CategoryController::class, 'destroy'])->name('category.destroy');
     });
 
+    Route::prefix('service')->group(function () {
+        Route::middleware('permission:service.view')->get('/', [ServiceController::class, 'index'])->name('service.index');
+        Route::middleware('permission:service.store')->post('/', [ServiceController::class, 'store'])->name('service.store');
+        Route::middleware('permission:service.update')->put('/{service}', [ServiceController::class, 'update'])->name('service.update');
+        Route::middleware('permission:service.delete')->delete('/{service}', [ServiceController::class, 'destroy'])->name('service.destroy');
+    });
+
     Route::prefix('supplier')->group(function () {
         Route::middleware('permission:supplier.view')->get('/', [SupplierController::class, 'index'])->name('supplier.index');
         Route::middleware('permission:supplier.store')->post('/', [SupplierController::class, 'store'])->name('supplier.store');
@@ -61,3 +69,14 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__ . '/auth.php';
+
+// dummy route to test the route
+Route::get('/product', function() {
+    return view('pages.product.index');
+})->name('product.index');
+
+Route::resource('service', \App\Http\Controllers\ServiceController::class);
+
+Route::get('/transaction', function() {
+    return view('pages.transaction.index');
+})->name('transaction.index');
