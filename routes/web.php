@@ -61,3 +61,16 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__ . '/auth.php';
+
+// dummy route to test the route
+Route::get('/product', function() {
+    return view('pages.product.index');
+})->name('product.index');
+
+Route::get('/service', function() {
+    return view('pages.service.index');
+})->name('service.index');
+
+Route::get('/transaction', function() {
+    return view('pages.transaction.index');
+})->name('transaction.index');
