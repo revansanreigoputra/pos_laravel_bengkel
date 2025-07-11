@@ -15,7 +15,11 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('phone');
-            $table->string('email')->nullable();
+            $table->string('nama_barang')->nullable();
+            $table->enum('tipe_barang', ['satuan', 'set'])->default('satuan');
+            $table->integer('jumlah')->default(0);
+            $table->decimal('harga', 15, 2)->default(0); // harga dengan 2 angka desimal
+            $table->date('tanggal_masuk')->nullable();
             $table->text('address')->nullable();
             $table->timestamps();
         });
