@@ -58,7 +58,6 @@
                                 <a class="dropdown-item {{ request()->is('kategori*') ? 'active' : '' }}"
                                     href="{{ route('category.index') }}"> Kategori </a>
                                 @endcan
-                                <a class="dropdown-item" href="./markdown.html"> Produk </a>
                                 @can('user.view')
                                 <a class="dropdown-item {{ request()->is('user*') ? 'active' : '' }}"
                                     href="{{ route('user.index') }}"> User </a>
