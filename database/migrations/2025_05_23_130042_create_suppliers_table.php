@@ -11,16 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('suppliers', function (Blueprint $table) {
+                Schema::create('suppliers', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('phone');
-            $table->string('nama_barang')->nullable();
-            $table->enum('tipe_barang', ['satuan', 'set'])->default('satuan');
-            $table->integer('jumlah')->default(0);
-            $table->decimal('harga', 15, 2)->default(0); // harga dengan 2 angka desimal
-            $table->date('tanggal_masuk')->nullable();
-            $table->text('address')->nullable();
+            $table->string('name'); // nama supplier
+            $table->string('phone')->nullable(); // nomor telepon
+            $table->string('email')->nullable(); // email opsional
+            $table->text('address')->nullable(); // alamat
+            $table->text('note')->nullable(); // keterangan tambahan
             $table->timestamps();
         });
     }

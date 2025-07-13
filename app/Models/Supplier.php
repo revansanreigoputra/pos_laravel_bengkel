@@ -11,10 +11,6 @@ class Supplier extends Model
         'phone',
         'email',
         'address',
-        'nama_barang',
-        'tipe_barang',
-        'jumlah',
-        'harga',
-        'tanggal_masuk',
+        'note',
     ];
 }

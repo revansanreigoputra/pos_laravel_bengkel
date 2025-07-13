@@ -17,47 +17,22 @@
 
                     <div class="mb-3">
                         <label class="form-label">No. Telp</label>
-                        <input type="number" class="form-control" name="phone" value="{{ old('phone', $supplier->phone) }}" required>
+                        <input type="text" class="form-control" name="phone" value="{{ old('phone', $supplier->phone) }}" required>
                     </div>
-{{-- 
+
                     <div class="mb-3">
                         <label class="form-label">Email</label>
                         <input type="email" class="form-control" name="email" value="{{ old('email', $supplier->email) }}">
-                    </div> --}}
+                    </div>
 
                     <div class="mb-3">
                         <label class="form-label">Alamat</label>
                         <textarea class="form-control" name="address">{{ old('address', $supplier->address) }}</textarea>
                     </div>
 
-                    <hr>
-
                     <div class="mb-3">
-                        <label class="form-label">Nama Barang</label>
-                        <input type="text" class="form-control" name="nama_barang" value="{{ old('nama_barang', $supplier->nama_barang) }}">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Tipe Barang</label>
-                        <select class="form-select" name="tipe_barang">
-                            <option value="satuan" {{ old('tipe_barang', $supplier->tipe_barang) == 'satuan' ? 'selected' : '' }}>Satuan</option>
-                            <option value="set" {{ old('tipe_barang', $supplier->tipe_barang) == 'set' ? 'selected' : '' }}>Set</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Jumlah</label>
-                        <input type="number" class="form-control" name="jumlah" value="{{ old('jumlah', $supplier->jumlah) }}">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Harga (Rp)</label>
-                        <input type="number" class="form-control" name="harga" value="{{ old('harga', $supplier->harga) }}">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Tanggal Masuk</label>
-                        <input type="date" class="form-control" name="tanggal_masuk" value="{{ old('tanggal_masuk', $supplier->tanggal_masuk ? \Carbon\Carbon::parse($supplier->tanggal_masuk)->format('Y-m-d') : '') }}">
+                        <label class="form-label">Catatan</label>
+                        <textarea class="form-control" name="note">{{ old('note', $supplier->note) }}</textarea>
                     </div>
                 </div>
 

@@ -16,31 +16,31 @@
             <table id="customers-table" class="table table-striped">
                 <thead>
                     <tr>
-                        <th>No</th>
-                        <th>Nama</th>
-                        <th>Jenis</th>
-                        <th>Durasi Estimasi</th>
-                        <th>Harga Standar</th>
-                        <th>Status</th>
-                        <th>Deskripsi</th>
-                        <th>Aksi</th>
+                        <th class="text-center">No</th>
+                        <th class="text-center">Nama</th>
+                        <th class="text-center">Jenis</th>
+                        <th class="text-center">Durasi Estimasi</th>
+                        <th class="text-center">Harga Standar</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-center">Deskripsi</th>
+                        <th class="text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($services as $index => $service)
                         <tr>
-                            <td>{{ $index + 1 }}</td>
-                            <td>{{ $service->nama }}</td>
-                            <td>{{ $service->jenis }}</td>
-                            <td>{{ $service->durasi_estimasi }}</td>
-                            <td>Rp {{ number_format($service->harga_standar, 0, ',', '.') }}</td>
-                            <td>
+                            <td class="text-center">{{ $index + 1 }}</td>
+                            <td class="text-center">{{ $service->nama }}</td>
+                            <td class="text-center">{{ $service->jenis }}</td>
+                            <td class="text-center">{{ $service->durasi_estimasi }}</td>
+                            <td class="text-center">Rp {{ number_format($service->harga_standar, 0, ',', '.') }}</td>
+                            <td class="text-center">
                                 <span class="badge bg-{{ $service->status === 'aktif' ? 'success' : 'secondary' }}">
                                     {{ ucfirst($service->status) }}
                                 </span>
                             </td>
-                            <td>{{ $service->deskripsi }}</td>
-                            <td>
+                            <td class="text-center">{{ $service->deskripsi }}</td>
+                            <td class="text-center">
                                 @canany(['service.update', 'service.delete'])
                                     @can('service.update')
                                         <button class="btn btn-warning btn-sm" data-bs-toggle="modal"

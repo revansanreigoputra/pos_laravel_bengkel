@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Requests;
+use Illuminate\Validation\Rule;
 
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -20,14 +21,21 @@ class StoreSupplierRequest extends FormRequest
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
-    {
-        return [
-            'name' => 'required|string|unique:suppliers,name',
-            'phone' => 'required|phone:ID',
-            'email' => 'nullable|email',
-            'address' => 'nullable|string',
-        ];
-    }
+{
+    $supplierId = $this->route('supplier'); // ambil ID dari route
+
+    return [
+        'name' => [
+            'required',
+            'string',
+            Rule::unique('suppliers', 'name')->ignore($supplierId),
+        ],
+        'phone' => 'required|string',
+        'email' => 'nullable|email',
+        'address' => 'nullable|string',
+        'note' => 'nullable|string',
+    ];
+}
 
     /**
      * Get the validation messages that apply to the request.

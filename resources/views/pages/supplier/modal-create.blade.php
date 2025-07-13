@@ -4,7 +4,7 @@
             @csrf
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Tambah data Supplier</h5>
+                    <h5 class="modal-title">Tambah Data Supplier</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
 
@@ -17,53 +17,24 @@
 
                     <div class="mb-3">
                         <label class="form-label">No. Telp</label>
-                        <input type="number" class="form-control" name="phone" placeholder="Masukkan no telp supplier"
+                        <input type="text" class="form-control" name="phone" placeholder="Masukkan no telp supplier"
                             value="{{ old('phone') }}" required>
                     </div>
 
-                    {{-- <div class="mb-3">
+                    <div class="mb-3">
                         <label class="form-label">Email</label>
                         <input type="email" class="form-control" name="email" placeholder="Masukkan email supplier"
                             value="{{ old('email') }}">
-                    </div> --}}
+                    </div>
 
                     <div class="mb-3">
                         <label class="form-label">Alamat</label>
                         <textarea class="form-control" name="address" placeholder="Masukkan alamat supplier">{{ old('address') }}</textarea>
                     </div>
 
-                    <hr>
-
                     <div class="mb-3">
-                        <label class="form-label">Nama Barang</label>
-                        <input type="text" class="form-control" name="nama_barang" placeholder="Masukkan nama barang"
-                            value="{{ old('nama_barang') }}">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Tipe Barang</label>
-                        <select class="form-select" name="tipe_barang">
-                            <option value="satuan" {{ old('tipe_barang') == 'satuan' ? 'selected' : '' }}>Satuan</option>
-                            <option value="set" {{ old('tipe_barang') == 'set' ? 'selected' : '' }}>Set</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Jumlah</label>
-                        <input type="number" class="form-control" name="jumlah" placeholder="Masukkan jumlah"
-                            value="{{ old('jumlah') }}">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Harga (Rp)</label>
-                        <input type="number" class="form-control" name="harga" placeholder="Masukkan harga"
-                            value="{{ old('harga') }}">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Tanggal Masuk</label>
-                        <input type="date" class="form-control" name="tanggal_masuk"
-                            value="{{ old('tanggal_masuk') }}">
+                        <label class="form-label">Catatan</label>
+                        <textarea class="form-control" name="note" placeholder="Opsional">{{ old('note') }}</textarea>
                     </div>
                 </div>
 
