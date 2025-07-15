@@ -44,6 +44,12 @@ class PermissionSeeder extends Seeder
             'user.edit',
             'user.update',
             'user.delete',
+            'sparepart.view',
+            'sparepart.create',
+            'sparepart.store',
+            'sparepart.edit',
+            'sparepart.update',
+            'sparepart.delete',
         ];
 
         foreach ($permissions as $permission) {

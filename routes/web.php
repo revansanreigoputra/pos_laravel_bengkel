@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\SparepartController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
@@ -71,9 +72,15 @@ Route::middleware('auth')->group(function () {
 require __DIR__ . '/auth.php';
 
 // dummy route to test the route
-Route::get('/product', function() {
-    return view('pages.product.index');
-})->name('product.index');
+// routes/web.php
+
+Route::get('/sparepart', [SparepartController::class, 'index'])
+->name('sparepart.index');
+Route::get('/sparepart/create', [SparepartController::class, 'create'])
+->name('sparepart.create');
+Route::post('/sparepart', [SparepartController::class, 'store'])
+->name('sparepart.store');
+Route::resource('sparepart', SparepartController::class);
 
 Route::resource('service', \App\Http\Controllers\ServiceController::class);
 
