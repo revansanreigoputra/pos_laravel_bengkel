@@ -6,6 +6,8 @@ use App\Http\Requests\StoreSupplierRequest;
 use App\Services\SupplierService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf; // export PDF
+use App\Models\Supplier; // export PDF
 
 class SupplierController extends Controller
 {
@@ -91,4 +93,13 @@ class SupplierController extends Controller
         $this->supplierService->deleteSupplier($id);
         return redirect()->back()->withSuccess('Data supplier berhasil dihapus');
     }
+
+    
+    public function exportPDF()
+    {
+        $suppliers = Supplier::all();
+        $pdf = Pdf::loadView('pages.supplier.export-pdf', compact('suppliers'));
+        return $pdf->download('data-supplier.pdf');
+    }
+
 }

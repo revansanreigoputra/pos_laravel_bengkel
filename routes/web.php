@@ -80,3 +80,8 @@ Route::resource('service', \App\Http\Controllers\ServiceController::class);
 Route::get('/transaction', function() {
     return view('pages.transaction.index');
 })->name('transaction.index');
+
+
+// export pdf
+Route::get('/supplier/export-pdf', [SupplierController::class, 'exportPDF'])->name('supplier.export-pdf');
+Route::get('/customer/export-pdf', [CustomerController::class, 'exportPDF'])->name('customer.export-pdf');

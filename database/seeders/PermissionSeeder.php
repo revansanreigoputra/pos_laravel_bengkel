@@ -44,16 +44,25 @@ class PermissionSeeder extends Seeder
             'user.edit',
             'user.update',
             'user.delete',
+            'service.view', // penting! ini belum ada di array sebelumnya
         ];
 
         foreach ($permissions as $permission) {
             Permission::firstOrCreate(['name' => $permission]);
         }
 
-        $adminRole = Role::where('name', 'admin')->first();
+        // Beri semua permission ke admin
+        $adminRole = Role::firstOrCreate(['name' => 'admin']);
+        $adminRole->syncPermissions($permissions);
 
-        if ($adminRole) {
-            $adminRole->syncPermissions($permissions);
-        }
+        // Beri permission tertentu ke kasir
+        $kasirRole = Role::firstOrCreate(['name' => 'kasir']);
+        $kasirPermissions = [
+            'category.view',
+            'service.view',
+            'supplier.view',
+            'customer.view',
+        ];
+        $kasirRole->syncPermissions($kasirPermissions);
     }
 }

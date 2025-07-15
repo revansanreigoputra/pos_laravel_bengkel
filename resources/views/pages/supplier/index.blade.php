@@ -7,6 +7,7 @@
         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createDataModal">Tambah Data</button>
         @include('pages.supplier.modal-create')
     @endcan
+    <a href="{{ route('supplier.export-pdf') }}" target="blank" class="btn btn-danger">Export PDF</a>
 @endsection
 
 @section('content')

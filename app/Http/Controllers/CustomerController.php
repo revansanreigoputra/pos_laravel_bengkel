@@ -8,6 +8,9 @@ use App\Http\Requests\StoreCustomerRequest;
 use App\Services\CustomerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+// exp PDF
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\Customer;
 
 final class CustomerController extends Controller
 {
@@ -93,4 +96,12 @@ final class CustomerController extends Controller
         $this->customerService->deleteCustomer((int)$id);
         return redirect()->back()->withSuccess('Data customer berhasil dihapus');
     }
+
+    public function exportPDF()
+{
+    $customers = Customer::all();
+    $pdf = Pdf::loadView('pages.customer.export-pdf', compact('customers'));
+    return $pdf->download('data-konsumen.pdf');
+}
+
 }

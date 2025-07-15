@@ -6,6 +6,7 @@
 @can('customer.create')
 <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createDataModal">Tambah Data</button>
 @include('pages.customer.modal-create')
+<a href="{{ route('customer.export-pdf') }}" class="btn btn-danger">Export PDF</a>
 @endcan
 
 @endsection
