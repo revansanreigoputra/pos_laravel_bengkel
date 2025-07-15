@@ -50,6 +50,12 @@ class PermissionSeeder extends Seeder
             'sparepart.edit',
             'sparepart.update',
             'sparepart.delete',
+            'transaction.view',
+            'transaction.create',
+            'transaction.store',
+            'transaction.edit',
+            'transaction.update',
+            'transaction.delete',
         ];
 
         foreach ($permissions as $permission) {
@@ -63,10 +69,16 @@ class PermissionSeeder extends Seeder
         // Beri permission tertentu ke kasir
         $kasirRole = Role::firstOrCreate(['name' => 'kasir']);
         $kasirPermissions = [
-            'category.view',
-            'service.view',
-            'supplier.view',
-            'customer.view',
+            // 'category.view',
+            // 'service.view',
+            // 'supplier.view',
+            // 'customer.view',
+            'transaction.view',
+            'transaction.create',
+            'transaction.store',
+            'transaction.edit',
+            'transaction.update',
+            'transaction.delete',
         ];
         $kasirRole->syncPermissions($kasirPermissions);
     }

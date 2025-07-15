@@ -75,6 +75,10 @@
                                 <a class="dropdown-item" href="{{ route('service.index') }}"> Servis </a>
                                 <a class="dropdown-item" href="{{ route('transaction.index') }}"> Transaksi </a> --}}
                                {{--Nav without backend end--}}
+                               @can('transaction.view')
+                                <a class="dropdown-item {{ request()->is('transaction*') ? 'active' : '' }}"
+                                    href="{{ route('transaction.index') }}"> Transaction </a>
+                                @endcan
                                 @can('user.view')
                                 <a class="dropdown-item {{ request()->is('user*') ? 'active' : '' }}"
                                     href="{{ route('user.index') }}"> User </a>

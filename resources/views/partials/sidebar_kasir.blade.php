@@ -58,10 +58,10 @@
                                 <a class="dropdown-item {{ request()->is('kategori*') ? 'active' : '' }}"
                                     href="{{ route('category.index') }}"> Kategori </a>
                                 @endcan
-                                {{-- @can('category.view')
-                                <a class="dropdown-item {{ request()->is('produk*') ? 'active' : '' }}"
-                                    href="{{ route('produk.index') }}"> Produk </a>
-                                @endcan --}}
+                                @can('category.view')
+                                <a class="dropdown-item {{ request()->is('sparepart*') ? 'active' : '' }}"
+                                    href="{{ route('sparepart.index') }}"> sparepart </a>
+                                @endcan
                                 @can('category.view')
                                 <a class="dropdown-item {{ request()->is('service*') ? 'active' : '' }}"
                                     href="{{ route('service.index') }}"> Servis </a>
@@ -75,6 +75,10 @@
                                 <a class="dropdown-item" href="{{ route('service.index') }}"> Servis </a>
                                 <a class="dropdown-item" href="{{ route('transaction.index') }}"> Transaksi </a> --}}
                                {{--Nav without backend end--}}
+                               @can('transaction.view')
+                                <a class="dropdown-item {{ request()->is('transaction*') ? 'active' : '' }}"
+                                    href="{{ route('transaction.index') }}"> Transaction </a>
+                                @endcan
                                 @can('user.view')
                                 <a class="dropdown-item {{ request()->is('user*') ? 'active' : '' }}"
                                     href="{{ route('user.index') }}"> User </a>

@@ -1,96 +1,91 @@
-@extends('layouts.master')
+<div class="modal fade" id="editModal-{{ $transaction->id }}" tabindex="-1" role="dialog" aria-labelledby="editModalLabel-{{ $transaction->id }}" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <form action="{{ route('transaction.update', $transaction->id) }}" method="POST">
+            @csrf
+            @method('PUT')
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalLabel-{{ $transaction->id }}">Edit Transaksi #{{ $transaction->id }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
 
-@section('title', 'Data Transaksi')
+                <div class="modal-body">
+                    {{-- Informasi Umum --}}
+                    <div class="mb-3">
+                        <label class="form-label">Nama Pelanggan</label>
+                        <input type="text" class="form-control" name="customer_name" value="{{ old('customer_name', $transaction->customer_name) }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nomor Kendaraan</label>
+                        <input type="text" class="form-control" name="vehicle_number" value="{{ old('vehicle_number', $transaction->vehicle_number) }}" required>
+                    </div>
 
-@section('action')
-    @can('transaction.create')
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTransactionModal">Tambah Transaksi</button>
-        {{-- Ensure modal-create.blade.php is updated as described above --}}
-        @include('pages.transaction.modal-create', [
-            'services' => $services, 
-            'spareparts' => $spareparts
-        ])
-    @endcan
-    {{-- <a href="{{ route('transaction.export-pdf') }}" target="_blank" class="btn btn-danger">Export PDF</a> --}}
-@endsection
+                    {{-- Edit Item --}}
+                    <h6>Detail Item:</h6>
+                    <div id="items-container-edit-{{ $transaction->id }}"> {{-- Unique ID for each edit modal's container --}}
+                        @foreach ($transaction->items as $index => $item)
+                            <div class="item-row mb-3 row align-items-end">
+                                <div class="col-md-5">
+                                    <label for="edit-item-select-{{ $transaction->id }}-{{ $index }}" class="form-label">Item</label>
+                                    <select name="items[{{ $index }}][item_full_id]" class="form-select item-select" id="edit-item-select-{{ $transaction->id }}-{{ $index }}" required>
+                                        <option value="">Pilih Item</option>
+                                        <optgroup label="Layanan">
+                                            @foreach ($services as $service)
+                                                <option value="service-{{ $service->id }}"
+                                                    data-price="{{ $service->harga_jual }}" {{-- Use harga_jual for consistency --}}
+                                                    @if ($item->item_type === 'service' && $item->item_id == $service->id) selected @endif>
+                                                    {{ $service->nama }} (Rp {{ number_format($service->harga_jual, 0, ',', '.') }})
+                                                </option>
+                                            @endforeach
+                                        </optgroup>
+                                        <optgroup label="Sparepart">
+                                            @foreach ($spareparts as $spare)
+                                                <option value="sparepart-{{ $spare->id }}"
+                                                    data-price="{{ $spare->price }}" {{-- Use price for consistency --}}
+                                                    @if ($item->item_type === 'sparepart' && $item->item_id == $spare->id) selected @endif>
+                                                    {{ $spare->name }} (Rp {{ number_format($spare->price, 0, ',', '.') }})
+                                                </option>
+                                            @endforeach
+                                        </optgroup>
+                                    </select>
+                                    {{-- Hidden inputs to store item_type and item_id separately --}}
+                                    <input type="hidden" name="items[{{ $index }}][item_type]" class="item-type-input" value="{{ $item->item_type }}">
+                                    <input type="hidden" name="items[{{ $index }}][item_id]" class="item-id-input" value="{{ $item->item_id }}">
+                                </div>
 
-@section('content')
-    <div class="card">
-        <div class="card-body">
-            <div class="table-responsive">
-                <table id="transaction-table" class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>No</th>
-                            <th>Nama Pelanggan</th>
-                            <th>No. Kendaraan</th>
-                            <th>Tanggal Transaksi</th>
-                            <th>Total Harga</th>
-                            <th>Item</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($transactions as $trx)
-                            <tr>
-                                <td>{{ $loop->iteration }}</td>
-                                <td>{{ $trx->customer_name }}</td>
-                                <td>{{ $trx->vehicle_number }}</td>
-                                <td>{{ $trx->transaction_date->format('d-m-Y') }}</td>
-                                <td>Rp {{ number_format($trx->total_price, 0, ',', '.') }}</td>
-                                <td>
-                                    <ul>
-                                        @foreach ($trx->items as $item)
-                                            <li>
-                                                {{ $item->item_type === 'service' ? ($item->service ? $item->service->nama : 'Layanan Tidak Ditemukan') : ($item->sparepart ? $item->sparepart->name : 'Sparepart Tidak Ditemukan') }}
-                                                (Rp {{ number_format($item->price, 0, ',', '.') }})
-                                            </li>
-                                        @endforeach
-                                    </ul>
-                                </td>
-                                <td>
-                                    @canany(['transaction.update', 'transaction.delete'])
-                                        @can('transaction.update')
-                                            <button class="btn btn-sm btn-warning" data-bs-toggle="modal"
-                                                data-bs-target="#editModal-{{ $trx->id }}">
-                                                Edit
-                                            </button>
-                                        @endcan
+                                <div class="col-md-3">
+                                    <label for="edit-price-{{ $transaction->id }}-{{ $index }}" class="form-label">Harga</label>
+                                    {{-- Removed 'readonly' to allow manual input --}}
+                                    <input type="number" name="items[{{ $index }}][price]" class="form-control price-input"
+                                        id="edit-price-{{ $transaction->id }}-{{ $index }}"
+                                        value="{{ old('items.' . $index . '.price', $item->price) }}" step="0.01" required>
+                                </div>
 
-                                        @can('transaction.delete')
-                                            <button class="btn btn-sm btn-danger" data-bs-toggle="modal"
-                                                data-bs-target="#delete-transaction-{{ $trx->id }}">
-                                                Hapus
-                                            </button>
-                                            <x-modal.delete-confirm 
-                                                id="delete-transaction-{{ $trx->id }}" 
-                                                :route="route('transaction.destroy', $trx->id)"
-                                                item="{{ $trx->customer_name }}" 
-                                                title="Hapus Transaksi?"
-                                                description="Data transaksi yang dihapus tidak bisa dikembalikan." />
-                                        @endcan
-                                    @else
-                                        <span class="text-muted">Tidak ada aksi</span>
-                                    @endcanany
-                                </td>
-                            </tr>
+                                <div class="col-md-2">
+                                    <label for="edit-qty-{{ $transaction->id }}-{{ $index }}" class="form-label">Qty</label>
+                                    <input type="number" name="items[{{ $index }}][quantity]" class="form-control"
+                                        id="edit-qty-{{ $transaction->id }}-{{ $index }}"
+                                        min="1" value="{{ old('items.' . $index . '.quantity', $item->quantity) }}" required>
+                                </div>
+
+                                <div class="col-md-2 d-flex align-items-end">
+                                    <button type="button" class="btn btn-danger btn-sm remove-item w-100">X</button>
+                                </div>
+                            </div>
                         @endforeach
-                    </tbody>
-                </table>
-            </div>
+                    </div>
 
-            {{-- Modal edit diletakkan setelah table --}}
-            @foreach ($transactions as $trx)
-                {{-- Ensure modal-edit.blade.php is updated as described in previous responses --}}
-                @include('pages.transaction.modal-edit', [
-                    'transaction' => $trx,
-                    'services' => $services,
-                    'spareparts' => $spareparts
-                ])
-            @endforeach
-        </div>
+                    <button type="button" class="btn btn-secondary mt-3 add-item-edit" data-transaction-id="{{ $transaction->id }}">Tambah Item</button>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn me-auto" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                </div>
+            </div>
+        </form>
     </div>
-@endsection
+</div>
 
 @push('addon-script')
 <script>
@@ -152,8 +147,8 @@
             }
 
             // Attach change listener to the item select dropdown
-            // Remove existing listener first to prevent multiple attachments on re-initialization
-            itemSelect.removeEventListener('change', function() { updatePriceAndHiddenFields(this); }); 
+            // Use 'once' to prevent multiple listeners if the row is re-initialized (e.g., from modal show)
+            itemSelect.removeEventListener('change', updatePriceAndHiddenFields); // Remove existing listener first
             itemSelect.addEventListener('change', function() {
                 updatePriceAndHiddenFields(this);
             });
@@ -234,8 +229,7 @@
 
                     initializeItemRow(firstRow); // Re-initialize the first row to ensure its listeners are fresh
                 }
-                itemCounter = 0; // Reset counter for a new transaction form, so the first added item gets index 0
-                console.log('Initial itemCounter for create modal:', itemCounter);
+                itemCounter = 0; // Reset counter for a new transaction form
             });
 
             const addItemButton = document.getElementById('add-item');
@@ -286,32 +280,30 @@
         }
 
         // --- Handle Edit Modals ---
-        // We use a general selector for all modals whose IDs start with 'editModal-'
         document.querySelectorAll('[id^="editModal-"]').forEach(editModal => {
             editModal.addEventListener('shown.bs.modal', function () {
                 console.log('Edit Modal shown:', editModal.id);
                 const transactionId = editModal.id.split('-')[1]; // Extract ID from modal ID
-                // Use the correct, specific ID for the container in this modal
                 const itemsContainer = this.querySelector(`#items-container-edit-${transactionId}`); 
                 
                 if (itemsContainer) {
                     // Initialize all existing item rows in the edit modal
-                    itemsContainer.querySelectorAll('.item-row').forEach((row) => {
+                    itemsContainer.querySelectorAll('.item-row').forEach((row, index) => {
+                        // Set the initial itemCounter based on the number of existing rows
+                        itemCounter = Math.max(itemCounter, index);
                         initializeItemRow(row);
                     });
-                    // Set itemCounter to the number of existing rows for the next new item
-                    itemCounter = itemsContainer.querySelectorAll('.item-row').length;
-                    console.log('Initial itemCounter for edit modal:', itemCounter);
+                     // After initializing all existing rows, increment itemCounter for any new ones added later
+                     itemCounter = itemsContainer.querySelectorAll('.item-row').length > 0 ? itemsContainer.querySelectorAll('.item-row').length - 1 : 0;
                 }
             });
 
-            // Also attach add item functionality if edit modals have it
+            // Handle adding items in the edit modal
             const addItemButtonEdit = editModal.querySelector('.add-item-edit'); 
             if (addItemButtonEdit) {
                 addItemButtonEdit.addEventListener('click', function() {
                     console.log('Add Item button clicked in Edit Modal for:', editModal.id);
                     const transactionId = this.dataset.transactionId; // Get ID from data attribute
-                    // Use the correct, specific ID for the container in this modal
                     const container = editModal.querySelector(`#items-container-edit-${transactionId}`); 
                     const firstRowTemplate = container.querySelector('.item-row'); 
 
@@ -321,7 +313,7 @@
                     }
 
                     const newRow = firstRowTemplate.cloneNode(true);
-                    itemCounter++; 
+                    itemCounter++; // Increment counter for new items in this session
 
                     newRow.querySelectorAll('input, select, label').forEach(el => {
                         if (el.name) {
@@ -352,7 +344,6 @@
         });
 
         // Initial setup for the first item row in the create modal if it's already present on page load
-        // This targets the first row inside the #items-container (for the create modal)
         const initialCreateModalFirstRow = document.querySelector('#items-container .item-row');
         if (initialCreateModalFirstRow) {
             initializeItemRow(initialCreateModalFirstRow);

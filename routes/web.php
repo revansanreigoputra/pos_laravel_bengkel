@@ -9,6 +9,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 
 // Route::get('/', function () {
@@ -67,6 +68,13 @@ Route::middleware('auth')->group(function () {
         Route::middleware('permission:user.update')->put('/{user}', [UserController::class, 'update'])->name('user.update');
         Route::middleware('permission:user.delete')->delete('/{user}', [UserController::class, 'destroy'])->name('user.destroy');
     });
+
+    Route::prefix('transaction')->group(function () {
+        Route::middleware('permission:transaction.view')->get('/', [TransactionController::class, 'index'])->name('transaction.index');
+        Route::middleware('permission:transaction.store')->post('/', [TransactionController::class, 'store'])->name('transaction.store');
+        Route::middleware('permission:transaction.update')->put('/{transaction}', [TransactionController::class, 'update'])->name('transaction.update');
+        Route::middleware('permission:transaction.delete')->delete('/{transaction}', [TransactionController::class, 'destroy'])->name('transaction.destroy');
+    });
 });
 
 require __DIR__ . '/auth.php';
@@ -83,10 +91,6 @@ Route::post('/sparepart', [SparepartController::class, 'store'])
 Route::resource('sparepart', SparepartController::class);
 
 Route::resource('service', \App\Http\Controllers\ServiceController::class);
-
-Route::get('/transaction', function() {
-    return view('pages.transaction.index');
-})->name('transaction.index');
 
 
 // export pdf
