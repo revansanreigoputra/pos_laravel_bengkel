@@ -58,10 +58,10 @@
                                 <a class="dropdown-item {{ request()->is('kategori*') ? 'active' : '' }}"
                                     href="{{ route('category.index') }}"> Kategori </a>
                                 @endcan
-                                {{-- @can('category.view')
-                                <a class="dropdown-item {{ request()->is('produk*') ? 'active' : '' }}"
-                                    href="{{ route('produk.index') }}"> Produk </a>
-                                @endcan --}}
+                                @can('category.view')
+                                <a class="dropdown-item {{ request()->is('sparepart*') ? 'active' : '' }}"
+                                    href="{{ route('sparepart.index') }}"> sparepart </a>
+                                @endcan
                                 @can('category.view')
                                 <a class="dropdown-item {{ request()->is('service*') ? 'active' : '' }}"
                                     href="{{ route('service.index') }}"> Servis </a>
