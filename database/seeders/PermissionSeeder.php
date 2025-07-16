@@ -15,13 +15,11 @@ class PermissionSeeder extends Seeder
     public function run(): void
     {
         $permissions = [
-<<<<<<< Updated upstream
-=======
+
             'service.view',
             'service.create',
             'service.update',
             'service.delete',
->>>>>>> Stashed changes
             'role.view',
             'role.update',
             'category.view',
