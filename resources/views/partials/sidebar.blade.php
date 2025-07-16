@@ -1,9 +1,8 @@
 <aside class="navbar navbar-vertical navbar-expand-lg">
     <div class="container-fluid">
         <!-- NAVBAR TOGGLER -->
-        <button class="navbar-toggler collapsed" type="button" data-bs-toggle="collapse"
-            data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false"
-            aria-label="Toggle navigation">
+        <button class="navbar-toggler collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu"
+            aria-controls="sidebar-menu" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
 
@@ -37,7 +36,8 @@
                 </li>
 
                 <!-- Master Data -->
-                <li class="nav-item dropdown {{ request()->is('kategori*') || request()->is('sparepart*') || request()->is('service*') || request()->is('supplier*') || request()->is('konsumen*') ? 'active' : '' }}">
+                <li
+                    class="nav-item dropdown {{ request()->is('kategori*') || request()->is('sparepart*') || request()->is('service*') || request()->is('supplier*') || request()->is('konsumen*') ? 'active' : '' }}">
                     <a class="nav-link dropdown-toggle" href="#" aria-expanded="false">
                         <span class="nav-link-icon d-md-none d-lg-inline-block">
                             <!-- Icon Folder -->
@@ -53,28 +53,29 @@
                         </span>
                         <span class="nav-link-title">Master Data</span>
                     </a>
-                    <div class="dropdown-menu {{ request()->is('kategori*') || request()->is('sparepart*') || request()->is('service*') || request()->is('supplier*') || request()->is('konsumen*') ? 'show' : '' }}">
+                    <div
+                        class="dropdown-menu {{ request()->is('kategori*') || request()->is('sparepart*') || request()->is('service*') || request()->is('supplier*') || request()->is('konsumen*') ? 'show' : '' }}">
                         <div class="dropdown-menu-columns">
                             <div class="dropdown-menu-column">
                                 @can('category.view')
-                                <a class="dropdown-item {{ request()->is('kategori*') ? 'active' : '' }}"
-                                    href="{{ route('category.index') }}">Kategori</a>
+                                    <a class="dropdown-item {{ request()->is('kategori*') ? 'active' : '' }}"
+                                        href="{{ route('category.index') }}">Kategori</a>
                                 @endcan
                                 @can('sparepart.view')
-                                <a class="dropdown-item {{ request()->is('sparepart*') ? 'active' : '' }}"
-                                    href="{{ route('sparepart.index') }}">Sparepart</a>
+                                    <a class="dropdown-item {{ request()->is('sparepart*') ? 'active' : '' }}"
+                                        href="{{ route('sparepart.index') }}">Sparepart</a>
                                 @endcan
                                 @can('service.view')
-                                <a class="dropdown-item {{ request()->is('service*') ? 'active' : '' }}"
-                                    href="{{ route('service.index') }}">Servis</a>
+                                    <a class="dropdown-item {{ request()->is('service*') ? 'active' : '' }}"
+                                        href="{{ route('service.index') }}">Servis</a>
                                 @endcan
                                 @can('supplier.view')
-                                <a class="dropdown-item {{ request()->is('supplier*') ? 'active' : '' }}"
-                                    href="{{ route('supplier.index') }}">Supplier</a>
+                                    <a class="dropdown-item {{ request()->is('supplier*') ? 'active' : '' }}"
+                                        href="{{ route('supplier.index') }}">Supplier</a>
                                 @endcan
                                 @can('customer.view')
-                                <a class="dropdown-item {{ request()->is('konsumen*') ? 'active' : '' }}"
-                                    href="{{ route('customer.index') }}">Konsumen</a>
+                                    <a class="dropdown-item {{ request()->is('konsumen*') ? 'active' : '' }}"
+                                        href="{{ route('customer.index') }}">Konsumen</a>
                                 @endcan
                             </div>
                         </div>
@@ -82,7 +83,8 @@
                 </li>
 
                 <!-- Transaksi -->
-                <li class="nav-item dropdown {{ request()->is('pembelian*') || request()->is('transaction*') ? 'active' : '' }}">
+                <li
+                    class="nav-item dropdown {{ request()->is('pembelian*') || request()->is('transaction*') ? 'active' : '' }}">
                     <a class="nav-link dropdown-toggle" href="#" aria-expanded="false">
                         <span class="nav-link-icon d-md-none d-lg-inline-block">
                             <!-- Icon Transaksi -->
@@ -96,16 +98,15 @@
                         </span>
                         <span class="nav-link-title">Transaksi</span>
                     </a>
-                    <div class="dropdown-menu {{ request()->is('pembelian*') || request()->is('transaction*') ? 'show' : '' }}">
+                    <div
+                        class="dropdown-menu {{ request()->is('pembelian*') || request()->is('transaction*') ? 'show' : '' }}">
                         <div class="dropdown-menu-columns">
                             <div class="dropdown-menu-column">
-                                @can('purchase.view')
-                                <a class="dropdown-i    tem {{ request()->is('pembelian*') ? 'active' : '' }}"
-                                    href="{{ route('pembelian.index') }}">Pembelian Sparepart</a>
-                                @endcan
+                                <a class="dropdown-item {{ request()->is('stock-handle*') ? 'active' : '' }}"
+                                    href="{{ route('stock-handle.index') }}">Pembelian Sparepart</a>
                                 @can('transaction.view')
-                                <a class="dropdown-item {{ request()->is('transaction*') ? 'active' : '' }}"
-                                    href="{{ route('transaction.index') }}">Penjualan Sparepart</a>
+                                    <a class="dropdown-item {{ request()->is('transaction*') ? 'active' : '' }}"
+                                        href="{{ route('transaction.index') }}">Penjualan Sparepart</a>
                                 @endcan
                             </div>
                         </div>
@@ -131,12 +132,12 @@
                         <div class="dropdown-menu-columns">
                             <div class="dropdown-menu-column">
                                 @can('report.transaction')
-                                <a class="dropdown-item {{ request()->is('laporan/transaksi') ? 'active' : '' }}"
-                                    href="{{ route('laporan.transaksi') }}">Laporan Transaksi</a>
+                                    <a class="dropdown-item {{ request()->is('laporan/transaksi') ? 'active' : '' }}"
+                                        href="{{ route('laporan.transaksi') }}">Laporan Transaksi</a>
                                 @endcan
                                 @can('report.purchase')
-                                <a class="dropdown-item {{ request()->is('laporan/pembelian') ? 'active' : '' }}"
-                                    href="{{ route('laporan.pembelian') }}">Laporan Pembelian</a>
+                                    <a class="dropdown-item {{ request()->is('laporan/pembelian') ? 'active' : '' }}"
+                                        href="{{ route('laporan.pembelian') }}">Laporan Pembelian</a>
                                 @endcan
                             </div>
                         </div>
@@ -148,9 +149,9 @@
                     <a class="nav-link dropdown-toggle" href="#" aria-expanded="false">
                         <span class="nav-link-icon d-md-none d-lg-inline-block">
                             <!-- Icon User -->
-                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-1" width="24" height="24"
-                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-1" width="24"
+                                height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                                 <path d="M8 3.13a4 4 0 0 0 0 7.75" />
                                 <path d="M2 21v-2a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v2" />
@@ -162,12 +163,12 @@
                         <div class="dropdown-menu-columns">
                             <div class="dropdown-menu-column">
                                 @can('user.view')
-                                <a class="dropdown-item {{ request()->is('user*') ? 'active' : '' }}"
-                                    href="{{ route('user.index') }}">User</a>
+                                    <a class="dropdown-item {{ request()->is('user*') ? 'active' : '' }}"
+                                        href="{{ route('user.index') }}">User</a>
                                 @endcan
                                 @can('role.view')
-                                <a class="dropdown-item {{ request()->is('roles*') ? 'active' : '' }}"
-                                    href="{{ route('roles.index') }}">Hak Akses</a>
+                                    <a class="dropdown-item {{ request()->is('roles*') ? 'active' : '' }}"
+                                        href="{{ route('roles.index') }}">Hak Akses</a>
                                 @endcan
                             </div>
                         </div>
@@ -188,7 +189,7 @@
             const toggle = dropdown.querySelector('.nav-link.dropdown-toggle');
             const menu = dropdown.querySelector('.dropdown-menu');
 
-            toggle.addEventListener('click', function (e) {
+            toggle.addEventListener('click', function(e) {
                 e.preventDefault();
 
                 const isShown = menu.classList.contains('show');
@@ -197,7 +198,8 @@
                 dropdowns.forEach(other => {
                     if (other !== dropdown) {
                         other.querySelector('.dropdown-menu')?.classList.remove('show');
-                        other.querySelector('.dropdown-toggle')?.setAttribute('aria-expanded', 'false');
+                        other.querySelector('.dropdown-toggle')?.setAttribute(
+                            'aria-expanded', 'false');
                     }
                 });
 
@@ -213,11 +215,12 @@
         });
 
         // Klik di luar sidebar, tutup semua
-        document.addEventListener('click', function (e) {
+        document.addEventListener('click', function(e) {
             if (!e.target.closest('.navbar-vertical')) {
                 dropdowns.forEach(dropdown => {
                     dropdown.querySelector('.dropdown-menu')?.classList.remove('show');
-                    dropdown.querySelector('.dropdown-toggle')?.setAttribute('aria-expanded', 'false');
+                    dropdown.querySelector('.dropdown-toggle')?.setAttribute('aria-expanded',
+                        'false');
                 });
             }
         });

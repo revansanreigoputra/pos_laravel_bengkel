@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\SupplierSparepartStockController;
 use App\Http\Controllers\SparepartController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CategoryController;
@@ -91,6 +92,23 @@ Route::post('/sparepart', [SparepartController::class, 'store'])
 Route::resource('sparepart', SparepartController::class);
 
 Route::resource('service', \App\Http\Controllers\ServiceController::class);
+
+// route for sparepart stock handling
+Route::resource('stock-handle', SupplierSparepartStockController::class)
+    ->parameters([
+        'stock-handle' => 'stock'
+    ])
+    ->names([
+        'index' => 'stock-handle.index',
+        'create' => 'stock-handle.create',
+        'store' => 'stock-handle.store',
+        'show' => 'stock-handle.show',
+        'edit' => 'stock-handle.edit',
+        'update' => 'stock-handle.update',
+        'destroy' => 'stock-handle.destroy',
+    ]);
+
+// Route::resource('stock-handle', SupplierSparepartStockController::class);
 
 
 // export pdf

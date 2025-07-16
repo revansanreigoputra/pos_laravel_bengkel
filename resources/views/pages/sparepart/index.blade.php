@@ -27,7 +27,7 @@
                                     <th>No</th>
                                     <th>Kode Part</th>
                                     <th>Nama Sparepart</th>
-                                    <th>Supplier</th>
+                                    
                                     <th>Stok</th>
                                     <th>Harga Beli</th>
                                     <th>Harga Jual</th>
@@ -39,9 +39,8 @@
                                 <tr>
                                     <td>{{ $index + 1 }}</td>
                                     <td>{{ $sparepart->code_part }}</td>
-                                    <td>{{ $sparepart->name }}</td>
-                                    <td>{{ $sparepart->supplier->name ?? '-' }}</td>
-                                    <td>{{ $sparepart->quantity }}</td>
+                                    <td>{{ $sparepart->name }}</td> 
+                                    <td>{{ $sparepart->quantity }}</td> 
                                     <td>{{ number_format($sparepart->purchase_price, 0, ',', '.') }}</td>
                                     <td>{{ number_format($sparepart->selling_price, 0, ',', '.') }}</td>
                                     <td class="text-center">

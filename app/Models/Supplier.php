@@ -13,4 +13,18 @@ class Supplier extends Model
         'address',
         'note',
     ];
+
+    // Many-to-Many relationship with Spareparts via pivot table
+    public function spareparts()
+    {
+        return $this->belongsToMany(Sparepart::class, 'supplier_sparepart_stocks')
+            ->withPivot(['quantity', 'purchase_price', 'received_date', 'note'])
+            ->withTimestamps();
+    }
+
+    // One-to-many: A supplier may deliver multiple stock batches
+    public function stockDeliveries()
+    {
+        return $this->hasMany(SupplierSparepartStock::class);
+    }
 }

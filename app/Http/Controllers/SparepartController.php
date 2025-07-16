@@ -11,47 +11,39 @@ class SparepartController extends Controller
     public function index()
     {
         $spareparts = Sparepart::get();
-        $suppliers = Supplier::all();
-        return view('pages.sparepart.index', compact('spareparts', 'suppliers'));
+        return view('pages.sparepart.index', compact('spareparts'));
     }
 
     public function create()
     {
-        $suppliers = Supplier::all();
-        return view('pages.sparepart.create', compact('suppliers'));
+        return view('pages.sparepart.create');
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'code_part' => 'required|string',
-            'supplier_id' => 'required|exists:suppliers,id',
-            'purchase_price' => 'required|numeric|min:0',
+            'code_part' => 'required|string|unique:spareparts,code_part',
+            // 'purchase_price' => 'required|numeric|min:0',
             'selling_price' => 'required|numeric|min:0',
             'expired_date' => 'nullable|date',
-            'quantity' => 'required|integer|min:0'
         ]);
 
-        $sparepart = Sparepart::create([
+        Sparepart::create([
             'name' => $validated['name'],
             'code_part' => $validated['code_part'],
-            'supplier_id' => $validated['supplier_id'],
-            'purchase_price' => $validated['purchase_price'],
+            'purchase_price' => 0,
             'selling_price' => $validated['selling_price'],
             'expired_date' => $validated['expired_date'],
-           'quantity' => $validated['quantity'],
+            'quantity' => 0, // Start with 0; will be updated by SupplierSparepartStock
         ]);
 
         return redirect()->route('sparepart.index')->with('success', 'Sparepart created successfully');
     }
 
-     
-
     public function edit(Sparepart $sparepart)
     {
-        $suppliers = Supplier::all();
-        return view('sparepart.edit', compact('sparepart', 'suppliers'));
+        return view('pages.sparepart.edit', compact('sparepart'));
     }
 
     public function update(Request $request, Sparepart $sparepart)
@@ -59,10 +51,9 @@ class SparepartController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code_part' => 'required|string|unique:spareparts,code_part,' . $sparepart->id,
-            'supplier_id' => 'required|exists:suppliers,id',
-            'purchase_price' => 'required|numeric|min:0',
+            // 'purchase_price' => 'required|numeric|min:0',
             'selling_price' => 'required|numeric|min:0',
-            'expired_date' => 'nullable|date'
+            'expired_date' => 'nullable|date',
         ]);
 
         $sparepart->update($validated);

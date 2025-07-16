@@ -4,7 +4,7 @@
             @csrf
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Tambah Data Sparepart</h5>
+                    <h5 class="modal-title">Tambah Data Stok Barang Sparepart</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
                 </div>
 
@@ -18,27 +18,11 @@
                         <input type="text" class="form-control" name="code_part" required>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Supplier</label>
-                        <select name="supplier_id" class="form-select @error('supplier_id') is-invalid @enderror"
-                            required>
-                            <option value="">Pilih Supplier</option>
-                            @foreach ($suppliers as $supplier)
-                                <option value="{{ $supplier->id }}"
-                                    {{ old('supplier_id') == $supplier->id ? 'selected' : '' }}>
-                                    {{ $supplier->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('supplier_id')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="mb-3">
+                   
+                    {{-- <div class="mb-3">
                         <label class="form-label">Harga Beli</label>
                         <input type="number" class="form-control" name="purchase_price" required>
-                    </div>
+                    </div> --}}
 
                     <div class="mb-3">
                         <label class="form-label">Harga Jual</label>
@@ -48,10 +32,7 @@
                         <label class="form-label">Expired Date</label>
                         <input type="date" class="form-control" name="expired_date" required>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">quantity</label>
-                        <input type="number" class="form-control" name="quantity" required>
-                    </div>
+                   
 
 
                 </div>

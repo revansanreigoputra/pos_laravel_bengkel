@@ -56,6 +56,12 @@ class PermissionSeeder extends Seeder
             'transaction.edit',
             'transaction.update',
             'transaction.delete',
+            'stock-handle.view',
+            'stock-handle.create',
+            'stock-handle.store',   
+            'stock-handle.edit',
+            'stock-handle.update',  
+            'stock-handle.delete',
         ];
 
         foreach ($permissions as $permission) {

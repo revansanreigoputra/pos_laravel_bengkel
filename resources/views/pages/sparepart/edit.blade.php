@@ -28,24 +28,9 @@
                         @enderror
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Supplier</label>
-                        <select name="supplier_id" class="form-select @error('supplier_id') is-invalid @enderror"
-                            required>
-                            <option value="">Pilih Supplier</option>
-                            @foreach ($suppliers as $supplier)
-                                <option value="{{ $supplier->id }}"
-                                    {{ old('supplier_id', $sparepart->supplier_id) == $supplier->id ? 'selected' : '' }}>
-                                    {{ $supplier->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('supplier_id')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
+                    
 
-                    <div class="mb-3">
+                    {{-- <div class="mb-3">
                         <label class="form-label">Harga Beli</label>
                         <input type="number" class="form-control @error('purchase_price') is-invalid @enderror"
                             name="purchase_price" value="{{ old('purchase_price', $sparepart->purchase_price) }}"
@@ -53,7 +38,7 @@
                         @error('purchase_price')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
-                    </div>
+                    </div> --}}
 
                     <div class="mb-3">
                         <label class="form-label">Harga Jual</label>
