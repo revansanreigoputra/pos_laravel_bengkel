@@ -36,6 +36,7 @@
                 </li>
 
                 <!-- Master Data -->
+                <li class="nav-item dropdown {{ request()->is('kategori*') || request()->is('sparepart*') || request()->is('service*') || request()->is('supplier*') || request()->is('konsumen*') || request()->is('jenis-kendaraan*') ? 'active' : '' }}">
                 <li
                     class="nav-item dropdown {{ request()->is('kategori*') || request()->is('sparepart*') || request()->is('service*') || request()->is('supplier*') || request()->is('konsumen*') ? 'active' : '' }}">
                     <a class="nav-link dropdown-toggle" href="#" aria-expanded="false">
@@ -53,8 +54,7 @@
                         </span>
                         <span class="nav-link-title">Master Data</span>
                     </a>
-                    <div
-                        class="dropdown-menu {{ request()->is('kategori*') || request()->is('sparepart*') || request()->is('service*') || request()->is('supplier*') || request()->is('konsumen*') ? 'show' : '' }}">
+                    <div class="dropdown-menu {{ request()->is('kategori*') || request()->is('sparepart*') || request()->is('service*') || request()->is('supplier*') || request()->is('konsumen*') || request()->is('jenis-kendaraan*') ? 'show' : '' }}">
                         <div class="dropdown-menu-columns">
                             <div class="dropdown-menu-column">
                                 @can('category.view')
@@ -76,6 +76,10 @@
                                 @can('customer.view')
                                     <a class="dropdown-item {{ request()->is('konsumen*') ? 'active' : '' }}"
                                         href="{{ route('customer.index') }}">Konsumen</a>
+                                @endcan
+                                @can('jenis-kendaraan.view')
+                                <a class="dropdown-item {{ request()->is('jenis-kendaraan*') ? 'active' : '' }}"
+                                    href="{{ route('jenis-kendaraan.index') }}">Jenis Kendaraan</a>
                                 @endcan
                             </div>
                         </div>

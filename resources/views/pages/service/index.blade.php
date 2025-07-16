@@ -13,12 +13,12 @@
 <div class="card">
     <div class="card-body">
         <div class="table-responsive">
-            <table id="customers-table" class="table table-striped">
+            <table id="services-table" class="table table-striped">
                 <thead>
                     <tr>
                         <th class="text-center">No</th>
                         <th class="text-center">Nama</th>
-                        <th class="text-center">Jenis</th>
+                        <th class="text-center">Jenis Kendaraan</th>
                         <th class="text-center">Durasi Estimasi</th>
                         <th class="text-center">Harga Standar</th>
                         <th class="text-center">Status</th>
@@ -31,7 +31,7 @@
                         <tr>
                             <td class="text-center">{{ $index + 1 }}</td>
                             <td class="text-center">{{ $service->nama }}</td>
-                            <td class="text-center">{{ $service->jenis }}</td>
+                            <td class="text-center">{{ $service->jenisKendaraan->nama ?? '-' }}</td>
                             <td class="text-center">{{ $service->durasi_estimasi }}</td>
                             <td class="text-center">Rp {{ number_format($service->harga_standar, 0, ',', '.') }}</td>
                             <td class="text-center">
@@ -39,7 +39,9 @@
                                     {{ ucfirst($service->status) }}
                                 </span>
                             </td>
-                            <td class="text-center">{{ $service->deskripsi }}</td>
+                            <td class="text-center">
+                                {{ Str::limit($service->deskripsi, 50) }}
+                            </td>
                             <td class="text-center">
                                 @canany(['service.update', 'service.delete'])
                                     @can('service.update')
@@ -74,7 +76,7 @@
 @push('addon-script')
     <script>
         $(document).ready(function () {
-            $('#customers-table').DataTable();
+            $('#services-table').DataTable();
         });
     </script>
 @endpush

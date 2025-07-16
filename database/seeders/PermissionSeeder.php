@@ -15,6 +15,7 @@ class PermissionSeeder extends Seeder
     public function run(): void
     {
         $permissions = [
+            'service.view',
             'service.create',
             'service.update',
             'service.delete',
@@ -56,6 +57,11 @@ class PermissionSeeder extends Seeder
             'transaction.edit',
             'transaction.update',
             'transaction.delete',
+             'jenis-kendaraan.view',
+            'jenis-kendaraan.create',
+            'jenis-kendaraan.store',
+            'jenis-kendaraan.update',
+            'jenis-kendaraan.delete',
             'stock-handle.view',
             'stock-handle.create',
             'stock-handle.store',   

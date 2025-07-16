@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Service;
 use Illuminate\Http\Request;
+use App\Models\JenisKendaraan;
 
 class ServiceController extends Controller
 {
@@ -11,9 +12,11 @@ class ServiceController extends Controller
      * Tampilkan semua data service.
      */
     public function index()
-    {
-        $services = Service::all();
-        return view('pages.service.index', compact('services'));
+    {   
+        $services = Service::with('jenisKendaraan')->get();
+        $jenisKendaraans = JenisKendaraan::all();
+
+        return view('pages.service.index', compact('services', 'jenisKendaraans'));
     }
 
     /**
@@ -23,20 +26,27 @@ class ServiceController extends Controller
     {
         $request->validate([
             'nama' => 'required|string|max:255',
-            'jenis' => 'required|string|max:100',
+            'jenis_kendaraan_id' => 'required|exists:jenis_kendaraans,id',
             'durasi_estimasi' => 'required|string|max:100',
             'harga_standar' => 'required|numeric|min:0',
             'status' => 'required|in:aktif,nonaktif',
             'deskripsi' => 'nullable|string',
         ]);
 
-        Service::create($request->all());
+        Service::create([
+            'nama' => $request->nama,
+            'jenis_kendaraan_id' => $request->jenis_kendaraan_id,
+            'durasi_estimasi' => $request->durasi_estimasi,
+            'harga_standar' => $request->harga_standar,
+            'status' => $request->status,
+            'deskripsi' => $request->deskripsi,
+        ]);
 
         return redirect()->route('service.index')->with('success', 'Service berhasil ditambahkan.');
     }
 
     /**
-     * Tampilkan form edit (jika pakai modal bisa dihandle di blade).
+     * Tampilkan data untuk edit.
      */
     public function edit(Service $service)
     {
@@ -50,14 +60,21 @@ class ServiceController extends Controller
     {
         $request->validate([
             'nama' => 'required|string|max:255',
-            'jenis' => 'required|string|max:100',
+            'jenis_kendaraan_id' => 'required|exists:jenis_kendaraans,id',
             'durasi_estimasi' => 'required|string|max:100',
             'harga_standar' => 'required|numeric|min:0',
             'status' => 'required|in:aktif,nonaktif',
             'deskripsi' => 'nullable|string',
         ]);
 
-        $service->update($request->all());
+        $service->update([
+            'nama' => $request->nama,
+            'jenis_kendaraan_id' => $request->jenis_kendaraan_id,
+            'durasi_estimasi' => $request->durasi_estimasi,
+            'harga_standar' => $request->harga_standar,
+            'status' => $request->status,
+            'deskripsi' => $request->deskripsi,
+        ]);
 
         return redirect()->route('service.index')->with('success', 'Service berhasil diperbarui.');
     }

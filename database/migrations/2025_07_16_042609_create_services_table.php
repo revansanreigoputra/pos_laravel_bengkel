@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('services', function (Blueprint $table) {
             $table->id();
             $table->string('nama');
-            $table->string('jenis');
+            $table->foreignId('jenis_kendaraan_id')->constrained('jenis_kendaraans')->onDelete('cascade');
             $table->string('durasi_estimasi');
             $table->decimal('harga_standar', 10, 2);
             $table->enum('status', ['aktif', 'nonaktif'])->default('aktif');

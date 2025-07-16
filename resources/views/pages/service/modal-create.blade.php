@@ -15,8 +15,15 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Jenis</label>
-                        <input type="text" class="form-control" name="jenis" value="{{ old('jenis') }}" required>
+                        <label class="form-label">Jenis Kendaraan</label>
+                        <select class="form-select" name="jenis_kendaraan_id" required>
+                            <option value="">-- Pilih Jenis Kendaraan --</option>
+                            @foreach($jenisKendaraans as $jenis)
+                                <option value="{{ $jenis->id }}" {{ old('jenis_kendaraan_id') == $jenis->id ? 'selected' : '' }}>
+                                    {{ $jenis->nama }}
+                                </option>
+                            @endforeach
+                        </select>
                     </div>
 
                     <div class="mb-3">
@@ -32,8 +39,8 @@
                     <div class="mb-3">
                         <label class="form-label">Status</label>
                         <select class="form-select" name="status" required>
-                            <option value="aktif">Aktif</option>
-                            <option value="nonaktif">Nonaktif</option>
+                            <option value="aktif" {{ old('status') == 'aktif' ? 'selected' : '' }}>Aktif</option>
+                            <option value="nonaktif" {{ old('status') == 'nonaktif' ? 'selected' : '' }}>Nonaktif</option>
                         </select>
                     </div>
 
