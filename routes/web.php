@@ -1,10 +1,7 @@
 <?php
 
-<<<<<<< HEAD
-=======
 use App\Http\Controllers\SupplierSparepartStockController;
 use App\Http\Controllers\SparepartController;
->>>>>>> 690f4e2 (Refactor Sparepart and Supplier Models and Controllers)
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
@@ -13,6 +10,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ServiceController;
 
 // Route::get('/', function () {
 //     return view('pages.dashboard');
@@ -66,8 +64,6 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__ . '/auth.php';
-<<<<<<< HEAD
-=======
 
 // dummy route to test the route
 // routes/web.php
@@ -80,7 +76,7 @@ Route::post('/sparepart', [SparepartController::class, 'store'])
 ->name('sparepart.store');
 Route::resource('sparepart', SparepartController::class);
 
-Route::resource('service', \App\Http\Controllers\ServiceController::class);
+// Route::resource('service', \App\Http\Controllers\ServiceController::class);
 
 // route for sparepart stock handling
 Route::resource('stock-handle', SupplierSparepartStockController::class)
@@ -105,4 +101,3 @@ Route::get('/supplier/export-pdf', [SupplierController::class, 'exportPDF'])->na
 Route::get('/customer/export-pdf', [CustomerController::class, 'exportPDF'])->name('customer.export-pdf');
 
 
->>>>>>> 690f4e2 (Refactor Sparepart and Supplier Models and Controllers)
