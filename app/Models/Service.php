@@ -11,10 +11,18 @@ class Service extends Model
 
     protected $fillable = [
         'nama',
-        'jenis',
+        'jenis_kendaraan_id',
         'durasi_estimasi',
         'harga_standar',
         'status',
         'deskripsi',
     ];
+
+    /**
+     * Relasi ke model JenisKendaraan
+     */
+    public function jenisKendaraan()
+    {
+        return $this->belongsTo(JenisKendaraan::class);
+    }
 }

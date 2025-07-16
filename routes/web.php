@@ -11,6 +11,8 @@ use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\JenisKendaraanController;
+
 
 // Route::get('/', function () {
 //     return view('pages.dashboard');
@@ -75,6 +77,14 @@ Route::middleware('auth')->group(function () {
         Route::middleware('permission:transaction.update')->put('/{transaction}', [TransactionController::class, 'update'])->name('transaction.update');
         Route::middleware('permission:transaction.delete')->delete('/{transaction}', [TransactionController::class, 'destroy'])->name('transaction.destroy');
     });
+
+    Route::prefix('jenis-kendaraan')->group(function () {
+        Route::middleware('permission:jenis-kendaraan.view')->get('/', [JenisKendaraanController::class, 'index'])->name('jenis-kendaraan.index');
+        Route::middleware('permission:jenis-kendaraan.store')->post('/', [JenisKendaraanController::class, 'store'])->name('jenis-kendaraan.store');
+        Route::middleware('permission:jenis-kendaraan.update')->put('/{jenis_kendaraan}', [JenisKendaraanController::class, 'update'])->name('jenis-kendaraan.update');
+        Route::middleware('permission:jenis-kendaraan.delete')->delete('/{jenis_kendaraan}', [JenisKendaraanController::class, 'destroy'])->name('jenis-kendaraan.destroy');
+    });
+
 });
 
 require __DIR__ . '/auth.php';

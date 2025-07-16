@@ -37,7 +37,7 @@
                 </li>
 
                 <!-- Master Data -->
-                <li class="nav-item dropdown {{ request()->is('kategori*') || request()->is('sparepart*') || request()->is('service*') || request()->is('supplier*') || request()->is('konsumen*') ? 'active' : '' }}">
+                <li class="nav-item dropdown {{ request()->is('kategori*') || request()->is('sparepart*') || request()->is('service*') || request()->is('supplier*') || request()->is('konsumen*') || request()->is('jenis-kendaraan*') ? 'active' : '' }}">
                     <a class="nav-link dropdown-toggle" href="#" aria-expanded="false">
                         <span class="nav-link-icon d-md-none d-lg-inline-block">
                             <!-- Icon Folder -->
@@ -53,7 +53,7 @@
                         </span>
                         <span class="nav-link-title">Master Data</span>
                     </a>
-                    <div class="dropdown-menu {{ request()->is('kategori*') || request()->is('sparepart*') || request()->is('service*') || request()->is('supplier*') || request()->is('konsumen*') ? 'show' : '' }}">
+                    <div class="dropdown-menu {{ request()->is('kategori*') || request()->is('sparepart*') || request()->is('service*') || request()->is('supplier*') || request()->is('konsumen*') || request()->is('jenis-kendaraan*') ? 'show' : '' }}">
                         <div class="dropdown-menu-columns">
                             <div class="dropdown-menu-column">
                                 @can('category.view')
@@ -75,6 +75,10 @@
                                 @can('customer.view')
                                 <a class="dropdown-item {{ request()->is('konsumen*') ? 'active' : '' }}"
                                     href="{{ route('customer.index') }}">Konsumen</a>
+                                @endcan
+                                @can('jenis-kendaraan.view')
+                                <a class="dropdown-item {{ request()->is('jenis-kendaraan*') ? 'active' : '' }}"
+                                    href="{{ route('jenis-kendaraan.index') }}">Jenis Kendaraan</a>
                                 @endcan
                             </div>
                         </div>
@@ -99,14 +103,14 @@
                     <div class="dropdown-menu {{ request()->is('pembelian*') || request()->is('transaction*') ? 'show' : '' }}">
                         <div class="dropdown-menu-columns">
                             <div class="dropdown-menu-column">
-                                @can('purchase.view')
+                                {{-- @can('purchase.view')
                                 <a class="dropdown-i    tem {{ request()->is('pembelian*') ? 'active' : '' }}"
                                     href="{{ route('pembelian.index') }}">Pembelian Sparepart</a>
                                 @endcan
                                 @can('transaction.view')
                                 <a class="dropdown-item {{ request()->is('transaction*') ? 'active' : '' }}"
                                     href="{{ route('transaction.index') }}">Penjualan Sparepart</a>
-                                @endcan
+                                @endcan --}}
                             </div>
                         </div>
                     </div>
@@ -130,14 +134,14 @@
                     <div class="dropdown-menu {{ request()->is('laporan*') ? 'show' : '' }}">
                         <div class="dropdown-menu-columns">
                             <div class="dropdown-menu-column">
-                                @can('report.transaction')
+                                {{-- @can('report.transaction')
                                 <a class="dropdown-item {{ request()->is('laporan/transaksi') ? 'active' : '' }}"
                                     href="{{ route('laporan.transaksi') }}">Laporan Transaksi</a>
                                 @endcan
                                 @can('report.purchase')
                                 <a class="dropdown-item {{ request()->is('laporan/pembelian') ? 'active' : '' }}"
                                     href="{{ route('laporan.pembelian') }}">Laporan Pembelian</a>
-                                @endcan
+                                @endcan --}}
                             </div>
                         </div>
                     </div>
