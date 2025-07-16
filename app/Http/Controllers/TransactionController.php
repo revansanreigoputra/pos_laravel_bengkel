@@ -9,7 +9,7 @@ use App\Models\Sparepart;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Log; // <--- ADD THIS LINE
+use Illuminate\Support\Facades\Log;
 
 class TransactionController extends Controller
 {
@@ -58,7 +58,7 @@ class TransactionController extends Controller
                 'total_price'      => 0,
             ]);
 
-            $total = 0; // Initialize total price for the transaction
+            $total = 0;
             
             foreach ($validatedData['items'] as $itemData) {
 
@@ -80,11 +80,9 @@ class TransactionController extends Controller
                 if ($type === 'sparepart') {
                     $sparepart = Sparepart::find($id);
                     if ($sparepart) {
-                        // Check if sufficient stock is available before decrementing
                         if ($sparepart->stock >= $quantity) {
                             $sparepart->decrement('stock', $quantity);
                         } else {
-                            // If stock is insufficient, rollback and return an error
                             DB::rollBack();
                             return redirect()->back()->with('error', 'Stok sparepart ' . $sparepart->name . ' tidak mencukupi. Sisa stok: ' . $sparepart->stock)->withInput();
                         }
@@ -94,13 +92,12 @@ class TransactionController extends Controller
 
             $transaction->update(['total_price' => $total]);
 
-            DB::commit(); // Commit the database transaction
+            DB::commit();
             return redirect()->back()->with('success', 'Transaksi berhasil ditambahkan.');
 
         } catch (\Exception $e) {
-            DB::rollback(); // Rollback if any error occurs
-            // Log the error for debugging purposes
-            Log::error('Error storing transaction: ' . $e->getMessage()); // Corrected line
+            DB::rollback();
+            Log::error('Error storing transaction: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Gagal menyimpan transaksi: ' . $e->getMessage())->withInput();
         }
     }
@@ -114,14 +111,13 @@ class TransactionController extends Controller
      */
     public function update(Request $request, Transaction $transaction)
     {
-        // Validate the incoming request data
         try {
             $validatedData = $request->validate([
                 'customer_name' => 'required|string|max:255',
                 'vehicle_number' => 'required|string|max:255',
                 'items' => 'required|array|min:1',
                 'items.*.item_full_id' => 'required|string',
-                'items.*.price' => 'required|numeric|min:0', // Allows manual price input
+                'items.*.price' => 'required|numeric|min:0',
                 'items.*.quantity' => 'required|integer|min:1',
             ]);
         } catch (ValidationException $e) {
@@ -130,19 +126,16 @@ class TransactionController extends Controller
 
         DB::beginTransaction();
         try {
-            // Update the main transaction details
             $transaction->update([
                 'customer_name'    => $validatedData['customer_name'],
                 'vehicle_number'   => $validatedData['vehicle_number'],
-                // 'transaction_date' => now(), // Usually, transaction date is not updated
             ]);
 
             $currentItems = $transaction->items()->get();
 
-            // Delete existing transaction items for this transaction
             $transaction->items()->delete();
 
-            $total = 0; // Reset total price for recalculation
+            $total = 0; 
             
             foreach ($validatedData['items'] as $itemData) {
                 [$type, $id] = explode('-', $itemData['item_full_id']);
