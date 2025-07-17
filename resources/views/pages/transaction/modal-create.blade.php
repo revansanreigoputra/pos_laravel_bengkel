@@ -36,7 +36,7 @@
                                         @endforeach
                                     </optgroup>
                                     <optgroup label="Sparepart">
-                                        @foreach ($spareparts as $sparep art)
+                                        @foreach ($spareparts as $sparepart)
                                             {{-- Menggunakan selling_price sesuai migrasi spareparts --}}
                                             <option value="sparepart-{{ $sparepart->id }}" data-price="{{ $sparepart->selling_price }}">
                                                 {{ $sparepart->name }} (Rp {{ number_format($sparepart->selling_price, 0, ',', '.') }})

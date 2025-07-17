@@ -101,7 +101,7 @@ Route::post('/sparepart', [SparepartController::class, 'store'])
 ->name('sparepart.store');
 Route::resource('sparepart', SparepartController::class);
 
-Route::resource('service', \App\Http\Controllers\ServiceController::class);
+// Route::resource('service', \App\Http\Controllers\ServiceController::class);
 
 // route for sparepart stock handling
 Route::resource('stock-handle', SupplierSparepartStockController::class)

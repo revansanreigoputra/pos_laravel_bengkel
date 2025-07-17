@@ -9,10 +9,13 @@ use Illuminate\Http\Request;
 class SparepartController extends Controller
 {
     public function index()
-    {
-        $spareparts = Sparepart::get();
-        return view('pages.sparepart.index', compact('spareparts'));
-    }
+{
+    // Only get spareparts that are used in supplier stock
+    $spareparts = Sparepart::has('stockBatches')->with('stockBatches')->get();
+
+    return view('pages.sparepart.index', compact('spareparts'));
+}
+
 
     public function create()
     {

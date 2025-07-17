@@ -61,7 +61,7 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Quantity</label>
+                        <label class="form-label">Kuantitas</label>
                         <input type="number" class="form-control @error('quantity') is-invalid @enderror"
                             name="quantity" value="{{ old('quantity', $sparepart->quantity) }}"
                             required>

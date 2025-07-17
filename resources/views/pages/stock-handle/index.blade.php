@@ -27,7 +27,7 @@
                                         <th>No</th>
                                         <th>Supplier</th>
                                         <th>Sparepart</th>
-                                        <th>Stok Total</th>
+                                        <th>Kuantitas</th>
                                         <th>Harga Beli</th>
                                         <th>Tanggal Terima</th>
                                         <th>Catatan</th>

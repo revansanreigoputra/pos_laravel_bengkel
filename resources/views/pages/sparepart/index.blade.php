@@ -4,9 +4,7 @@
 @section('title', 'Data Sparepart')
  
 @section('action') 
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createSparepartModal">Tambah Sparepart</button>
-        @include('pages.sparepart.create')
-    
+        <button class="btn btn-primary">Unduh</button>
 @endsection
 
 
@@ -26,9 +24,8 @@
                                 <tr>
                                     <th>No</th>
                                     <th>Kode Part</th>
-                                    <th>Nama Sparepart</th>
-                                    
-                                    <th>Stok</th>
+                                    <th>Nama Sparepart</th> 
+                                    <th>Stok Total</th>
                                     <th>Harga Beli</th>
                                     <th>Harga Jual</th>
                                     <th>Aksi</th>
