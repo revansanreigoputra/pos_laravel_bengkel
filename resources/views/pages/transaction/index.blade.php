@@ -42,8 +42,9 @@
                                     <ul>
                                         @foreach ($trx->items as $item)
                                             <li>
+                                                {{-- MODIFIKASI BARIS INI UNTUK MENAMPILKAN KUANTITAS --}}
                                                 {{ $item->item_type === 'service' ? ($item->service ? $item->service->nama : 'Layanan Tidak Ditemukan') : ($item->sparepart ? $item->sparepart->name : 'Sparepart Tidak Ditemukan') }}
-                                                (Rp {{ number_format($item->price, 0, ',', '.') }})
+                                                (Qty: {{ $item->quantity }}, Rp {{ number_format($item->price, 0, ',', '.') }})
                                             </li>
                                         @endforeach
                                     </ul>

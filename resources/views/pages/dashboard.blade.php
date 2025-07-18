@@ -70,6 +70,31 @@
         </div>
     </div>
 
+    {{-- Bagian Baru untuk Grafik --}}
+    <div class="row mt-4 dashboard-charts">
+        <div class="col-lg-6 mb-4">
+            <div class="card chart-card">
+                <div class="card-header">
+                    <h5 class="card-title">Transaksi Bulanan</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="monthlyTransactionsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-4">
+            <div class="card chart-card">
+                <div class="card-header">
+                    <h5 class="card-title">Top 5 Item Terlaris</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="topSellingItemsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @section('styles')
@@ -183,7 +208,7 @@
         color: var(--secondary-color);
     }
 
-    /* Activity Card */
+    /* Activity Card - (Keep if you have an activity card, otherwise remove) */
     .activity-card {
         border: none;
         border-radius: 10px;
@@ -247,16 +272,29 @@
     .activity-content small {
         font-size: 0.75rem;
     }
+
+    /* Chart Cards */
+    .chart-card {
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+    .chart-card .card-header {
+        background: white;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        padding: 1rem 1.5rem;
+    }
+    .chart-card .card-body {
+        padding: 1.5rem;
+    }
 </style>
 @endsection
 
 @section('scripts')
-<!-- Include Font Awesome for icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- Additional JavaScript if needed -->
 <script>
-    // You can add dashboard-specific JavaScript here
     document.addEventListener('DOMContentLoaded', function() {
         // Animation for stat cards on load
         const statCards = document.querySelectorAll('.stat-card');
@@ -265,6 +303,102 @@
                 card.style.opacity = '1';
                 card.style.transform = 'translateY(0)';
             }, index * 100);
+        });
+
+        // --- Monthly Transactions Chart ---
+        const monthlyTransactionsCtx = document.getElementById('monthlyTransactionsChart').getContext('2d');
+        const monthlyTransactionsChart = new Chart(monthlyTransactionsCtx, {
+            type: 'line', // You can change this to 'bar' if preferred
+            data: {
+                labels: @json($months), // Data dari controller
+                datasets: [{
+                    label: 'Jumlah Transaksi',
+                    data: @json($transactionCounts), // Data dari controller
+                    backgroundColor: 'rgba(67, 97, 238, 0.2)',
+                    borderColor: 'rgba(67, 97, 238, 1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4 // Membuat garis sedikit melengkung
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                if (Number.isInteger(value)) {
+                                    return value;
+                                }
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false // Sembunyikan legenda jika hanya ada satu dataset
+                    },
+                    title: {
+                        display: true,
+                        text: 'Grafik Transaksi Bulanan (12 Bulan Terakhir)'
+                    }
+                }
+            }
+        });
+
+        // --- Top Selling Items Chart ---
+        const topSellingItemsCtx = document.getElementById('topSellingItemsChart').getContext('2d');
+        const topSellingItemsChart = new Chart(topSellingItemsCtx, {
+            type: 'bar',
+            data: {
+                labels: @json($itemLabels), // Data dari controller
+                datasets: [{
+                    label: 'Jumlah Terjual',
+                    data: @json($itemQuantities), // Data dari controller
+                    backgroundColor: [
+                        'rgba(76, 201, 240, 0.7)', // success-color
+                        'rgba(67, 97, 238, 0.7)', // primary-color
+                        'rgba(72, 149, 239, 0.7)', // accent-color
+                        'rgba(63, 55, 201, 0.7)', // secondary-color
+                        'rgba(144, 12, 63, 0.7)' // A different color for variety
+                    ],
+                    borderColor: [
+                        'rgba(76, 201, 240, 1)',
+                        'rgba(67, 97, 238, 1)',
+                        'rgba(72, 149, 239, 1)',
+                        'rgba(63, 55, 201, 1)',
+                        'rgba(144, 12, 63, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                if (Number.isInteger(value)) {
+                                    return value;
+                                }
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    title: {
+                        display: true,
+                        text: 'Top 5 Item (Layanan/Sparepart) Terlaris'
+                    }
+                }
+            }
         });
     });
 </script>
