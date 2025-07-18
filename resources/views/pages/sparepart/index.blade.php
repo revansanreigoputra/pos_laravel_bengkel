@@ -24,10 +24,10 @@
                                 <tr>
                                     <th>No</th>
                                     <th>Kode Part</th>
-                                    <th>Nama Sparepart</th> 
+                                    <th>Nama Sparepart</th>
                                     <th>Stok Total</th>
                                     <th>Harga Beli</th>
-                                    <th>Harga Jual</th>
+                                    <th>Harga Jual</th> {{-- Judul kolom tetap --}}
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
@@ -36,10 +36,24 @@
                                 <tr>
                                     <td>{{ $index + 1 }}</td>
                                     <td>{{ $sparepart->code_part }}</td>
-                                    <td>{{ $sparepart->name }}</td> 
-                                    <td>{{ $sparepart->quantity }}</td> 
+                                    <td>{{ $sparepart->name }}</td>
+                                    <td>{{ $sparepart->quantity }}</td>
                                     <td>{{ number_format($sparepart->purchase_price, 0, ',', '.') }}</td>
-                                    <td>{{ number_format($sparepart->selling_price, 0, ',', '.') }}</td>
+                                    <td>
+                                        {{-- Logika untuk menampilkan harga diskon --}}
+                                        @if ($sparepart->isDiscountActive())
+                                            <span class="text-danger fw-bold">
+                                                {{ number_format($sparepart->final_selling_price, 0, ',', '.') }}
+                                            </span>
+                                            <small class="text-muted text-decoration-line-through">
+                                                {{ number_format($sparepart->selling_price, 0, ',', '.') }}
+                                            </small>
+                                            <span class="badge bg-success ms-1">{{ $sparepart->discount_percentage }}% OFF</span>
+                                        @else
+                                            {{-- Jika tidak ada diskon aktif, tampilkan harga normal --}}
+                                            {{ number_format($sparepart->selling_price, 0, ',', '.') }}
+                                        @endif
+                                    </td>
                                     <td class="text-center">
                                         @can('sparepart.update')
                                             <button class="btn btn-warning btn-sm" data-bs-toggle="modal"
@@ -57,8 +71,7 @@
                                                 title="Hapus Sparepart?"
                                                 description="Data sparepart yang dihapus tidak bisa dikembalikan." />
                                         @endcan
-                                    
-                                    </td>  
+                                    </td>
                                 </tr>
                                 @endforeach
                             </tbody>
