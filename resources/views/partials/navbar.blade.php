@@ -1,8 +1,7 @@
-<header class="navbar navbar-expand-md d-flex d-print-none fixed-top fixed-md-bottom"
+<header class="navbar navbar-expand-md d-flex d-print-none fixed-top"
     style="background-color: rgba(255, 255, 255, 0.7);">
     <div class="container-xl ">
         <div class="flex-row navbar-nav order-md-last w-100 justify-content-between justify-content-md-end">
-            <!-- Notifications Dropdown -->
             <div class="d-md-flex">
                 <div class="nav-item dropdown d-flex relative">
                     <a href="#" class="px-0 nav-link" data-bs-toggle="dropdown" tabindex="-1"
@@ -54,11 +53,10 @@
                 </div>
             </div>
 
-            <!-- User Dropdown -->
             <div class="nav-item dropdown relative">
                 <a href="#" class="p-0 px-2 nav-link d-flex lh-1" data-bs-toggle="dropdown"
                     aria-label="Open user menu">
-                    <span class="avatar avatar-sm"  > 
+                    <span class="avatar avatar-sm" > 
                         <img src="{{ asset('assets/Person.png') }}"  alt="Person">
 
                     </span>
@@ -83,27 +81,32 @@
             </div>
         </div>
         <div class="collapse navbar-collapse" id="navbar-menu">
-            <!-- Navbar content here -->
-        </div>
+            </div>
     </div>
 </header>
 
 <style>
+    /* Global/Default Styles */
+    body {
+        /* Default padding-top for desktop */
+        padding-top: 60px; /* Sesuaikan ini dengan tinggi navbar Anda */
+    }
+
     /* Mobile styles */
     @media (max-width: 767.98px) {
-
-        /* Navbar positioning */
-        .fixed-md-bottom {
+        /* Navbar positioning for mobile (fixed-bottom) */
+        .fixed-top { /* Override fixed-top for mobile to move it to bottom */
             top: auto !important;
             bottom: 0 !important;
             box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            width: 100%; /* Pastikan lebar penuh */
+            z-index: 1030; /* Pastikan di atas konten lain */
         }
 
-        /* Dropdown positioning */
+        /* Dropdown positioning for mobile (opens upwards) */
         .mobile-dropup {
             position: fixed !important;
-            bottom: 60px !important;
-            /* Height of navbar */
+            bottom: 60px !important; /* Height of navbar */
             left: 0 !important;
             right: 0 !important;
             top: auto !important;
@@ -114,7 +117,7 @@
             margin: 0 !important;
         }
 
-        /* Dropdown styling */
+        /* Dropdown styling for mobile */
         .dropdown-menu-card {
             border-radius: 0 !important;
             border-top-left-radius: var(--tblr-border-radius-lg) !important;
@@ -123,18 +126,27 @@
             border-bottom-right-radius: 0 !important;
         }
 
-        /* Ensure content doesn't hide behind navbar */
+        /* Adjust body padding for mobile (to prevent content hiding behind bottom navbar) */
         body {
-            padding-bottom: 60px;
-            /* Height of navbar */
+            padding-top: 0 !important; /* Hapus padding-top di mobile */
+            padding-bottom: 60px; /* Add padding-bottom for the fixed-bottom navbar */
         }
     }
 
     /* Desktop styles */
     @media (min-width: 768px) {
+        /* Ensure fixed-top is at the top for desktop */
+        .fixed-top {
+            top: 0 !important;
+            bottom: auto !important;
+        }
+
+        /* Dropdown positioning for desktop (opens downwards as usual) */
         .mobile-dropup {
             bottom: auto !important;
             top: 100% !important;
+            position: absolute !important; /* Kembali ke perilaku default dropdown */
+            width: auto !important; /* Kembali ke lebar default */
         }
     }
 </style>
