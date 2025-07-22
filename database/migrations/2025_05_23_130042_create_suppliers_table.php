@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('phone')->nullable(); // nomor telepon
             $table->string('email')->nullable(); // email opsional
             $table->text('address')->nullable(); // alamat
-            $table->text('note')->nullable(); // keterangan tambahan
+            $table->text('note')->nullable(); // keterangan Bengkel mana
             $table->timestamps();
         });
     }

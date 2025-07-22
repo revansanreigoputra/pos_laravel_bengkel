@@ -10,14 +10,10 @@
 
 @section('content')
 <div class="container-fluid">
-   
-
     <div class="row">
         <div class="col-12">
             <div class="card">
                 <div class="card-body">
-                     
-
                     <div class="table-responsive">
                         <table id="spareparts-table" class="table table-striped dt-responsive nowrap w-100">
                             <thead>
@@ -27,7 +23,7 @@
                                     <th>Nama Sparepart</th>
                                     <th>Stok Total</th>
                                     <th>Harga Beli</th>
-                                    <th>Harga Jual</th> {{-- Judul kolom tetap --}}
+                                    <th>Harga Jual</th>
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
@@ -77,10 +73,13 @@
                             </tbody>
                         </table>
                     </div>
+                    {{-- New Note --}}
+                    <div class="alert alert-info mt-3" role="alert">
+                        <b>Perhatian:</b> Untuk memastikan sparepart dapat dijual, pastikan Anda telah memperbarui **Harga Jual** dan mengatur **Diskon** (jika ada) melalui tombol "Edit" pada setiap baris data.
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 @endsection
-
