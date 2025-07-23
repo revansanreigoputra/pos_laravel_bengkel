@@ -7,7 +7,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Transaction extends Model
 {
-    protected $fillable = ['customer_name', 'vehicle_number', 'transaction_date', 'total_price'];
+    // Add 'discount_amount' to the fillable properties
+    protected $fillable = ['customer_name', 'vehicle_number', 'transaction_date', 'total_price', 'discount_amount'];
 
     /**
      * The attributes that should be cast.

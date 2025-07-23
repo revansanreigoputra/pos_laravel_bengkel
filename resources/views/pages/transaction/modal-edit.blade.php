@@ -75,7 +75,7 @@
                                 </div>
 
                                 <div class="col-md-2 d-flex align-items-end">
-                                    <button type="button" class="btn btn-danger btn-sm remove-item w-100">X</button>
+                                    <button type="button" class="btn btn-danger remove-item w-100">Hapus</button>
                                 </div>
                             </div>
                         @endforeach

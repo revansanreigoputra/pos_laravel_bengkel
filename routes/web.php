@@ -74,6 +74,9 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('transaction')->group(function () {
         Route::middleware('permission:transaction.view')->get('/', [TransactionController::class, 'index'])->name('transaction.index');
+        Route::middleware('permission:transaction.create')->get('/create', [TransactionController::class, 'create'])->name('transaction.create');
+        // ADD THIS ROUTE
+        Route::middleware('permission:transaction.update')->get('/{transaction}/edit', [TransactionController::class, 'edit'])->name('transaction.edit');
         Route::middleware('permission:transaction.store')->post('/', [TransactionController::class, 'store'])->name('transaction.store');
         Route::middleware('permission:transaction.update')->put('/{transaction}', [TransactionController::class, 'update'])->name('transaction.update');
         Route::middleware('permission:transaction.delete')->delete('/{transaction}', [TransactionController::class, 'destroy'])->name('transaction.destroy');

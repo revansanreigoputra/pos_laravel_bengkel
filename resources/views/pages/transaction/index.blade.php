@@ -4,21 +4,28 @@
 
 @section('action')
     @can('transaction.create')
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTransactionModal">Tambah Transaksi</button>
-        {{-- Ensure modal-create.blade.php is updated as described above --}}
-        @include('pages.transaction.modal-create', [
-            'services' => $services, 
-            'spareparts' => $spareparts
-        ])
+        <a href="{{ route('transaction.create') }}" class="btn btn-primary">Tambah Transaksi</a>
     @endcan
-    {{-- <a href="{{ route('transaction.export-pdf') }}" target="_blank" class="btn btn-danger">Export PDF</a> --}}
 @endsection
 
 @section('content')
     <div class="card">
         <div class="card-body">
+            @if (session('success'))
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+            @if (session('error'))
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+
             <div class="table-responsive">
-                <table id="transaction-table" class="table table-striped">
+                <table id="transaction-table" class="table table-striped table-bordered"> {{-- Added table-bordered for better look --}}
                     <thead>
                         <tr>
                             <th>No</th>
@@ -42,7 +49,6 @@
                                     <ul>
                                         @foreach ($trx->items as $item)
                                             <li>
-                                                {{-- MODIFIKASI BARIS INI UNTUK MENAMPILKAN KUANTITAS --}}
                                                 {{ $item->item_type === 'service' ? ($item->service ? $item->service->nama : 'Layanan Tidak Ditemukan') : ($item->sparepart ? $item->sparepart->name : 'Sparepart Tidak Ditemukan') }}
                                                 (Qty: {{ $item->quantity }}, Rp {{ number_format($item->price, 0, ',', '.') }})
                                             </li>
@@ -50,12 +56,9 @@
                                     </ul>
                                 </td>
                                 <td>
-                                    @canany(['transaction.update', 'transaction.delete'])
-                                        @can('transaction.update')
-                                            <button class="btn btn-sm btn-warning" data-bs-toggle="modal"
-                                                data-bs-target="#editModal-{{ $trx->id }}">
-                                                Edit
-                                            </button>
+                                    @canany(['transaction.edit', 'transaction.delete'])
+                                        @can('transaction.edit')
+                                            <a href="{{ route('transaction.edit', $trx->id) }}" class="btn btn-sm btn-warning">Edit</a>
                                         @endcan
 
                                         @can('transaction.delete')
@@ -63,10 +66,10 @@
                                                 data-bs-target="#delete-transaction-{{ $trx->id }}">
                                                 Hapus
                                             </button>
-                                            <x-modal.delete-confirm 
-                                                id="delete-transaction-{{ $trx->id }}" 
+                                            <x-modal.delete-confirm
+                                                id="delete-transaction-{{ $trx->id }}"
                                                 :route="route('transaction.destroy', $trx->id)"
-                                                item="{{ $trx->customer_name }}" 
+                                                item="{{ $trx->customer_name }}"
                                                 title="Hapus Transaksi?"
                                                 description="Data transaksi yang dihapus tidak bisa dikembalikan." />
                                         @endcan
@@ -79,16 +82,6 @@
                     </tbody>
                 </table>
             </div>
-
-            {{-- Modal edit diletakkan setelah table --}}
-            @foreach ($transactions as $trx)
-                {{-- Ensure modal-edit.blade.php is updated as described in previous responses --}}
-                @include('pages.transaction.modal-edit', [
-                    'transaction' => $trx,
-                    'services' => $services,
-                    'spareparts' => $spareparts
-                ])
-            @endforeach
         </div>
     </div>
 @endsection
@@ -96,14 +89,18 @@
 @push('addon-script')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Initialize DataTables
+        $(document).ready(function() {
+            $('#transaction-table').DataTable();
+        });
+
         let itemCounter = 0; // Global counter to ensure unique names/IDs across all dynamic forms
 
-        // Function to update the price and hidden type/id fields based on selected item
         function updatePriceAndHiddenFields(selectElement) {
             console.log('updatePriceAndHiddenFields called for:', selectElement.id);
             const selectedOption = selectElement.options[selectElement.selectedIndex];
             const itemRow = selectElement.closest('.item-row');
-            
+
             if (!itemRow) {
                 console.error("Item row not found for select element:", selectElement);
                 return;
@@ -113,88 +110,101 @@
             const itemTypeInput = itemRow.querySelector('.item-type-input');
             const itemIdInput = itemRow.querySelector('.item-id-input');
 
-            // Clear previous values
             if (priceInput) priceInput.value = '';
             if (itemTypeInput) itemTypeInput.value = '';
             if (itemIdInput) itemIdInput.value = '';
-            
 
-            if (selectedOption && selectedOption.value) { // Ensure an option is selected and has a value
+            if (selectedOption && selectedOption.value) {
                 const price = selectedOption.getAttribute('data-price');
-                const fullId = selectedOption.value; // e.g., "service-1" or "sparepart-5"
+                const fullId = selectedOption.value;
                 const [itemType, itemId] = fullId.split('-');
 
                 console.log('Selected option value:', fullId, 'Price:', price, 'Type:', itemType, 'ID:', itemId);
-                
+
                 if (price) {
-                    if (priceInput) priceInput.value = parseFloat(price); // Set numeric value
+                    if (priceInput) priceInput.value = parseFloat(price);
                 } else {
                     console.warn("No 'data-price' attribute found or price is empty for selected option:", selectedOption);
                 }
 
-                // Set hidden fields
                 if (itemTypeInput) itemTypeInput.value = itemType;
                 if (itemIdInput) itemIdInput.value = itemId;
 
             } else {
                 console.log("No item selected, clearing price and hidden fields.");
             }
+            recalculateTotal(selectElement.closest('form'));
         }
-        
-        // Function to initialize event listeners for a new item row
+
         function initializeItemRow(rowElement) {
             console.log('Initializing item row:', rowElement.id || rowElement.className);
             const itemSelect = rowElement.querySelector('.item-select');
             const removeItemButton = rowElement.querySelector('.remove-item');
+            const quantityInput = rowElement.querySelector('input[type="number"][name*="quantity"]');
+            const priceInput = rowElement.querySelector('.price-input');
 
             if (!itemSelect) {
                 console.error("Item select dropdown not found in row:", rowElement);
                 return;
             }
 
-            // Attach change listener to the item select dropdown
-            // Remove existing listener first to prevent multiple attachments on re-initialization
-            itemSelect.removeEventListener('change', function() { updatePriceAndHiddenFields(this); }); 
+            itemSelect.removeEventListener('change', function() { updatePriceAndHiddenFields(this); });
             itemSelect.addEventListener('change', function() {
                 updatePriceAndHiddenFields(this);
             });
 
-            // Attach click listener to the remove button
-            if (removeItemButton) { // Check if the button exists
-                removeItemButton.removeEventListener('click', handleRemoveItem); // Remove existing listener
+            if (quantityInput) {
+                quantityInput.removeEventListener('input', handleItemChange);
+                quantityInput.addEventListener('input', handleItemChange);
+            }
+            if (priceInput) {
+                priceInput.removeEventListener('input', handleItemChange);
+                priceInput.addEventListener('input', handleItemChange);
+            }
+
+            if (removeItemButton) {
+                removeItemButton.removeEventListener('click', handleRemoveItem);
                 removeItemButton.addEventListener('click', handleRemoveItem);
             }
 
-            // Trigger updatePriceAndHiddenFields immediately for existing/initial rows
-            // This handles pre-selected values in edit modals or if the first option has a default price
-            updatePriceAndHiddenFields(itemSelect);
+            if (itemSelect.value) {
+                updatePriceAndHiddenFields(itemSelect);
+            } else {
+                const itemRow = itemSelect.closest('.item-row');
+                const priceInput = itemRow.querySelector('.price-input');
+                const itemTypeInput = itemRow.querySelector('.item-type-input');
+                const itemIdInput = itemRow.querySelector('.item-id-input');
+                if (priceInput) priceInput.value = '';
+                if (itemTypeInput) itemTypeInput.value = '';
+                if (itemIdInput) itemIdInput.value = '';
+            }
         }
 
-        // Centralized remove item handler
+        function handleItemChange(event) {
+            recalculateTotal(event.target.closest('form'));
+        }
+
         function handleRemoveItem(event) {
             const row = event.target.closest('.item-row');
             const container = row.parentElement;
-            
+
             if (!container) {
                 console.error("Items container not found for remove button.");
                 return;
             }
 
-            // Count only actual item rows that are not hidden
             const visibleItemRows = container.querySelectorAll('.item-row:not(.d-none)').length;
-            
+
             if (visibleItemRows > 1) {
                 row.remove();
             } else {
-                // Optionally, clear the first row instead of removing it if it's the last one
                 const selectEl = row.querySelector('.item-select');
                 if (selectEl) selectEl.selectedIndex = 0;
                 const priceInput = row.querySelector('.price-input');
                 if (priceInput) priceInput.value = '';
                 const qtyInput = row.querySelector('input[type="number"][name*="quantity"]');
                 if (qtyInput) qtyInput.value = 1;
-                
-                // Also clear the hidden type/id inputs
+
                 const itemTypeInput = row.querySelector('.item-type-input');
                 if (itemTypeInput) itemTypeInput.value = '';
                 const itemIdInput = row.querySelector('.item-id-input');
@@ -202,41 +212,74 @@
 
                 console.log("Last item row cleared instead of removed.");
             }
+            recalculateTotal(container.closest('form'));
         }
 
-        // --- Handle Create Modal ---
+        function recalculateTotal(formElement) {
+            if (!formElement) {
+                console.error("Form element not found for recalculation.");
+                return;
+            }
+
+            const itemRows = formElement.querySelectorAll('.item-row');
+            let subtotal = 0;
+
+            itemRows.forEach(row => {
+                const priceInput = row.querySelector('.price-input');
+                const quantityInput = row.querySelector('input[type="number"][name*="quantity"]');
+
+                const price = parseFloat(priceInput ? priceInput.value : 0) || 0;
+                const quantity = parseInt(quantityInput ? quantityInput.value : 0) || 0;
+
+                subtotal += (price * quantity);
+            });
+
+            const globalDiscountInput = formElement.querySelector('.global-discount-input');
+            const globalDiscount = parseFloat(globalDiscountInput ? globalDiscountInput.value : 0) || 0;
+
+            let finalTotal = subtotal - globalDiscount;
+            if (finalTotal < 0) {
+                finalTotal = 0;
+            }
+
+            const totalDisplayInput = formElement.querySelector('.total-price-display');
+            if (totalDisplayInput) {
+                totalDisplayInput.value = finalTotal.toFixed(0);
+            }
+        }
+
+
+        // --- Handle Create Form ---
         const createTransactionModal = document.getElementById('createTransactionModal');
         if (createTransactionModal) {
             createTransactionModal.addEventListener('shown.bs.modal', function () {
                 console.log('Create Transaction Modal shown. Resetting form.');
                 const itemsContainer = document.getElementById('items-container');
-                
-                // Remove all but the first row to ensure a clean state
+
                 const allRows = itemsContainer.querySelectorAll('.item-row');
-                for (let i = 1; i < allRows.length; i++) { // Start from the second row
+                for (let i = 1; i < allRows.length; i++) {
                     allRows[i].remove();
                 }
 
-                // Reset the first item row
                 const firstRow = itemsContainer.querySelector('.item-row');
                 if (firstRow) {
                     const selectEl = firstRow.querySelector('.item-select');
-                    if (selectEl) selectEl.selectedIndex = 0; // Reset select to "Pilih Item"
+                    if (selectEl) selectEl.selectedIndex = 0;
                     const priceInput = firstRow.querySelector('.price-input');
-                    if (priceInput) priceInput.value = ''; // Clear price
+                    if (priceInput) priceInput.value = '';
                     const qtyInput = firstRow.querySelector('input[type="number"][name*="quantity"]');
-                    if (qtyInput) qtyInput.value = 1; // Reset quantity
+                    if (qtyInput) qtyInput.value = 1;
 
-                    // Also clear the hidden type/id inputs
                     const itemTypeInput = firstRow.querySelector('.item-type-input');
                     if (itemTypeInput) itemTypeInput.value = '';
                     const itemIdInput = firstRow.querySelector('.item-id-input');
                     if (itemIdInput) itemIdInput.value = '';
 
-                    initializeItemRow(firstRow); // Re-initialize the first row to ensure its listeners are fresh
+                    initializeItemRow(firstRow);
                 }
-                itemCounter = 0; // Reset counter for a new transaction form, so the first added item gets index 0
+                itemCounter = 0;
                 console.log('Initial itemCounter for create modal:', itemCounter);
+                recalculateTotal(createTransactionModal.querySelector('form'));
             });
 
             const addItemButton = document.getElementById('add-item');
@@ -248,81 +291,11 @@
 
                     if (!firstRowTemplate) {
                         console.error("Cannot add item: No template row found in #items-container.");
-                        return; 
-                    }
-
-                    const newRow = firstRowTemplate.cloneNode(true); 
-                    itemCounter++; // Increment counter for unique names/IDs
-
-                    newRow.querySelectorAll('input, select, label').forEach(el => {
-                        // Update name attribute for array indexing (e.g., items[0][item_full_id] -> items[1][item_full_id])
-                        if (el.name) {
-                            el.name = el.name.replace(/\[\d+\]/, `[${itemCounter}]`);
-                        }
-                        // Update ID attribute for uniqueness
-                        if (el.id) {
-                            el.id = el.id.replace(/-\d+/, `-${itemCounter}`);
-                        }
-                        // Update 'for' attribute for labels
-                        if (el.tagName === 'LABEL' && el.htmlFor) {
-                            el.htmlFor = el.htmlFor.replace(/-\d+/, `-${itemCounter}`);
-                        }
-                        
-                        // Reset values for cloned elements
-                        if (el.classList.contains('price-input') || el.classList.contains('item-type-input') || el.classList.contains('item-id-input')) {
-                            el.value = ''; // Clear price and hidden fields
-                        } else if (el.tagName === 'SELECT') {
-                            el.selectedIndex = 0; // Select first option ("Pilih Item")
-                        } else if (el.type === 'number') {
-                            el.value = 1; // Reset quantity to 1
-                        } else if (el.type === 'text') {
-                            el.value = ''; // Clear any text inputs
-                        }
-                    });
-
-                    container.appendChild(newRow);
-                    initializeItemRow(newRow); // Initialize the newly added row with listeners
-                });
-            }
-        }
-
-        // --- Handle Edit Modals ---
-        // We use a general selector for all modals whose IDs start with 'editModal-'
-        document.querySelectorAll('[id^="editModal-"]').forEach(editModal => {
-            editModal.addEventListener('shown.bs.modal', function () {
-                console.log('Edit Modal shown:', editModal.id);
-                const transactionId = editModal.id.split('-')[1]; // Extract ID from modal ID
-                // Use the correct, specific ID for the container in this modal
-                const itemsContainer = this.querySelector(`#items-container-edit-${transactionId}`); 
-                
-                if (itemsContainer) {
-                    // Initialize all existing item rows in the edit modal
-                    itemsContainer.querySelectorAll('.item-row').forEach((row) => {
-                        initializeItemRow(row);
-                    });
-                    // Set itemCounter to the number of existing rows for the next new item
-                    itemCounter = itemsContainer.querySelectorAll('.item-row').length;
-                    console.log('Initial itemCounter for edit modal:', itemCounter);
-                }
-            });
-
-            // Also attach add item functionality if edit modals have it
-            const addItemButtonEdit = editModal.querySelector('.add-item-edit'); 
-            if (addItemButtonEdit) {
-                addItemButtonEdit.addEventListener('click', function() {
-                    console.log('Add Item button clicked in Edit Modal for:', editModal.id);
-                    const transactionId = this.dataset.transactionId; // Get ID from data attribute
-                    // Use the correct, specific ID for the container in this modal
-                    const container = editModal.querySelector(`#items-container-edit-${transactionId}`); 
-                    const firstRowTemplate = container.querySelector('.item-row'); 
-
-                    if (!firstRowTemplate) {
-                        console.error("Cannot add item: No template row found in #items-container-edit for edit modal.", editModal.id);
                         return;
                     }
 
                     const newRow = firstRowTemplate.cloneNode(true);
-                    itemCounter++; 
+                    itemCounter++;
 
                     newRow.querySelectorAll('input, select, label').forEach(el => {
                         if (el.name) {
@@ -334,7 +307,7 @@
                         if (el.tagName === 'LABEL' && el.htmlFor) {
                             el.htmlFor = el.htmlFor.replace(/-\d+/, `-${itemCounter}`);
                         }
-                        
+
                         if (el.classList.contains('price-input') || el.classList.contains('item-type-input') || el.classList.contains('item-id-input')) {
                             el.value = '';
                         } else if (el.tagName === 'SELECT') {
@@ -348,15 +321,94 @@
 
                     container.appendChild(newRow);
                     initializeItemRow(newRow);
+                    recalculateTotal(container.closest('form'));
+                });
+            }
+
+            const createGlobalDiscountInput = createTransactionModal.querySelector('.global-discount-input');
+            if (createGlobalDiscountInput) {
+                createGlobalDiscountInput.addEventListener('input', function() {
+                    recalculateTotal(createTransactionModal.querySelector('form'));
+                });
+            }
+        }
+
+        // --- Handle Edit Modals ---
+        document.querySelectorAll('[id^="editModal-"]').forEach(editModal => {
+            editModal.addEventListener('shown.bs.modal', function () {
+                console.log('Edit Modal shown:', editModal.id);
+                const transactionId = editModal.id.split('-')[1];
+                const itemsContainer = this.querySelector(`#items-container-edit-${transactionId}`);
+
+                if (itemsContainer) {
+                    itemsContainer.querySelectorAll('.item-row').forEach((row) => {
+                        initializeItemRow(row);
+                    });
+                    itemCounter = itemsContainer.querySelectorAll('.item-row').length;
+                    console.log('Initial itemCounter for edit modal:', itemCounter);
+                    recalculateTotal(editModal.querySelector('form'));
+                }
+            });
+
+            const addItemButtonEdit = editModal.querySelector('.add-item-edit');
+            if (addItemButtonEdit) {
+                addItemButtonEdit.addEventListener('click', function() {
+                    console.log('Add Item button clicked in Edit Modal for:', editModal.id);
+                    const transactionId = this.dataset.transactionId;
+                    const container = editModal.querySelector(`#items-container-edit-${transactionId}`);
+                    const firstRowTemplate = container.querySelector('.item-row');
+
+                    if (!firstRowTemplate) {
+                        console.error("Cannot add item: No template row found in #items-container-edit for edit modal.", editModal.id);
+                        return;
+                    }
+
+                    const newRow = firstRowTemplate.cloneNode(true);
+                    itemCounter++;
+
+                    newRow.querySelectorAll('input, select, label').forEach(el => {
+                        if (el.name) {
+                            el.name = el.name.replace(/\[\d+\]/, `[${itemCounter}]`);
+                        }
+                        if (el.id) {
+                            el.id = el.id.replace(/-\d+/, `-${itemCounter}`);
+                        }
+                        if (el.tagName === 'LABEL' && el.htmlFor) {
+                            el.htmlFor = el.htmlFor.replace(/-\d+/, `-${itemCounter}`);
+                        }
+
+                        if (el.classList.contains('price-input') || el.classList.contains('item-type-input') || el.classList.contains('item-id-input')) {
+                            el.value = '';
+                        } else if (el.tagName === 'SELECT') {
+                            el.selectedIndex = 0;
+                        } else if (el.type === 'number') {
+                            el.value = 1;
+                        } else if (el.type === 'text') {
+                            el.value = '';
+                        }
+                    });
+
+                    container.appendChild(newRow);
+                    initializeItemRow(newRow);
+                    recalculateTotal(container.closest('form'));
+                });
+            }
+
+            const editGlobalDiscountInput = editModal.querySelector('.global-discount-input');
+            if (editGlobalDiscountInput) {
+                editGlobalDiscountInput.addEventListener('input', function() {
+                    recalculateTotal(editModal.querySelector('form'));
                 });
             }
         });
 
-        // Initial setup for the first item row in the create modal if it's already present on page load
-        // This targets the first row inside the #items-container (for the create modal)
         const initialCreateModalFirstRow = document.querySelector('#items-container .item-row');
         if (initialCreateModalFirstRow) {
             initializeItemRow(initialCreateModalFirstRow);
+            const createForm = initialCreateModalFirstRow.closest('form');
+            if (createForm) {
+                recalculateTotal(createForm);
+            }
         }
     });
 </script>

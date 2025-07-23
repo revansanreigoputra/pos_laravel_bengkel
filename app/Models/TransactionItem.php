@@ -15,11 +15,13 @@ class TransactionItem extends Model
 
     public function service()
     {
+        // Ensure this relationship correctly points to the Service model
         return $this->belongsTo(Service::class, 'item_id');
     }
 
     public function sparepart()
     {
+        // Ensure this relationship correctly points to the Sparepart model
         return $this->belongsTo(Sparepart::class, 'item_id');
     }
 }

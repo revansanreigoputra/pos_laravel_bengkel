@@ -4,7 +4,9 @@
 @section('title', 'Data Sparepart')
  
 @section('action') 
-        <button class="btn btn-primary">Unduh</button>
+        <button class="btn btn-blue">Unduh</button>
+        {{-- <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createSparepartModal">Tambah Sparepart</button>
+        @include('pages.sparepart.create') --}}
 @endsection
 
 
