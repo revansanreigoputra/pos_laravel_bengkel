@@ -24,16 +24,31 @@
                 </div>
             @endif
 
+            {{-- Filter Status Transaksi --}}
+            <div class="mb-3 d-flex justify-content-end align-items-center">
+                <label for="statusFilter" class="form-label mb-0 me-2">Filter Status:</label>
+                <select id="statusFilter" class="form-select" style="width: auto;">
+                    <option value="">Semua</option>
+                    <option value="pending">Pending</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+            </div>
+            {{-- End Filter Status Transaksi --}}
+
             <div class="table-responsive">
-                <table id="transaction-table" class="table table-striped table-bordered"> {{-- Added table-bordered for better look --}}
+                <table id="transaction-table" class="table table-striped table-bordered">
                     <thead>
                         <tr>
                             <th>No</th>
+                            <th>No. Invoice</th>
                             <th>Nama Pelanggan</th>
                             <th>No. Kendaraan</th>
+                            <th>Merk/Model</th>
                             <th>Tanggal Transaksi</th>
                             <th>Total Harga</th>
-                            <th>Item</th>
+                            <th>Metode Bayar</th>
+                            <th>Status</th>
                             <th>Aksi</th>
                         </tr>
                     </thead>
@@ -41,26 +56,27 @@
                         @foreach ($transactions as $trx)
                             <tr>
                                 <td>{{ $loop->iteration }}</td>
+                                <td>{{ $trx->invoice_number }}</td>
                                 <td>{{ $trx->customer_name }}</td>
                                 <td>{{ $trx->vehicle_number }}</td>
+                                <td>{{ $trx->vehicle_model ?? '-' }}</td>
                                 <td>{{ $trx->transaction_date->format('d-m-Y') }}</td>
                                 <td>Rp {{ number_format($trx->total_price, 0, ',', '.') }}</td>
+                                <td>{{ $trx->payment_method }}</td>
                                 <td>
-                                    <ul>
-                                        @foreach ($trx->items as $item)
-                                            <li>
-                                                {{ $item->item_type === 'service' ? ($item->service ? $item->service->nama : 'Layanan Tidak Ditemukan') : ($item->sparepart ? $item->sparepart->name : 'Sparepart Tidak Ditemukan') }}
-                                                (Qty: {{ $item->quantity }}, Rp {{ number_format($item->price, 0, ',', '.') }})
-                                            </li>
-                                        @endforeach
-                                    </ul>
+                                    @if ($trx->status == 'completed')
+                                        <span class="badge bg-success text-white p-2">{{ $trx->status }}</span>
+                                    @elseif ($trx->status == 'pending')
+                                        <span class="badge bg-warning text-white p-2">{{ $trx->status }}</span>
+                                    @else
+                                        <span class="badge bg-danger text-white p-2">{{ $trx->status }}</span>
+                                    @endif
                                 </td>
                                 <td>
                                     @canany(['transaction.edit', 'transaction.delete'])
                                         @can('transaction.edit')
                                             <a href="{{ route('transaction.edit', $trx->id) }}" class="btn btn-sm btn-warning">Edit</a>
                                         @endcan
-
                                         @can('transaction.delete')
                                             <button class="btn btn-sm btn-danger" data-bs-toggle="modal"
                                                 data-bs-target="#delete-transaction-{{ $trx->id }}">
@@ -73,6 +89,13 @@
                                                 title="Hapus Transaksi?"
                                                 description="Data transaksi yang dihapus tidak bisa dikembalikan." />
                                         @endcan
+                                        @if ($trx->proof_of_transfer_url)
+                                            <a href="{{ asset($trx->proof_of_transfer_url) }}" target="_blank" class="btn btn-sm btn-info mt-1">Lihat Bukti TF</a>
+                                        @endif
+                                        {{-- ADDED CONDITION HERE --}}
+                                        @if ($trx->status == 'completed')
+                                            <a href="{{ route('transaction.exportPdf', $trx->id) }}" class="btn btn-sm btn-info mt-1" target="_blank">Cetak Invoice</a>
+                                        @endif
                                     @else
                                         <span class="text-muted">Tidak ada aksi</span>
                                     @endcanany
@@ -90,9 +113,17 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize DataTables
-        $(document).ready(function() {
-            $('#transaction-table').DataTable();
+        var table = $('#transaction-table').DataTable(); // Simpan instance DataTables ke variabel
+
+        // Event listener untuk filter status
+        $('#statusFilter').on('change', function() {
+            var status = $(this).val(); // Dapatkan nilai yang dipilih dari dropdown
+            // Gunakan `column().search()` untuk memfilter kolom 'Status'
+            // Kolom 'Status' ada di indeks ke-8 (dimulai dari 0)
+            table.column(8).search(status).draw();
         });
+
+        // ... (kode JavaScript lainnya yang sudah ada) ...
 
         let itemCounter = 0; // Global counter to ensure unique names/IDs across all dynamic forms
 

@@ -35,7 +35,7 @@
                             <td class="text-center">{{ $service->durasi_estimasi }}</td>
                             <td class="text-center">Rp {{ number_format($service->harga_standar, 0, ',', '.') }}</td>
                             <td class="text-center">
-                                <span class="badge bg-{{ $service->status === 'aktif' ? 'success' : 'secondary' }}">
+                                <span class="badge bg-{{ $service->status === 'aktif' ? 'success' : 'secondary' }} text-white p-2">
                                     {{ ucfirst($service->status) }}
                                 </span>
                             </td>
@@ -45,7 +45,7 @@
                             <td class="text-center">
                                 @canany(['service.update', 'service.delete'])
                                     @can('service.update')
-                                        <button class="btn btn-warning btn-sm" data-bs-toggle="modal"
+                                        <button class="btn btn-warning btn-sm " data-bs-toggle="modal"
                                             data-bs-target="#editServiceModal-{{ $service->id }}">Edit</button>
                                         @include('pages.service.modal-edit', ['service' => $service])
                                     @endcan

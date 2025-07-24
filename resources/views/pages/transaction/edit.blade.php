@@ -11,13 +11,27 @@
             {{-- Form starts here --}}
             <form action="{{ route('transaction.update', $transaction->id) }}" method="POST" id="editTransactionForm">
                 @csrf
-                @method('PUT') {{-- Penting: Laravel membutuhkan ini untuk metode PUT/PATCH --}}
+                @method('PUT')
 
                 {{-- Customer Information --}}
+                <div class="mb-3">
+                    <label for="invoice_number" class="form-label">Nomor Invoice</label>
+                    <input type="text" class="form-control @error('invoice_number') is-invalid @enderror" id="invoice_number" name="invoice_number" value="{{ old('invoice_number', $transaction->invoice_number) }}" required>
+                    @error('invoice_number')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
                 <div class="mb-3">
                     <label for="customer_name" class="form-label">Nama Pelanggan</label>
                     <input type="text" class="form-control @error('customer_name') is-invalid @enderror" id="customer_name" name="customer_name" value="{{ old('customer_name', $transaction->customer_name) }}" required>
                     @error('customer_name')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+                <div class="mb-3">
+                    <label for="vehicle_model" class="form-label">Merk/Model Kendaraan</label>
+                    <input type="text" class="form-control @error('vehicle_model') is-invalid @enderror" id="vehicle_model" name="vehicle_model" value="{{ old('vehicle_model', $transaction->vehicle_model) }}" placeholder="Contoh: Toyota Avanza, Honda Vario">
+                    @error('vehicle_model')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
@@ -161,6 +175,48 @@
                     <label for="final_total_display" class="form-label">Total Akhir</label>
                     <input type="text" class="form-control" id="final_total_display" value="Rp 0" readonly>
                     <input type="hidden" id="final_total_hidden" name="total_price" value="{{ old('total_price', $transaction->total_price) }}"> {{-- Hidden input to send final total --}}
+                </div>
+
+                <div class="mb-3">
+                    <label for="payment_method" class="form-label">Metode Pembayaran</label>
+                    <select class="form-select @error('payment_method') is-invalid @enderror" id="payment_method" name="payment_method" required>
+                        <option value="">Pilih Metode Pembayaran</option>
+                        <option value="tunai" {{ old('payment_method', $transaction->payment_method) == 'tunai' ? 'selected' : '' }}>Tunai</option>
+                        <option value="transfer bank" {{ old('payment_method', $transaction->payment_method) == 'transfer bank' ? 'selected' : '' }}>Transfer Bank</option>
+                        <option value="kartu debit" {{ old('payment_method', $transaction->payment_method) == 'kartu debit' ? 'selected' : '' }}>Kartu Debit</option>
+                        <option value="e-wallet" {{ old('payment_method', $transaction->payment_method) == 'e-wallet' ? 'selected' : '' }}>E-Wallet</option>
+                        </select>
+                    @error('payment_method')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="mb-3">
+                    <label for="proof_of_transfer_file" class="form-label">Bukti Transfer (Opsional)</label>
+                    <input type="file" class="form-control @error('proof_of_transfer_file') is-invalid @enderror" id="proof_of_transfer_file" name="proof_of_transfer_file" accept="image/*,application/pdf">
+                    @error('proof_of_transfer_file')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                    <small class="form-text text-muted">Format: JPG, PNG, PDF. Max 2MB.</small>
+                    @if ($transaction->proof_of_transfer_url)
+                        <p class="mt-2">File saat ini: <a href="{{ asset($transaction->proof_of_transfer_url) }}" target="_blank">Lihat Bukti</a></p>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="clear_proof_of_transfer" id="clear_proof_of_transfer">
+                            <label class="form-check-label" for="clear_proof_of_transfer">Hapus Bukti Transfer Saat Ini</label>
+                        </div>
+                    @endif
+                </div>
+
+                <div class="mb-3">
+                    <label for="status" class="form-label">Status Transaksi</label>
+                    <select class="form-select @error('status') is-invalid @enderror" id="status" name="status" required>
+                        <option value="pending" {{ old('status', $transaction->status) == 'pending' ? 'selected' : '' }}>Pending</option>
+                        <option value="completed" {{ old('status', $transaction->status) == 'completed' ? 'selected' : '' }}>Selesai</option>
+                        <option value="cancelled" {{ old('status', $transaction->status) == 'cancelled' ? 'selected' : '' }}>Dibatalkan</option>
+                    </select>
+                    @error('status')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                 </div>
 
                 {{-- Form Actions --}}

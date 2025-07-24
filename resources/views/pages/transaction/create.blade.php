@@ -14,19 +14,37 @@
 
                 {{-- Customer Information --}}
                 <div class="mb-3">
+                    <label for="invoice_number" class="form-label">Nomor Invoice</label>
+                    <input type="text" class="form-control @error('invoice_number') is-invalid @enderror" id="invoice_number" name="invoice_number" value="{{ old('invoice_number', 'INV-' . date('Ymd') . '-' . mt_rand(1000, 9999)) }}" readonly>
+                    @error('invoice_number')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="mb-3">
                     <label for="customer_name" class="form-label">Nama Pelanggan</label>
-                    <input type="text" class="form-control @error('customer_name') is-invalid @enderror" id="customer_name" name="customer_name" value="{{ old('customer_name') }}" required>
+                    <input type="text" class="form-control @error('customer_name') is-invalid @enderror" id="customer_name" name="customer_name" value="{{ old('customer_name') }}" placeholder="Irgi Nazwa" required>
                     @error('customer_name')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
+
+                <div class="mb-3">
+                    <label for="vehicle_model" class="form-label">Merk/Model Kendaraan</label>
+                    <input type="text" class="form-control @error('vehicle_model') is-invalid @enderror" id="vehicle_model" name="vehicle_model" value="{{ old('vehicle_model') }}" placeholder="Toyota Avanza, Honda Vario">
+                    @error('vehicle_model')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
                 <div class="mb-3">
                     <label for="vehicle_number" class="form-label">Nomor Kendaraan</label>
-                    <input type="text" class="form-control @error('vehicle_number') is-invalid @enderror" id="vehicle_number" name="vehicle_number" value="{{ old('vehicle_number') }}" required>
+                    <input type="text" class="form-control @error('vehicle_number') is-invalid @enderror" id="vehicle_number" name="vehicle_number" value="{{ old('vehicle_number') }}"placeholder="X 1234 XXX" required>
                     @error('vehicle_number')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
+
                 <div class="mb-3">
                     <label for="transaction_date" class="form-label">Tanggal Transaksi</label>
                     <input type="date" class="form-control @error('transaction_date') is-invalid @enderror" id="transaction_date" name="transaction_date" value="{{ old('transaction_date', now()->format('Y-m-d')) }}" required>
@@ -73,6 +91,7 @@
                             <input type="hidden" class="item-type-input" name="items[0][item_type]">
                             <input type="hidden" class="item-id-input" name="items[0][item_id]">
                         </div>
+
                         <div class="col-md-3">
                             <label for="price-0" class="form-label">Harga</label>
                             <input type="number" class="form-control price-input @error('items.0.price') is-invalid @enderror" name="items[0][price]" id="price-0" step="0.01" required>
@@ -80,6 +99,7 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
+
                         <div class="col-md-2">
                             <label for="qty-0" class="form-label">Qty</label>
                             <input type="number" class="form-control qty-input @error('items.0.quantity') is-invalid @enderror" name="items[0][quantity]" id="qty-0" value="1" min="1" required>
@@ -87,9 +107,11 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
+
                         <div class="col-md-2 d-flex align-items-end">
                             <button type="button" class="btn btn-danger remove-item w-100">Hapus</button>
                         </div>
+
                     </div>
                 </div>
                 <button type="button" class="btn btn-secondary mt-3" id="add-item">Tambah Item</button>
@@ -115,6 +137,41 @@
                     <input type="text" class="form-control" id="final_total_display" value="Rp 0" readonly>
                     <input type="hidden" id="final_total_hidden" name="total_price"> {{-- Hidden input to send final total --}}
                 </div>
+
+                <div class="mb-3">
+                <label for="payment_method" class="form-label">Metode Pembayaran</label>
+                <select class="form-select @error('payment_method') is-invalid @enderror" id="payment_method" name="payment_method" required>
+                    <option value="">Pilih Metode Pembayaran</option>
+                    <option value="tunai" {{ old('payment_method') == 'tunai' ? 'selected' : '' }}>Tunai</option>
+                    <option value="transfer bank" {{ old('payment_method') == 'transfer bank' ? 'selected' : '' }}>Transfer Bank</option>
+                    <option value="kartu debit" {{ old('payment_method') == 'kartu debit' ? 'selected' : '' }}>Kartu Debit</option>
+                    <option value="e-wallet" {{ old('payment_method') == 'e-wallet' ? 'selected' : '' }}>E-Wallet</option>
+                    </select>
+                @error('payment_method')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="mb-3">
+                <label for="proof_of_transfer_file" class="form-label">Bukti Transfer (Opsional)</label>
+                <input type="file" class="form-control @error('proof_of_transfer_file') is-invalid @enderror" id="proof_of_transfer_file" name="proof_of_transfer_file" accept="image/*,application/pdf">
+                @error('proof_of_transfer_file')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+                <small class="form-text text-muted">Format: JPG, PNG, PDF. Max 2MB.</small>
+            </div>
+
+            <div class="mb-3">
+                <label for="status" class="form-label">Status Transaksi</label>
+                <select class="form-select @error('status') is-invalid @enderror" id="status" name="status" required>
+                    <option value="pending" {{ old('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                    <option value="completed" {{ old('status') == 'completed' ? 'selected' : '' }}>Selesai</option>
+                    <option value="cancelled" {{ old('status') == 'cancelled' ? 'selected' : '' }}>Dibatalkan</option>
+                </select>
+                @error('status')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
 
                 {{-- Form Actions --}}
                 <div class="d-flex justify-content-between mt-4">
