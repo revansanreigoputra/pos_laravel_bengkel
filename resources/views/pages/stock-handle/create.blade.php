@@ -24,14 +24,18 @@
                     <div id="sparepart-items">
                         <div class="row mb-3 item-row align-items-center">
                             <div class="col-md-4">
-                                <label class="form-label">Pilih Sparepart</label>
-                                <select name="spareparts[0][sparepart_id]" class="form-select">
-                                    <option value="">--Pilih--</option>
+                                <label class="form-label" class="form-select">Pilih Sparepart</label>
+                                <select name="spareparts[0][sparepart_id]" class="form-select" required>
+                                    <option value="">-- Pilih Sparepart --</option>
                                     @foreach ($spareparts as $sparepart)
-                                        <option value="{{ $sparepart->id }}">{{ $sparepart->name }}</option>
+                                        <option value="{{ $sparepart->id }}"
+                                            data-category="{{ $sparepart->category->name }}">
+                                            {{ $sparepart->name }}
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>
+
                             <div class="col-md-3">
                                 <label class="form-label">Kuantitas</label>
                                 <input type="number" name="spareparts[0][quantity]" class="form-control"
@@ -52,7 +56,7 @@
                     <div class="mb-3 text-center">
                         <button type="button" class="btn btn-dark btn-sm w-full add-item  py-2">+ Tambah Item</button>
                     </div>
-
+                     
                     <!-- Other Inputs -->
                     <div class="mb-3">
                         <label class="form-label">Tanggal Terima</label>
@@ -115,4 +119,29 @@
             }
         });
     });
-</script> 
+
+    document.getElementById('add-more').addEventListener('click', () => {
+        const container = document.getElementById('sparepart-container');
+        const index = container.children.length;
+        const newEntry = container.children[0].cloneNode(true);
+
+        // Update name attributes
+        newEntry.querySelectorAll('input, select').forEach(input => {
+            if (input.name) {
+                input.name = input.name.replace(/\d+/, index);
+                if (input.tagName === 'INPUT') input.value = '';
+            }
+        });
+
+        container.appendChild(newEntry);
+    });
+
+    // Auto-fill category when sparepart is selected
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('sparepart-select')) {
+            const selected = e.target.options[e.target.selectedIndex];
+            const category = selected.getAttribute('data-category');
+            e.target.closest('.sparepart-entry').querySelector('.category-display').value = category;
+        }
+    });
+</script>

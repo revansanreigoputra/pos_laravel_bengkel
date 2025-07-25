@@ -26,59 +26,38 @@ class SupplierSparepartStockController extends Controller
         return view('pages.stock-handle.create', compact('suppliers', 'spareparts'));
     }
 
-    public function store(Request $request)
+   public function store(Request $request)
 {
-    $rules = [
+    $validated = $request->validate([
         'supplier_id' => 'required|exists:suppliers,id',
-        'sparepart_id' => 'nullable|exists:spareparts,id',
-        'quantity' => 'required|numeric|min:1',
-        'purchase_price' => 'required|numeric|min:0',
-        'received_date' => 'nullable|date',
-        'note' => 'nullable|string',
-        'selling_price' => 'nullable|numeric|min:0',
-    ];
+        'spareparts' => 'required|array|min:1',
+        'spareparts.*.sparepart_id' => 'required|exists:spareparts,id',
+        'spareparts.*.quantity' => 'required|numeric|min:1',
+        'spareparts.*.purchase_price' => 'required|numeric|min:0',
+        'spareparts.*.received_date' => 'nullable|date',
+        'spareparts.*.note' => 'nullable|string',
+    ]);
 
-    if (!$request->filled('sparepart_id')) {
-        $rules['name'] = 'required|string|max:255';
-        $rules['code_part'] = 'required|string|unique:spareparts,code_part';
-    }
-
-    $validated = $request->validate($rules);
-
-    // Create new sparepart if needed
-    if (empty($validated['sparepart_id'])) {
-        $sparepart = Sparepart::create([
-            'name' => $validated['name'],
-            'code_part' => $validated['code_part'],
-            'purchase_price' => $validated['purchase_price'], // Set initial price
-            'selling_price' => $validated['selling_price'] ?? 0,
-            'expired_date' => null,
-            'quantity' => $validated['quantity'], // Initial quantity
+    foreach ($validated['spareparts'] as $sparepartInput) {
+        $stock = SupplierSparepartStock::create([
+            'supplier_id' => $validated['supplier_id'],
+            'sparepart_id' => $sparepartInput['sparepart_id'],
+            'quantity' => $sparepartInput['quantity'],
+            'purchase_price' => $sparepartInput['purchase_price'],
+            'received_date' => $sparepartInput['received_date'] ?? now(),
+            'note' => $sparepartInput['note'] ?? null,
         ]);
-        $validated['sparepart_id'] = $sparepart->id;
-    } else {
-        // Ensure we have the sparepart
-        $sparepart = Sparepart::findOrFail($validated['sparepart_id']);
+
+        $sparepart = Sparepart::find($sparepartInput['sparepart_id']);
+        $sparepart->update([
+            'quantity' => $sparepart->stockBatches()->sum('quantity'),
+            'purchase_price' => $sparepartInput['purchase_price'],
+        ]);
     }
 
-    // Create stock record
-    $stock = SupplierSparepartStock::create([
-        'supplier_id' => $validated['supplier_id'],
-        'sparepart_id' => $validated['sparepart_id'],
-        'quantity' => $validated['quantity'],
-        'purchase_price' => $validated['purchase_price'],
-        'received_date' => $validated['received_date'] ?? now(),
-        'note' => $validated['note'] ?? null,
-    ]);
-
-    // Update sparepart
-    $sparepart->update([
-        'quantity' => $sparepart->stockBatches()->sum('quantity'),
-        'purchase_price' => $validated['purchase_price'],
-    ]);
-
-    return redirect()->back()->with('success', 'Stock successfully added.');
+    return redirect()->route('stock-handle.index')->with('success', 'Stock successfully added.');
 }
+
 
     public function edit(SupplierSparepartStock $stock)
     {
