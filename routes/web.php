@@ -13,7 +13,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\JenisKendaraanController;
-
+use App\Models\Supplier;
 
 // Route::get('/', function () {
 //     return view('pages.dashboard');
@@ -117,6 +117,8 @@ Route::resource('stock-handle', SupplierSparepartStockController::class)
         'update' => 'stock-handle.update',
         'destroy' => 'stock-handle.destroy',
     ]);
+Route::post('/stock-handle/quick-store', [SupplierSparepartStockController::class, 'quickStore'])->name('stock-handle.quick-store');
+
 
 // Route::resource('stock-handle', SupplierSparepartStockController::class);
 

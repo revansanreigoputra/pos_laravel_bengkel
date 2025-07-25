@@ -10,6 +10,15 @@
 
                 <div class="modal-body">
                     <div class="mb-3">
+                        <label for="category_id" class="form-label">Kategori</label>
+                        <select name="category_id" class="form-select" required>
+                            <option value="">Pilih Kategori</option>
+                            @foreach ($categories as $category)
+                                <option value="{{ $category->id }}">{{ $category->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label">Nama Sparepart</label>
                         <input type="text" class="form-control" name="name" required>
                     </div>
@@ -26,7 +35,7 @@
 
                     <div class="mb-3">
                         <label class="form-label">Harga Jual</label>
-                        <input type="number" class="form-control" name="selling_price" required>
+                        <input type="number" class="form-control" name="selling_price" value="0">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Expired Date</label>

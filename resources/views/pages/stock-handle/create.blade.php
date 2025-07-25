@@ -9,105 +9,110 @@
                 </div>
 
                 <div class="modal-body">
+                    <!-- Supplier Select -->
                     <div class="mb-3">
                         <label class="form-label">Pilih Supplier</label>
-                        <select name="supplier_id" class="form-select @error('supplier_id') is-invalid @enderror"
-                            required>
-                            <option value="">-- Pilih Supplier --</option>
+                        <select name="supplier_id" class="form-select" required>
+                            <option value="">--Pilih Supplier--</option>
                             @foreach ($suppliers as $supplier)
                                 <option value="{{ $supplier->id }}">{{ $supplier->name }}</option>
                             @endforeach
                         </select>
-                        @error('supplier_id')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
                     </div>
 
+                    <!-- Container for dynamic item rows -->
+                    <div id="sparepart-items">
+                        <div class="row mb-3 item-row align-items-center">
+                            <div class="col-md-4">
+                                <label class="form-label">Pilih Sparepart</label>
+                                <select name="spareparts[0][sparepart_id]" class="form-select">
+                                    <option value="">--Pilih--</option>
+                                    @foreach ($spareparts as $sparepart)
+                                        <option value="{{ $sparepart->id }}">{{ $sparepart->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Kuantitas</label>
+                                <input type="number" name="spareparts[0][quantity]" class="form-control"
+                                    placeholder="Kuantitas">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Harga Beli</label>
+                                <input type="number" name="spareparts[0][purchase_price]" class="form-control"
+                                    placeholder="Harga Beli">
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <!-- Remove button (only shown on clone) -->
+                            </div>
+                        </div>
+                    </div>
 
-                    <!-- Existing Sparepart Dropdown -->
+                    <!-- Add item button -->
+                    <div class="mb-3 text-center">
+                        <button type="button" class="btn btn-dark btn-sm w-full add-item  py-2">+ Tambah Item</button>
+                    </div>
+
+                    <!-- Other Inputs -->
                     <div class="mb-3">
-                        <label for="sparepart_id">Pilih Sparepart (optional)</label>
-                        <select name="sparepart_id" id="sparepart_id" class="form-select">
-                            <option value="">-- Tambah Baru Sparepart --</option>
-                            @foreach ($spareparts as $sparepart)
-                                <option value="{{ $sparepart->id }}">{{ $sparepart->name }}
-                                    ({{ $sparepart->code_part }})</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <!-- New Sparepart Fields -->
-                    <div class="mb-3 new-sparepart-field">
-                        <label for="name">Nama Sparepart (Jika baru)</label>
-                        <input type="text" name="name" class="form-control" placeholder="Sparepart Name">
-                    </div>
-
-                    <div class="mb-3 new-sparepart-field">
-                        <label for="code_part">Kode Sparepart (Jika Baru)</label>
-                        <input type="text" name="code_part" class="form-control" placeholder="Unique Code">
-                    </div>
-
-
-                    <div class="mb-3">
-                        <label class="form-label">Jumlah Stok (Kuantitas)</label>
-                        <input type="number" name="quantity"
-                            class="form-control @error('quantity') is-invalid @enderror" required>
-                        @error('quantity')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Harga Beli</label>
-                        <input type="number" name="purchase_price"
-                            class="form-control @error('purchase_price') is-invalid @enderror" required>
-                        @error('purchase_price')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
+                        <label class="form-label">Tanggal Terima</label>
+                        <input type="date" name="received_date" class="form-control">
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Tanggal Diterima</label>
-                        <input type="date" name="received_date"
-                            class="form-control @error('received_date') is-invalid @enderror">
-                        @error('received_date')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Catatan (Opsional)</label>
-                        <textarea name="note" class="form-control @error('note') is-invalid @enderror"></textarea>
-                        @error('note')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
+                        <label class="form-label">Keterangan</label>
+                        <textarea name="note" class="form-control" placeholder="Satuan Kuantitas: ..."></textarea>
                     </div>
                 </div>
 
+                <!-- Footer -->
                 <div class="modal-footer">
-                    <button type="button" class="btn me-auto" data-bs-dismiss="modal">Tutup</button>
-                    <button type="submit" class="btn btn-primary">Simpan</button>
+                    <button type="button" class="btn btn-secondary me-auto" data-bs-dismiss="modal">Tutup</button>
+                    <button type="submit" class="btn btn-success">Simpan</button>
                 </div>
             </div>
         </form>
     </div>
-</div> 
+</div>
+
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const sparepartSelect = document.getElementById('sparepart_id');
-        const newSparepartFields = document.querySelectorAll('.new-sparepart-field');
+    document.addEventListener('DOMContentLoaded', function() {
+        let index = 1;
+        const container = document.getElementById('sparepart-items');
 
-        function toggleNewFields() {
-            const isNew = !sparepartSelect.value; // true if value is empty
-            newSparepartFields.forEach(field => {
-                field.style.display = isNew ? 'block' : 'none';
-            });
-        }
+        document.addEventListener('click', function(e) {
+            // Add item
+            if (e.target.classList.contains('add-item')) {
+                e.preventDefault();
 
-        // Initial check on load
-        toggleNewFields();
+                const lastRow = container.querySelector('.item-row:last-child');
+                const clone = lastRow.cloneNode(true);
 
-        // Listen to changes
-        sparepartSelect.addEventListener('change', toggleNewFields);
+                // Clear input and update name attribute indexes
+                clone.querySelectorAll('input, select').forEach(el => {
+                    el.name = el.name.replace(/\[\d+\]/, `[${index}]`);
+                    el.value = '';
+                });
+
+                // Add or update remove button in .col-md-2
+                const buttonCol = clone.querySelector('.col-md-2');
+                buttonCol.innerHTML = ''; // clear previous button if any
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'btn btn-danger btn-sm py-2 remove-item';
+                removeBtn.textContent = 'Hapus';
+                buttonCol.appendChild(removeBtn);
+
+                container.appendChild(clone);
+                index++;
+            }
+
+            // Remove item
+            if (e.target.classList.contains('remove-item')) {
+                e.preventDefault();
+                const row = e.target.closest('.item-row');
+                if (row) row.remove();
+            }
+        });
     });
-</script> 
+</script>

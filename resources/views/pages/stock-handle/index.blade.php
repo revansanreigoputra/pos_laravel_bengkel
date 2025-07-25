@@ -4,16 +4,20 @@
 
 @section('action')
     @can('stock-handle.create')
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createStockHandleModal">Tambah Pembelian Sparepart</button>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createStockHandleModal">Tambah Pembelian</button>
         @include('pages.stock-handle.create')
     @endcan
+   @can('stock-handle.quick-create-sparepart')
+    <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#quickAddSparepartModal">
+        Tambah Sparepart
+    </button>
+    @include('pages.stock-handle.quick-create-sparepart')
+@endcan
 
 @endsection
 
 @section('content')
     <div class="container-fluid">
-
-
         <div class="row">
             <div class="col-12">
                 <div class="card">
@@ -37,36 +41,13 @@
                                 <tbody>
                                     @forelse ($stocks as $index => $stock)
                                         <tr>
-                                            <td>{{ $index + 1 }}</td>
-                                            <td>{{ $stock->supplier->name }}</td>
-                                            <td>{{ $stock->sparepart->name }} ({{ $stock->sparepart->code_part }})</td>
-                                            <td>{{ $stock->quantity }}</td>
-                                            <td>Rp {{ number_format($stock->purchase_price, 0, ',', '.') }}</td>
-                                            <td>{{ $stock->received_date ? \Carbon\Carbon::parse($stock->received_date)->format('d M Y') : '-' }}
-                                            </td>
-                                            <td>{{ $stock->note ?? '-' }}</td>
-                                            <td>
-                                                {{-- <a href="{{ route('stock-handle.edit', $stock->id) }}"
-                                                    class="btn btn-sm btn-warning">Edit</a> --}}
-                                                @can('stock-handle.update')
-                                                    <button class="btn btn-warning btn-sm" data-bs-toggle="modal"
-                                                        data-bs-target="#editStockHandleModal-{{ $stock->id }}">Edit</button>
-                                                    @include('pages.stock-handle.edit', [
-                                                        'stock' => $stock,
-                                                    ])
-                                                @endcan
- 
-
-                                                @can('stock-handle.delete')
-                                                    <button class="btn btn-danger btn-sm" data-bs-toggle="modal"
-                                                        data-bs-target="#deleteStockHandleModal-{{ $stock->id }}">Hapus</button>
-                                                    <x-modal.delete-confirm id="deleteStockHandleModal-{{ $stock->id }}"
-                                                        :route="route('stock-handle.destroy', $stock->id)" item="{{ $stock->name }}"
-                                                        title="Hapus Data Pembelian?"
-                                                        description="Data Pembelian yang dihapus tidak bisa dikembalikan." />
-                                                @endcan
-
-                                            </td>
+                                            <td>{{ $stock->sparepart?->name ?? 'N/A' }} ({{ $stock->sparepart?->code_part ?? 'N/A' }})</td>
+                                            <td>{{ $stock->sparepart?->name ?? 'N/A' }} ({{ $stock->sparepart?->code_part ?? 'N/A' }})</td>
+                                            <td>{{ $stock->sparepart?->name ?? 'N/A' }} ({{ $stock->sparepart?->code_part ?? 'N/A' }})</td>
+                                            <td>{{ $stock->sparepart?->name ?? 'N/A' }} ({{ $stock->sparepart?->code_part ?? 'N/A' }})</td>
+                                            <td>{{ $stock->sparepart?->name ?? 'N/A' }} ({{ $stock->sparepart?->code_part ?? 'N/A' }})</td>
+                                            <td>{{ $stock->sparepart?->name ?? 'N/A' }} ({{ $stock->sparepart?->code_part ?? 'N/A' }})</td>
+                                            <td>{{ $stock->sparepart?->name ?? 'N/A' }} ({{ $stock->sparepart?->code_part ?? 'N/A' }})</td>
                                         </tr>
                                     @empty
                                         <tr>

@@ -59,17 +59,18 @@ class PermissionSeeder extends Seeder
             'transaction.edit',
             'transaction.update',
             'transaction.delete',
-             'jenis-kendaraan.view',
+            'jenis-kendaraan.view',
             'jenis-kendaraan.create',
             'jenis-kendaraan.store',
             'jenis-kendaraan.update',
             'jenis-kendaraan.delete',
             'stock-handle.view',
             'stock-handle.create',
-            'stock-handle.store',   
+            'stock-handle.store',
             'stock-handle.edit',
-            'stock-handle.update',  
+            'stock-handle.update',
             'stock-handle.delete',
+            'stock-handle.quick-create-sparepart',
         ];
 
         foreach ($permissions as $permission) {

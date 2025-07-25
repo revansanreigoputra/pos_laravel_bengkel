@@ -1,9 +1,10 @@
 <?php
 
 namespace App\Models;
-
+use App\Models\Category;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon; // Ensure Carbon is imported if not using Laravel's default date casting
 
 class Sparepart extends Model
@@ -27,6 +28,7 @@ class Sparepart extends Model
         'discount_percentage',
         'discount_start_date',
         'discount_end_date',
+        'category_id', // Added for category relationship
     ];
 
     /**
@@ -101,5 +103,10 @@ class Sparepart extends Model
         }
 
         return (float) $this->selling_price;
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
     }
 }

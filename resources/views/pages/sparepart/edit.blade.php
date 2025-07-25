@@ -10,6 +10,17 @@
                 </div>
 
                 <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="category_id" class="form-label">Kategori</label>
+                        <select name="category_id" class="form-select" required>
+                            <option value="">Pilih Kategori</option>
+                            @foreach ($categories as $category)
+                                <option value="{{ $category->id }}" {{ $sparepart->category_id == $category->id ? 'selected' : '' }}>
+                                    {{ $category->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
                     {{-- Nama Sparepart --}}
                     <div class="mb-3">
                         <label class="form-label">Nama Sparepart</label>

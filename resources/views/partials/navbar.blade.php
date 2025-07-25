@@ -1,4 +1,4 @@
-<header class="navbar navbar-expand-md d-flex d-print-none fixed-top fixed-md-bottom"
+<header class="navbar navbar-expand-md d-flex d-print-none fixed-md-bottom"
     style="background-color: rgba(255, 255, 255, 0.7);">
     <div class="container-xl ">
         <div class="flex-row navbar-nav order-md-last w-100 justify-content-between justify-content-md-end">
