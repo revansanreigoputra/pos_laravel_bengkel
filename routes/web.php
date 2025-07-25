@@ -74,6 +74,9 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('transaction')->group(function () {
         Route::middleware('permission:transaction.view')->get('/', [TransactionController::class, 'index'])->name('transaction.index');
+        Route::middleware('permission:transaction.create')->get('/create', [TransactionController::class, 'create'])->name('transaction.create');
+        // ADD THIS ROUTE
+        Route::middleware('permission:transaction.update')->get('/{transaction}/edit', [TransactionController::class, 'edit'])->name('transaction.edit');
         Route::middleware('permission:transaction.store')->post('/', [TransactionController::class, 'store'])->name('transaction.store');
         Route::middleware('permission:transaction.update')->put('/{transaction}', [TransactionController::class, 'update'])->name('transaction.update');
         Route::middleware('permission:transaction.delete')->delete('/{transaction}', [TransactionController::class, 'destroy'])->name('transaction.destroy');
@@ -126,5 +129,5 @@ Route::post('/stock-handle/quick-store', [SupplierSparepartStockController::clas
 // export pdf
 Route::get('/supplier/export-pdf', [SupplierController::class, 'exportPDF'])->name('supplier.export-pdf');
 Route::get('/customer/export-pdf', [CustomerController::class, 'exportPDF'])->name('customer.export-pdf');
-
+Route::get('/transactions/{transaction}/invoice/pdf', [App\Http\Controllers\TransactionController::class, 'exportPdf'])->name('transaction.exportPdf');
 
