@@ -49,6 +49,7 @@
                             <th>Total Harga</th>
                             <th>Metode Bayar</th>
                             <th>Status</th>
+                            {{-- <th>Item</th> --}}
                             <th>Aksi</th>
                         </tr>
                     </thead>
@@ -63,7 +64,9 @@
                                 <td>{{ $trx->transaction_date->format('d-m-Y') }}</td>
                                 <td>Rp {{ number_format($trx->total_price, 0, ',', '.') }}</td>
                                 <td>{{ $trx->payment_method }}</td>
-                                <td>
+                                <td class="justify-content-center align-items-center">
+                                    {{-- Status Transaksi --}}
+                                    {{-- Status Badge --}}
                                     @if ($trx->status == 'completed')
                                         <span class="badge bg-success text-white p-2">{{ $trx->status }}</span>
                                     @elseif ($trx->status == 'pending')
@@ -72,6 +75,16 @@
                                         <span class="badge bg-danger text-white p-2">{{ $trx->status }}</span>
                                     @endif
                                 </td>
+                                {{-- <td>
+                                    <ul>
+                                        @foreach ($trx->items as $item)
+                                            <li>
+                                                {{ $item->item_type === 'service' ? ($item->service ? $item->service->nama : 'Layanan Tidak Ditemukan') : ($item->sparepart ? $item->sparepart->name : 'Sparepart Tidak Ditemukan') }}
+                                                (Qty: {{ $item->quantity }}, Rp {{ number_format($item->price, 0, ',', '.') }})
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                </td> --}}
                                 <td>
                                     @canany(['transaction.edit', 'transaction.delete'])
                                         @can('transaction.edit')

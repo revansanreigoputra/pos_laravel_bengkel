@@ -8,11 +8,11 @@
             <h4>Tambah Transaksi Baru</h4>
         </div>
         <div class="card-body">
-            {{-- Form starts here --}}
+            {{-- Form --}}
             <form action="{{ route('transaction.store') }}" method="POST" id="createTransactionForm">
                 @csrf
 
-                {{-- Customer Information --}}
+                {{-- Informasi Customer --}}
                 <div class="mb-3">
                     <label for="invoice_number" class="form-label">Nomor Invoice</label>
                     <input type="text" class="form-control @error('invoice_number') is-invalid @enderror" id="invoice_number" name="invoice_number" value="{{ old('invoice_number', 'INV-' . date('Ymd') . '-' . mt_rand(1000, 9999)) }}" readonly>
@@ -21,42 +21,50 @@
                     @enderror
                 </div>
 
-                <div class="mb-3">
-                    <label for="customer_name" class="form-label">Nama Pelanggan</label>
-                    <input type="text" class="form-control @error('customer_name') is-invalid @enderror" id="customer_name" name="customer_name" value="{{ old('customer_name') }}" placeholder="Irgi Nazwa" required>
-                    @error('customer_name')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                </div>
+                <div class="row">
+                    {{-- kiri --}}
+                    <div class="col-md-6">
+                         <div class="mb-3">
+                            <label for="customer_name" class="form-label">Nama Pelanggan</label>
+                            <input type="text" class="form-control @error('customer_name') is-invalid @enderror" id="customer_name" name="customer_name" value="{{ old('customer_name') }}" placeholder="Irgi Nazwa" required>
+                            @error('customer_name')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
 
-                <div class="mb-3">
-                    <label for="vehicle_model" class="form-label">Merk/Model Kendaraan</label>
-                    <input type="text" class="form-control @error('vehicle_model') is-invalid @enderror" id="vehicle_model" name="vehicle_model" value="{{ old('vehicle_model') }}" placeholder="Toyota Avanza, Honda Vario">
-                    @error('vehicle_model')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                </div>
+                        <div class="mb-3">
+                            <label for="vehicle_model" class="form-label">Merk/Model Kendaraan</label>
+                            <input type="text" class="form-control @error('vehicle_model') is-invalid @enderror" id="vehicle_model" name="vehicle_model" value="{{ old('vehicle_model') }}" placeholder="Toyota Avanza, Honda Vario">
+                            @error('vehicle_model')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
 
-                <div class="mb-3">
-                    <label for="vehicle_number" class="form-label">Nomor Kendaraan</label>
-                    <input type="text" class="form-control @error('vehicle_number') is-invalid @enderror" id="vehicle_number" name="vehicle_number" value="{{ old('vehicle_number') }}"placeholder="X 1234 XXX" required>
-                    @error('vehicle_number')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                </div>
+                    {{-- kanan --}}
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="vehicle_number" class="form-label">Nomor Kendaraan</label>
+                            <input type="text" class="form-control @error('vehicle_number') is-invalid @enderror" id="vehicle_number" name="vehicle_number" value="{{ old('vehicle_number') }}"placeholder="X 1234 XXX" required>
+                            @error('vehicle_number')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
 
-                <div class="mb-3">
-                    <label for="transaction_date" class="form-label">Tanggal Transaksi</label>
-                    <input type="date" class="form-control @error('transaction_date') is-invalid @enderror" id="transaction_date" name="transaction_date" value="{{ old('transaction_date', now()->format('Y-m-d')) }}" required>
-                    @error('transaction_date')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
+                        <div class="mb-3">
+                            <label for="transaction_date" class="form-label">Tanggal Transaksi</label>
+                            <input type="date" class="form-control @error('transaction_date') is-invalid @enderror" id="transaction_date" name="transaction_date" value="{{ old('transaction_date', now()->format('Y-m-d')) }}" required>
+                            @error('transaction_date')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
                 </div>
 
                 <hr>
                 <h5>Detail Item Transaksi</h5>
                 <div id="items-container">
-                    {{-- Initial item row. This structure will be cloned. --}}
+                    {{-- Menambahkan Item --}}
                     <div class="row mb-2 item-row align-items-end" data-item-index="0">
                         <div class="col-md-5">
                             <label for="item-0" class="form-label">Item</label>
@@ -87,7 +95,7 @@
                             @error('items.0.item_full_id')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
-                            {{-- Hidden inputs to send item_type and item_id separately to the backend --}}
+                            {{-- Hidden inputs --}}
                             <input type="hidden" class="item-type-input" name="items[0][item_type]">
                             <input type="hidden" class="item-id-input" name="items[0][item_id]">
                         </div>
@@ -118,7 +126,7 @@
 
                 <hr class="mt-4 mb-4">
 
-                {{-- Totals and Discount --}}
+                {{-- Total dan Discount --}}
                 <div class="mb-3">
                     <label for="sub_total_display" class="form-label">Sub Total</label>
                     <input type="text" class="form-control" id="sub_total_display" value="Rp 0" readonly>
@@ -152,14 +160,14 @@
                 @enderror
             </div>
 
-            <div class="mb-3">
+            {{-- <div class="mb-3">
                 <label for="proof_of_transfer_file" class="form-label">Bukti Transfer (Opsional)</label>
                 <input type="file" class="form-control @error('proof_of_transfer_file') is-invalid @enderror" id="proof_of_transfer_file" name="proof_of_transfer_file" accept="image/*,application/pdf">
                 @error('proof_of_transfer_file')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
                 <small class="form-text text-muted">Format: JPG, PNG, PDF. Max 2MB.</small>
-            </div>
+            </div> --}}
 
             <div class="mb-3">
                 <label for="status" class="form-label">Status Transaksi</label>
@@ -184,10 +192,10 @@
     </div>
 @endsection
 
-@push('addon-script') {{-- Use addon-script as per your master layout --}}
+@push('addon-script')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        let itemIndex = 1; // Start from 1 for new items, as the first one is already at index 0
+        let itemIndex = 1;
 
         const itemsContainer = document.getElementById('items-container');
         const addItemButton = document.getElementById('add-item');
@@ -225,7 +233,7 @@
 
             subTotalDisplay.value = formatRupiah(subTotal);
             finalTotalDisplay.value = formatRupiah(finalTotal);
-            finalTotalHidden.value = finalTotal.toFixed(2); // Crucial for backend
+            finalTotalHidden.value = finalTotal.toFixed(2);
 
             console.log("Total Price hidden field set to:", finalTotalHidden.value);
         }
@@ -265,7 +273,7 @@
             if (qtyInput) {
                 qtyInput.addEventListener('input', function() {
                     if (this.value < 1) {
-                        this.value = 1; // Ensure quantity is always at least 1
+                        this.value = 1;
                     }
                     calculateTotals();
                 });
@@ -273,7 +281,6 @@
 
             if (removeItemButton) {
                 removeItemButton.addEventListener('click', function () {
-                    // Make sure not to remove the last item row
                     const currentRows = itemsContainer.querySelectorAll('.item-row');
                     if (currentRows.length > 1) {
                         row.remove();
@@ -294,7 +301,6 @@
                 });
             }
 
-            // Initialize price and hidden fields for pre-selected items (important if `old()` values are present)
             if (itemSelect.value) {
                 const selectedOption = itemSelect.options[itemSelect.selectedIndex];
                 const price = selectedOption.dataset.price || 0;
@@ -310,7 +316,6 @@
         }
 
         addItemButton.addEventListener('click', function () {
-            // Get the HTML content of the first item row to clone it
             const firstRowTemplate = itemsContainer.querySelector('.item-row');
             if (!firstRowTemplate) {
                 console.error("No item-row template found to clone.");
@@ -318,9 +323,8 @@
             }
 
             const newRow = firstRowTemplate.cloneNode(true);
-            newRow.setAttribute('data-item-index', itemIndex); // Update data-item-index
+            newRow.setAttribute('data-item-index', itemIndex);
 
-            // Update names and IDs for cloned elements to be unique and array-friendly
             newRow.querySelectorAll('input, select, label').forEach(el => {
                 if (el.name) {
                     el.name = el.name.replace(/\[\d+\]/, `[${itemIndex}]`);

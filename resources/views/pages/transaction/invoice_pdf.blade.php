@@ -114,7 +114,7 @@
                     <table>
                         <tr>
                             <td class="title">
-                                {{-- <img src="{{ public_path('assets/logo.png') }}" style="width:100%; max-width:150px;"> --}}
+                                <img src="{{ public_path('assets/logo.png') }}" style="width:100%; max-width:150px;">
                                 <h1>{{ $nama_bengkel ?? 'Nama Bengkel Anda' }}</h1>
                             </td>
 

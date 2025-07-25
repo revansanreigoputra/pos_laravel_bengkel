@@ -21,33 +21,43 @@
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
-                <div class="mb-3">
-                    <label for="customer_name" class="form-label">Nama Pelanggan</label>
-                    <input type="text" class="form-control @error('customer_name') is-invalid @enderror" id="customer_name" name="customer_name" value="{{ old('customer_name', $transaction->customer_name) }}" required>
-                    @error('customer_name')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                </div>
-                <div class="mb-3">
-                    <label for="vehicle_model" class="form-label">Merk/Model Kendaraan</label>
-                    <input type="text" class="form-control @error('vehicle_model') is-invalid @enderror" id="vehicle_model" name="vehicle_model" value="{{ old('vehicle_model', $transaction->vehicle_model) }}" placeholder="Contoh: Toyota Avanza, Honda Vario">
-                    @error('vehicle_model')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                </div>
-                <div class="mb-3">
-                    <label for="vehicle_number" class="form-label">Nomor Kendaraan</label>
-                    <input type="text" class="form-control @error('vehicle_number') is-invalid @enderror" id="vehicle_number" name="vehicle_number" value="{{ old('vehicle_number', $transaction->vehicle_number) }}" required>
-                    @error('vehicle_number')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                </div>
-                <div class="mb-3">
-                    <label for="transaction_date" class="form-label">Tanggal Transaksi</label>
-                    <input type="date" class="form-control @error('transaction_date') is-invalid @enderror" id="transaction_date" name="transaction_date" value="{{ old('transaction_date', $transaction->transaction_date->format('Y-m-d')) }}" required>
-                    @error('transaction_date')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
+
+                <div class="row">
+                    {{-- kiri --}}
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="customer_name" class="form-label">Nama Pelanggan</label>
+                            <input type="text" class="form-control @error('customer_name') is-invalid @enderror" id="customer_name" name="customer_name" value="{{ old('customer_name', $transaction->customer_name) }}" required>
+                            @error('customer_name')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="mb-3">
+                            <label for="vehicle_model" class="form-label">Merk/Model Kendaraan</label>
+                            <input type="text" class="form-control @error('vehicle_model') is-invalid @enderror" id="vehicle_model" name="vehicle_model" value="{{ old('vehicle_model', $transaction->vehicle_model) }}" placeholder="Contoh: Toyota Avanza, Honda Vario">
+                            @error('vehicle_model')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+                
+                    {{-- kanan --}}
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="vehicle_number" class="form-label">Nomor Kendaraan</label>
+                            <input type="text" class="form-control @error('vehicle_number') is-invalid @enderror" id="vehicle_number" name="vehicle_number" value="{{ old('vehicle_number', $transaction->vehicle_number) }}" required>
+                            @error('vehicle_number')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="mb-3">
+                            <label for="transaction_date" class="form-label">Tanggal Transaksi</label>
+                            <input type="date" class="form-control @error('transaction_date') is-invalid @enderror" id="transaction_date" name="transaction_date" value="{{ old('transaction_date', $transaction->transaction_date->format('Y-m-d')) }}" required>
+                            @error('transaction_date')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
                 </div>
 
                 <hr>
