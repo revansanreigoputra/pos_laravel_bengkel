@@ -11,8 +11,10 @@ class SparepartController extends Controller
     public function index()
     {
         // Only get spareparts that are used in supplier stock
-        // Assuming 'stockBatches' is a relationship on your Sparepart model
-        $spareparts = Sparepart::has('stockBatches')->with('stockBatches')->get();
+        // // Assuming 'stockBatches' is a relationship on your Sparepart model
+        // $spareparts = Sparepart::has('stockBatches')->with('stockBatches')->get();
+        $spareparts = Sparepart::with('stockBatches')->get();
+
         $categories = Category::all();
         return view('pages.sparepart.index', compact('spareparts', 'categories'));
     }
