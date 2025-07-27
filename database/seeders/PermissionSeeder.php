@@ -71,6 +71,7 @@ class PermissionSeeder extends Seeder
             'stock-handle.update',
             'stock-handle.delete',
             'stock-handle.quick-create-sparepart',
+            'report.transaction',
         ];
 
         foreach ($permissions as $permission) {

@@ -14,6 +14,7 @@ use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\JenisKendaraanController;
 use App\Models\Supplier;
+use App\Http\Controllers\ReportController;
 
 // Route::get('/', function () {
 //     return view('pages.dashboard');
@@ -87,6 +88,11 @@ Route::middleware('auth')->group(function () {
         Route::middleware('permission:jenis-kendaraan.store')->post('/', [JenisKendaraanController::class, 'store'])->name('jenis-kendaraan.store');
         Route::middleware('permission:jenis-kendaraan.update')->put('/{jenis_kendaraan}', [JenisKendaraanController::class, 'update'])->name('jenis-kendaraan.update');
         Route::middleware('permission:jenis-kendaraan.delete')->delete('/{jenis_kendaraan}', [JenisKendaraanController::class, 'destroy'])->name('jenis-kendaraan.destroy');
+    });
+
+    // Laporan
+    Route::prefix('laporan')->group(function () {
+        Route::middleware('permission:report.transaction')->get('/transaksi', [ReportController::class, 'transactionReport'])->name('report.transaction');
     });
 
 });
