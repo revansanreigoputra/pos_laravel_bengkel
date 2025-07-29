@@ -103,6 +103,7 @@ class PermissionSeeder extends Seeder
             'transaction.edit',
             'transaction.update',
             'transaction.delete',
+            'report.transaction',
         ];
         $kasirRole->syncPermissions($kasirPermissions);
     }

@@ -74,7 +74,7 @@
                                 @endcan
                                 @can('customer.view')
                                 <a class="dropdown-item {{ request()->is('konsumen*') ? 'active' : '' }}"
-                                    href="{{ route('customer.index') }}">Konsumen</a>
+                                    href="{{ route('customer.index') }}">Pelanggan</a>
                                 @endcan
                                 @can('jenis-kendaraan.view')
                                 <a class="dropdown-item {{ request()->is('jenis-kendaraan*') ? 'active' : '' }}"
