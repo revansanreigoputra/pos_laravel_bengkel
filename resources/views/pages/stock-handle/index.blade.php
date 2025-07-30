@@ -4,15 +4,14 @@
 
 @section('action')
     @can('stock-handle.create')
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createStockHandleModal">Tambah Pembelian</button>
-        @include('pages.stock-handle.create')
+          <a class="btn btn-warning"  href="{{ route('stock-handle.create') }}">Tambah Pembelian</a>
     @endcan
-   @can('stock-handle.quick-create-sparepart')
+   {{-- @can('stock-handle.quick-create-sparepart')
     <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#quickAddSparepartModal">
         Tambah Sparepart
     </button>
-    @include('pages.stock-handle.quick-create-sparepart')
-@endcan
+    @include('pages.stock-handle.quick-create-sparepart') --}}
+{{-- @endcan --}}
 
 @endsection
 

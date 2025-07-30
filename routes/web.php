@@ -49,7 +49,9 @@ Route::middleware('auth')->group(function () {
         Route::middleware('permission:service.view')->get('/', [ServiceController::class, 'index'])->name('service.index');
         Route::middleware('permission:service.store')->post('/', [ServiceController::class, 'store'])->name('service.store');
         Route::middleware('permission:service.update')->put('/{service}', [ServiceController::class, 'update'])->name('service.update');
-        Route::middleware('permission:service.delete')->delete('/{service}', [ServiceController::class, 'destroy'])->name('service.destroy');
+        Route::middleware('permission:service.delete')->delete('/{service}', [ServiceController::class, 'destroy'])->name('service.destroy'); 
+        Route::middleware('permission:service.create')->get('/modal-create', [ServiceController::class, 'create'])->name('service.modal-create');
+        Route::middleware('permission:service.edit')->get('/{service}/edit', [ServiceController::class, 'edit'])->name('service.edit'); 
     });
 
     Route::prefix('supplier')->group(function () {
@@ -137,3 +139,4 @@ Route::get('/supplier/export-pdf', [SupplierController::class, 'exportPDF'])->na
 Route::get('/customer/export-pdf', [CustomerController::class, 'exportPDF'])->name('customer.export-pdf');
 Route::get('/transactions/{transaction}/invoice/pdf', [App\Http\Controllers\TransactionController::class, 'exportPdf'])->name('transaction.exportPdf');
 Route::get('/report/transactions/export-excel', [ReportController::class, 'exportExcel'])->name('report.transaction.export.excel');
+ 

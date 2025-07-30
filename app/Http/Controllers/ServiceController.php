@@ -12,13 +12,20 @@ class ServiceController extends Controller
      * Tampilkan semua data service.
      */
     public function index()
-    {   
+    {
         $services = Service::with('jenisKendaraan')->get();
         $jenisKendaraans = JenisKendaraan::all();
 
         return view('pages.service.index', compact('services', 'jenisKendaraans'));
     }
 
+
+    public function create()
+    {
+        $jenisKendaraans = JenisKendaraan::all();
+        $services = Service::all(); // You might not need $services for a new create form
+        return view('pages.service.modal-create', compact('services', 'jenisKendaraans'));
+    }
     /**
      * Simpan data baru ke database.
      */
@@ -50,7 +57,8 @@ class ServiceController extends Controller
      */
     public function edit(Service $service)
     {
-        return response()->json($service);
+       $jenisKendaraans = JenisKendaraan::all();
+        return view('pages.service.modal-edit', compact('service', 'jenisKendaraans'));
     }
 
     /**

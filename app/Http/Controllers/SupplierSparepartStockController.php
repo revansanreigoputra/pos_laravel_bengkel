@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use Illuminate\Support\Facades\Validator;
 use App\Models\SupplierSparepartStock;
 use App\Models\Supplier;
@@ -26,37 +27,37 @@ class SupplierSparepartStockController extends Controller
         return view('pages.stock-handle.create', compact('suppliers', 'spareparts'));
     }
 
-   public function store(Request $request)
-{
-    $validated = $request->validate([
-        'supplier_id' => 'required|exists:suppliers,id',
-        'spareparts' => 'required|array|min:1',
-        'spareparts.*.sparepart_id' => 'required|exists:spareparts,id',
-        'spareparts.*.quantity' => 'required|numeric|min:1',
-        'spareparts.*.purchase_price' => 'required|numeric|min:0',
-        'spareparts.*.received_date' => 'nullable|date',
-        'spareparts.*.note' => 'nullable|string',
-    ]);
-
-    foreach ($validated['spareparts'] as $sparepartInput) {
-        $stock = SupplierSparepartStock::create([
-            'supplier_id' => $validated['supplier_id'],
-            'sparepart_id' => $sparepartInput['sparepart_id'],
-            'quantity' => $sparepartInput['quantity'],
-            'purchase_price' => $sparepartInput['purchase_price'],
-            'received_date' => $sparepartInput['received_date'] ?? now(),
-            'note' => $sparepartInput['note'] ?? null,
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'supplier_id' => 'required|exists:suppliers,id',
+            'spareparts' => 'required|array|min:1',
+            'spareparts.*.sparepart_id' => 'required|exists:spareparts,id',
+            'spareparts.*.quantity' => 'required|numeric|min:1',
+            'spareparts.*.purchase_price' => 'required|numeric|min:0',
+            'received_date' => 'required|date', // Moved to top level
+            'note' => 'nullable|string', // Moved to top level
         ]);
 
-        $sparepart = Sparepart::find($sparepartInput['sparepart_id']);
-        $sparepart->update([
-            'quantity' => $sparepart->stockBatches()->sum('quantity'),
-            'purchase_price' => $sparepartInput['purchase_price'],
-        ]);
+        foreach ($validated['spareparts'] as $sparepartInput) {
+            $stock = SupplierSparepartStock::create([
+                'supplier_id' => $validated['supplier_id'],
+                'sparepart_id' => $sparepartInput['sparepart_id'],
+                'quantity' => $sparepartInput['quantity'],
+                'purchase_price' => $sparepartInput['purchase_price'],
+                'received_date' => $validated['received_date'], // From top level
+                'note' => $validated['note'] ?? null, // From top level
+            ]);
+
+            $sparepart = Sparepart::find($sparepartInput['sparepart_id']);
+            $sparepart->update([
+                'quantity' => $sparepart->stockBatches()->sum('quantity'),
+                'purchase_price' => $sparepartInput['purchase_price'],
+            ]);
+        }
+
+        return redirect()->route('stock-handle.index')->with('success', 'Stock successfully added.');
     }
-
-    return redirect()->route('stock-handle.index')->with('success', 'Stock successfully added.');
-}
 
 
     public function edit(SupplierSparepartStock $stock)
@@ -103,7 +104,7 @@ class SupplierSparepartStockController extends Controller
 
         return redirect()->route('stock-handle.index')->with('success', 'Stock successfully deleted.');
     }
-     //////add new sparepart just name and code 
+    //////add new sparepart just name and code 
     public function quickStore(Request $request)
     {
         $validated = $request->validate([
@@ -123,7 +124,6 @@ class SupplierSparepartStockController extends Controller
             'quantity' => 0,
         ]);
 
-       return redirect()->back()->with('success', 'Sparepart berhasil ditambahkan.');
-
+        return redirect()->back()->with('success', 'Sparepart berhasil ditambahkan.');
     }
 }

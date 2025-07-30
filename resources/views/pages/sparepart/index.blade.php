@@ -5,10 +5,10 @@
 
 @section('action')
     @can('sparepart.create')
-        <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#createSparepartModal">
+        <a class="btn btn-warning" href={{ route('sparepart.create') }}>
+            {{-- This a opens the modal to create a new spare part --}}
             Tambah Sparepart
-        </button>
-        @include('pages.sparepart.create')
+        </a>  
     @endcan
     <button class="btn btn-primary">Unduh</button>
 @endsection
@@ -65,10 +65,11 @@
                                         @endif
                                     </td>
                                     <td class="text-center">
-                                        @can('sparepart.update')
-                                            <button class="btn btn-warning btn-sm" data-bs-toggle="modal"
-                                                data-bs-target="#editSparepartModal-{{ $sparepart->id }}">Edit</button>
-                                            @include('pages.sparepart.edit', ['sparepart' => $sparepart])
+                                        @can('sparepart.update') 
+                                            <a class="btn btn-warning btn-sm" href="{{ route('sparepart.edit', $sparepart->id) }}">
+                                                Edit
+                                            </a>
+
                                         @endcan
 
                                         @can('sparepart.delete')
