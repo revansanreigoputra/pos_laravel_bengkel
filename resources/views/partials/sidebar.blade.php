@@ -86,7 +86,7 @@
                 </li>
 
                 <!-- Transaksi -->
-                <li class="nav-item dropdown {{ request()->is('pembelian*') || request()->is('transaction*') ? 'active' : '' }}">
+                <li class="nav-item dropdown {{ request()->is('pembelian*') || request()->is('transaction*') || request()->is('stock-handle*') ? 'active' : '' }}">
                     <a class="nav-link dropdown-toggle" href="#" aria-expanded="false">
                         <span class="nav-link-icon d-md-none d-lg-inline-block">
                             <!-- Icon Transaksi -->
@@ -100,16 +100,16 @@
                         </span>
                         <span class="nav-link-title">Transaksi</span>
                     </a>
-                    <div class="dropdown-menu {{ request()->is('pembelian*') || request()->is('transaction*') ? 'show' : '' }}">
+                    <div class="dropdown-menu {{ request()->is('pembelian*') || request()->is('transaction*') || request()->is('stock-handle*') ? 'show' : '' }}">
                         <div class="dropdown-menu-columns">
                             <div class="dropdown-menu-column">
                                 @can('stock-handle.view')
-                                <a class="dropdown-item {{ request()->is('stock-handle*') ? 'active' : '' }}"
-                                    href="{{ route('stock-handle.index') }}">Pembelian Sparepart</a>
+                                    <a class="dropdown-item {{ request()->is('stock-handle*') ? 'active' : '' }}"
+                                        href="{{ route('stock-handle.index') }}">Pembelian Sparepart</a>
                                 @endcan
                                 @can('transaction.view')
-                                <a class="dropdown-item {{ request()->is('transaction*') ? 'active' : '' }}"
-                                    href="{{ route('transaction.index') }}">Penjualan Sparepart</a>
+                                    <a class="dropdown-item {{ request()->is('transaction*') ? 'active' : '' }}"
+                                        href="{{ route('transaction.index') }}">Penjualan Sparepart</a>
                                 @endcan
                             </div>
                         </div>
