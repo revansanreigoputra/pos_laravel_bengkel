@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Customer; // Import model Customer
 use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\Service;
@@ -10,7 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage; // Tambahkan ini untuk manajemen storage
+use Illuminate\Support\Facades\Storage; // Untuk manajemen storage
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon; // Untuk memformat tanggal lebih baik
 
@@ -23,8 +24,8 @@ class TransactionController extends Controller
      */
     public function index()
     {
-        // Memuat relasi item, service, dan sparepart untuk tampilan
-        $transactions = Transaction::with(['items.service', 'items.sparepart'])->latest()->get();
+        // Memuat relasi customer, item, service, dan sparepart untuk tampilan
+        $transactions = Transaction::with(['customer', 'items.service', 'items.sparepart'])->latest()->get();
 
         $services = Service::where('status', 'aktif')->get();
         $spareparts = Sparepart::all();
@@ -54,18 +55,20 @@ class TransactionController extends Controller
      */
     public function store(Request $request)
     {
-        // Log request data untuk debugging awal
         Log::info('Incoming request for store transaction: ', $request->all());
 
         try {
             $validatedData = $request->validate([
                 'customer_name' => 'required|string|max:255',
-                'vehicle_number' => 'required|string|max:255',
+                'customer_phone' => 'required|string|max:20',
+                'customer_email' => 'nullable|email|max:255',
+                'customer_address' => 'nullable|string|max:255',
+                'vehicle_number' => 'nullable|string|max:255',
                 'transaction_date' => 'required|date',
                 'items' => 'required|array|min:1',
                 'items.*.item_full_id' => 'required|string',
                 'items.*.price' => 'required|numeric|min:0',
-                'items.*.quantity' => 'required|integer|min:1',
+                'items.*.quantity' => 'required|integer|min:0', // Changed to min:0 to allow 0 initially, client-side handles min:1 for actual sales
                 'global_discount' => 'nullable|numeric|min:0',
                 'total_price' => 'required|numeric|min:0',
                 'invoice_number' => 'required|string|max:255|unique:transactions,invoice_number',
@@ -82,13 +85,64 @@ class TransactionController extends Controller
 
         DB::beginTransaction();
         try {
+            // 1. Cari atau Buat Pelanggan Baru
+            $customer = Customer::firstOrCreate(
+                ['phone' => $validatedData['customer_phone']],
+                [
+                    'name' => $validatedData['customer_name'],
+                    'email' => $validatedData['customer_email'] ?? null,
+                    'address' => $validatedData['customer_address'] ?? null,
+                ]
+            );
+
+            if ($customer->name !== $validatedData['customer_name']) {
+                $customer->update(['name' => $validatedData['customer_name']]);
+                Log::info('Customer name updated for existing customer ID: ' . $customer->id);
+            }
+            Log::info('Customer processed (ID: ' . $customer->id . ', Name: ' . $customer->name . ').');
+
+            // 2. Validasi Stok Sparepart secara real-time dan hitung total harga
             $subTotalCalculated = 0;
-            foreach ($validatedData['items'] as $itemData) {
+            $errors = []; // Collect errors for ValidationException
+
+            foreach ($validatedData['items'] as $index => $itemData) {
+                [$type, $id] = explode('-', $itemData['item_full_id']);
                 $price = floatval($itemData['price']);
                 $quantity = intval($itemData['quantity']);
+
+                // Only process items with quantity > 0 for stock validation
+                if ($quantity <= 0) {
+                    // If quantity is 0, it means the item is effectively not being sold.
+                    // We can skip stock validation for it, but still include it in subtotal if price is > 0.
+                    $subTotalCalculated += ($price * $quantity);
+                    continue; // Skip to next item
+                }
+
+                if ($type === 'sparepart') {
+                    // Use lockForUpdate() to prevent race conditions
+                    $sparepart = Sparepart::lockForUpdate()->find($id);
+
+                    if (!$sparepart) {
+                        $errors["items.{$index}.item_full_id"] = "Sparepart dengan ID {$id} tidak ditemukan.";
+                        Log::error("Sparepart with ID {$id} not found during stock validation.");
+                        continue; // Skip to next item
+                    }
+
+                    // Check if the requested quantity exceeds available stock
+                    if ($sparepart->quantity < $quantity) {
+                        $errors["items.{$index}.quantity"] = "Stok '{$sparepart->name}' tidak cukup. Tersedia: {$sparepart->quantity}, Diminta: {$quantity}.";
+                        Log::warning("Insufficient stock for sparepart '{$sparepart->name}' (ID: {$id}). Available: {$sparepart->quantity}, Requested: {$quantity}.");
+                    }
+                }
                 $subTotalCalculated += ($price * $quantity);
             }
-            $globalDiscount = floatval($validatedData['global_discount'] ?? 0); // Pastikan mengambil dari validatedData atau default 0
+
+            // If there are any stock errors, throw a ValidationException
+            if (!empty($errors)) {
+                throw ValidationException::withMessages($errors);
+            }
+
+            $globalDiscount = floatval($validatedData['global_discount'] ?? 0);
             $finalTotalCalculated = $subTotalCalculated - $globalDiscount;
 
             if ($finalTotalCalculated < 0) {
@@ -103,71 +157,69 @@ class TransactionController extends Controller
                 $finalTotalToSave = $frontendTotalPrice;
             }
 
+            // 3. Upload Bukti Transfer jika ada
             $proofOfTransferUrl = null;
             if ($request->hasFile('proof_of_transfer_file')) {
                 $file = $request->file('proof_of_transfer_file');
                 $fileName = time() . '_' . $file->getClientOriginalName();
-                // Simpan di storage/app/public/proof_of_transfer
                 $file->storeAs('public/proof_of_transfer', $fileName);
-                // Path yang bisa diakses publik melalui php artisan storage:link
                 $proofOfTransferUrl = 'storage/proof_of_transfer/' . $fileName;
                 Log::info('Proof of transfer file uploaded: ' . $proofOfTransferUrl);
             }
 
+            // 4. Buat Transaksi Baru
             $transaction = Transaction::create([
-                'customer_name'        => $validatedData['customer_name'],
-                'vehicle_number'       => $validatedData['vehicle_number'],
-                'transaction_date'     => $validatedData['transaction_date'],
-                'discount_amount'      => $globalDiscount,
-                'total_price'          => $finalTotalToSave,
-                'invoice_number'       => $validatedData['invoice_number'],
-                'vehicle_model'        => $validatedData['vehicle_model'],
-                'payment_method'       => $validatedData['payment_method'],
+                'customer_id'           => $customer->id,
+                'vehicle_number'        => $validatedData['vehicle_number'] ?? null,
+                'transaction_date'      => $validatedData['transaction_date'],
+                'discount_amount'       => $globalDiscount,
+                'total_price'           => $finalTotalToSave,
+                'invoice_number'        => $validatedData['invoice_number'],
+                'vehicle_model'         => $validatedData['vehicle_model'] ?? null,
+                'payment_method'        => $validatedData['payment_method'],
                 'proof_of_transfer_url' => $proofOfTransferUrl,
-                'status'               => $validatedData['status'],
+                'status'                => $validatedData['status'],
             ]);
             Log::info('Transaction created with ID: ' . $transaction->id);
 
+            // 5. Tambahkan Item Transaksi dan Kurangi Stok
             foreach ($validatedData['items'] as $itemData) {
                 [$type, $id] = explode('-', $itemData['item_full_id']);
                 $price = floatval($itemData['price']);
                 $quantity = intval($itemData['quantity']);
 
-                Log::info("Processing item: Type={$type}, ID={$id}, Price={$price}, Quantity={$quantity}");
+                // Only create transaction item and decrement stock if quantity is positive
+                if ($quantity > 0) {
+                    TransactionItem::create([
+                        'transaction_id' => $transaction->id,
+                        'item_type'      => $type,
+                        'item_id'        => $id,
+                        'price'          => $price,
+                        'quantity'       => $quantity,
+                    ]);
+                    Log::info("Transaction item created for transaction {$transaction->id}: Type={$type}, ID={$id}, Quantity={$quantity}");
 
-                TransactionItem::create([
-                    'transaction_id' => $transaction->id,
-                    'item_type'      => $type,
-                    'item_id'        => $id,
-                    'price'          => $price,
-                    'quantity'       => $quantity,
-                ]);
-                Log::info("Transaction item created for transaction {$transaction->id}: Type={$type}, ID={$id}");
-
-
-                if ($type === 'sparepart') {
-                    $sparepart = Sparepart::find($id);
-                    if ($sparepart) {
-                        Log::info("Sparepart found (ID: {$id}). Current quantity: {$sparepart->quantity}, Requested quantity: {$quantity}");
-                        if ($sparepart->quantity >= $quantity) {
+                    if ($type === 'sparepart') {
+                        // Re-fetch with lockForUpdate() is not strictly needed here if already locked above
+                        // but good practice if this loop could be outside the initial validation loop
+                        $sparepart = Sparepart::find($id); // Already validated, just decrement
+                        if ($sparepart) {
                             $sparepart->decrement('quantity', $quantity);
                             Log::info('Sparepart ' . $sparepart->name . ' (ID: ' . $id . ') quantity decremented by ' . $quantity . '. New quantity: ' . $sparepart->quantity);
-                        } else {
-                            Log::warning('Stock sparepart ' . $sparepart->name . ' (ID: ' . $id . ') tidak mencukupi. Sisa stok: ' . $sparepart->quantity . ', Permintaan: ' . $quantity);
-                            DB::rollBack();
-                            return redirect()->back()->with('error', 'Stok sparepart ' . $sparepart->name . ' tidak mencukupi. Sisa stok: ' . $sparepart->quantity)->withInput();
                         }
-                    } else {
-                        Log::error('Sparepart dengan ID ' . $id . ' tidak ditemukan saat mencoba mengurangi stok.');
-                        DB::rollBack();
-                        return redirect()->back()->with('error', 'Sparepart dengan ID ' . $id . ' tidak ditemukan.')->withInput();
                     }
+                } else {
+                    Log::info("Skipping transaction item creation and stock decrement for item ID {$id} due to zero or negative quantity.");
                 }
             }
 
             DB::commit();
             Log::info('Transaction successfully committed.');
             return redirect()->route('transaction.index')->with('success', 'Transaksi berhasil ditambahkan!');
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            Log::error('Validation failed during transaction creation (after initial validation): ' . json_encode($e->errors()));
+            return redirect()->back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
             DB::rollback();
             Log::error('Error storing transaction: ' . $e->getMessage() . ' on line ' . $e->getLine() . ' in ' . $e->getFile());
@@ -190,12 +242,15 @@ class TransactionController extends Controller
         try {
             $validatedData = $request->validate([
                 'customer_name' => 'required|string|max:255',
-                'vehicle_number' => 'required|string|max:255',
+                'customer_phone' => 'required|string|max:20',
+                'customer_email' => 'nullable|email|max:255',
+                'customer_address' => 'nullable|string|max:255',
+                'vehicle_number' => 'nullable|string|max:255',
                 'transaction_date' => 'required|date',
                 'items' => 'required|array|min:1',
                 'items.*.item_full_id' => 'required|string',
                 'items.*.price' => 'required|numeric|min:0',
-                'items.*.quantity' => 'required|integer|min:1',
+                'items.*.quantity' => 'required|integer|min:0', // Changed to min:0
                 'global_discount' => 'nullable|numeric|min:0',
                 'total_price' => 'required|numeric|min:0',
                 'invoice_number' => 'required|string|max:255|unique:transactions,invoice_number,' . $transaction->id,
@@ -203,7 +258,7 @@ class TransactionController extends Controller
                 'payment_method' => 'required|string|max:50',
                 'proof_of_transfer_file' => 'nullable|file|mimes:jpeg,png,pdf|max:2048',
                 'status' => 'required|in:pending,completed,cancelled',
-                'clear_proof_of_transfer' => 'nullable|boolean', // Untuk menghapus file bukti transfer
+                'clear_proof_of_transfer' => 'nullable|boolean',
             ]);
             Log::info('Validation successful for update transaction (ID: ' . $transaction->id . ').', $validatedData);
         } catch (ValidationException $e) {
@@ -213,8 +268,25 @@ class TransactionController extends Controller
 
         DB::beginTransaction();
         try {
-            $oldSparepartQuantities = [];
+            // 1. Cari atau Buat Pelanggan Baru untuk Update
+            $customer = Customer::firstOrCreate(
+                ['phone' => $validatedData['customer_phone']],
+                [
+                    'name' => $validatedData['customer_name'],
+                    'email' => $validatedData['customer_email'] ?? null,
+                    'address' => $validatedData['customer_address'] ?? null,
+                ]
+            );
+
+            if ($customer->name !== $validatedData['customer_name']) {
+                $customer->update(['name' => $validatedData['customer_name']]);
+                Log::info('Customer name updated for existing customer ID: ' . $customer->id . ' during update.');
+            }
+            Log::info('Customer processed for update (ID: ' . $customer->id . ', Name: ' . $customer->name . ').');
+
             // Ambil kuantitas sparepart dari item transaksi lama sebelum dihapus
+            // Ini penting untuk mengembalikan stok yang benar
+            $oldSparepartQuantities = [];
             foreach ($transaction->items as $oldItem) {
                 if ($oldItem->item_type === 'sparepart') {
                     $oldSparepartQuantities[$oldItem->item_id] = ($oldSparepartQuantities[$oldItem->item_id] ?? 0) + $oldItem->quantity;
@@ -222,12 +294,56 @@ class TransactionController extends Controller
                 }
             }
 
+            // Validasi stok untuk item baru/yang diubah
             $subTotalCalculated = 0;
-            foreach ($validatedData['items'] as $itemData) {
+            $errors = [];
+            $newSparepartQuantities = []; // To track quantities of spareparts in the new request
+
+            foreach ($validatedData['items'] as $index => $itemData) {
+                [$type, $id] = explode('-', $itemData['item_full_id']);
                 $price = floatval($itemData['price']);
                 $quantity = intval($itemData['quantity']);
+
+                // Only process items with quantity > 0 for stock validation
+                if ($quantity <= 0) {
+                    $subTotalCalculated += ($price * $quantity);
+                    continue; // Skip to next item
+                }
+
+                if ($type === 'sparepart') {
+                    // Track new quantities for later comparison
+                    $newSparepartQuantities[$id] = ($newSparepartQuantities[$id] ?? 0) + $quantity;
+
+                    // Get the old quantity for this specific sparepart from the original transaction
+                    $oldQuantityForThisSparepart = $oldSparepartQuantities[$id] ?? 0;
+                    $netChange = $newSparepartQuantities[$id] - $oldQuantityForThisSparepart;
+
+                    // Fetch sparepart with lockForUpdate for accurate stock check
+                    $sparepart = Sparepart::lockForUpdate()->find($id);
+
+                    if (!$sparepart) {
+                        $errors["items.{$index}.item_full_id"] = "Sparepart dengan ID {$id} tidak ditemukan.";
+                        Log::error("Sparepart with ID {$id} not found during update stock validation.");
+                        continue;
+                    }
+
+                    // If netChange is positive, it means we need to decrement stock
+                    if ($netChange > 0) {
+                        if ($sparepart->quantity < $netChange) {
+                            $errors["items.{$index}.quantity"] = "Stok '{$sparepart->name}' tidak cukup untuk perubahan ini. Tersedia: {$sparepart->quantity}, Perlu dikurangi: {$netChange}.";
+                            Log::warning("Insufficient stock for sparepart '{$sparepart->name}' (ID: {$id}) during update. Available: {$sparepart->quantity}, Net change: {$netChange}.");
+                        }
+                    }
+                }
                 $subTotalCalculated += ($price * $quantity);
             }
+
+            // If there are any stock errors, throw a ValidationException
+            if (!empty($errors)) {
+                throw ValidationException::withMessages($errors);
+            }
+
+
             $globalDiscount = floatval($validatedData['global_discount'] ?? 0);
             $finalTotalCalculated = $subTotalCalculated - $globalDiscount;
             if ($finalTotalCalculated < 0) {
@@ -263,85 +379,72 @@ class TransactionController extends Controller
                 $proofOfTransferUrl = null;
             }
 
-
             $transaction->update([
-                'customer_name'         => $validatedData['customer_name'],
-                'vehicle_number'        => $validatedData['vehicle_number'],
+                'customer_id'           => $customer->id,
+                'vehicle_number'        => $validatedData['vehicle_number'] ?? null,
                 'transaction_date'      => $validatedData['transaction_date'],
                 'discount_amount'       => $globalDiscount,
                 'total_price'           => $finalTotalToSave,
                 'invoice_number'        => $validatedData['invoice_number'],
-                'vehicle_model'         => $validatedData['vehicle_model'],
+                'vehicle_model'         => $validatedData['vehicle_model'] ?? null,
                 'payment_method'        => $validatedData['payment_method'],
                 'proof_of_transfer_url' => $proofOfTransferUrl,
                 'status'                => $validatedData['status'],
             ]);
             Log::info('Transaction updated (ID: ' . $transaction->id . ').');
 
+            // **STOCK ADJUSTMENT LOGIC - BEFORE DELETING OLD ITEMS**
+            // Revert stock for all old items first
+            foreach ($transaction->items as $oldItem) {
+                if ($oldItem->item_type === 'sparepart') {
+                    $sparepart = Sparepart::find($oldItem->item_id); // Find, no lock needed yet for reverting
+                    if ($sparepart) {
+                        $sparepart->increment('quantity', $oldItem->quantity);
+                        Log::info("Reverted stock for sparepart {$sparepart->name} (ID: {$oldItem->item_id}) by {$oldItem->quantity}. New stock: {$sparepart->quantity}");
+                    }
+                }
+            }
+
             // Hapus semua item transaksi lama
             $transaction->items()->delete();
             Log::info('Old transaction items deleted for transaction ID: ' . $transaction->id);
 
-
+            // Tambahkan item transaksi yang diperbarui dan kurangi stok baru
             foreach ($validatedData['items'] as $itemData) {
                 [$type, $id] = explode('-', $itemData['item_full_id']);
                 $price = floatval($itemData['price']);
                 $quantity = intval($itemData['quantity']);
 
-                Log::info("Processing new/updated item: Type={$type}, ID={$id}, Price={$price}, Quantity={$quantity}");
+                // Only create transaction item and decrement stock if quantity is positive
+                if ($quantity > 0) {
+                    TransactionItem::create([
+                        'transaction_id' => $transaction->id,
+                        'item_type'      => $type,
+                        'item_id'        => $id,
+                        'price'          => $price,
+                        'quantity'       => $quantity,
+                    ]);
+                    Log::info("New transaction item created for transaction {$transaction->id}: Type={$type}, ID={$id}, Quantity={$quantity}");
 
-                TransactionItem::create([
-                    'transaction_id' => $transaction->id,
-                    'item_type'      => $type,
-                    'item_id'        => $id,
-                    'price'          => $price,
-                    'quantity'       => $quantity,
-                ]);
-                Log::info("New transaction item created for transaction {$transaction->id}: Type={$type}, ID={$id}");
-
-                if ($type === 'sparepart') {
-                    $sparepart = Sparepart::find($id);
-                    if ($sparepart) {
-                        $oldQuantityForThisSparepart = $oldSparepartQuantities[$id] ?? 0;
-                        $netChange = $quantity - $oldQuantityForThisSparepart; // Perubahan bersih kuantitas
-
-                        Log::info("Sparepart (ID: {$id}) - Old quantity in transaction: {$oldQuantityForThisSparepart}, New quantity in transaction: {$quantity}, Net change: {$netChange}. Current stock: {$sparepart->quantity}");
-
-                        if ($netChange > 0) { // Jika kuantitas baru lebih besar, berarti stok harus berkurang
-                            if ($sparepart->quantity >= $netChange) {
-                                $sparepart->decrement('quantity', $netChange);
-                                Log::info('Sparepart ' . $sparepart->name . ' (ID: ' . $id . ') quantity decremented by ' . $netChange . '. New stock: ' . $sparepart->quantity);
-                            } else {
-                                Log::warning('Stok sparepart ' . $sparepart->name . ' (ID: ' . $id . ') tidak mencukupi untuk perubahan. Sisa stok: ' . $sparepart->quantity . ', Perlu dikurangi: ' . $netChange);
-                                DB::rollBack();
-                                return redirect()->back()->with('error', 'Stok sparepart ' . $sparepart->name . ' tidak mencukupi untuk perubahan ini. Sisa stok: ' . $sparepart->quantity)->withInput();
-                            }
-                        } elseif ($netChange < 0) { // Jika kuantitas baru lebih kecil, berarti stok harus bertambah
-                            $sparepart->increment('quantity', abs($netChange));
-                            Log::info('Sparepart ' . $sparepart->name . ' (ID: ' . $id . ') quantity incremented by ' . abs($netChange) . '. New stock: ' . $sparepart->quantity);
+                    if ($type === 'sparepart') {
+                        $sparepart = Sparepart::find($id); // Already validated and potentially locked earlier in this request
+                        if ($sparepart) {
+                            $sparepart->decrement('quantity', $quantity);
+                            Log::info('Sparepart ' . $sparepart->name . ' (ID: ' . $id . ') quantity decremented by ' . $quantity . '. New stock: ' . $sparepart->quantity);
                         }
-                        // Hapus ID sparepart dari array lama karena sudah diproses
-                        unset($oldSparepartQuantities[$id]);
-                    } else {
-                        Log::error('Sparepart dengan ID ' . $id . ' tidak ditemukan saat update item transaksi.');
-                        DB::rollBack();
-                        return redirect()->back()->with('error', 'Sparepart dengan ID ' . $id . ' tidak ditemukan saat update.')->withInput();
                     }
-                }
-            }
-
-            // Kembalikan stok untuk sparepart yang dihapus sepenuhnya dari transaksi
-            foreach ($oldSparepartQuantities as $sparepartId => $qtyToReturn) {
-                $sparepart = Sparepart::find($sparepartId);
-                if ($sparepart) {
-                    $sparepart->increment('quantity', $qtyToReturn);
-                    Log::info('Sparepart ' . $sparepart->name . ' (ID: ' . $sparepartId . ') stock returned by ' . $qtyToReturn . ' as it was removed from transaction. New stock: ' . $sparepart->quantity);
+                } else {
+                    Log::info("Skipping new transaction item creation and stock decrement for item ID {$id} due to zero or negative quantity.");
                 }
             }
 
             DB::commit();
             Log::info('Transaction update successfully committed (ID: ' . $transaction->id . ').');
             return redirect()->route('transaction.index')->with('success', 'Transaksi berhasil diperbarui.');
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            Log::error('Validation failed during transaction update (after initial validation): ' . json_encode($e->errors()));
+            return redirect()->back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
             DB::rollback();
             Log::error('Error updating transaction (ID: ' . $transaction->id . '): ' . $e->getMessage() . ' on line ' . $e->getLine() . ' in ' . $e->getFile());
@@ -351,7 +454,8 @@ class TransactionController extends Controller
 
     public function edit(Transaction $transaction)
     {
-        $transaction->load(['items.service', 'items.sparepart']);
+        // Pastikan relasi customer dimuat saat mengedit
+        $transaction->load(['customer', 'items.service', 'items.sparepart']);
 
         $services = Service::where('status', 'aktif')->get();
         $spareparts = Sparepart::all();
@@ -362,7 +466,7 @@ class TransactionController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\Transaction
+     * @param  \App\Models\Transaction  $transaction
      * @return \Illuminate\Http\Response
      */
     public function destroy(Transaction $transaction)
@@ -373,7 +477,8 @@ class TransactionController extends Controller
             // Kembalikan stok sparepart sebelum menghapus item dan transaksi
             foreach ($transaction->items as $item) {
                 if ($item->item_type === 'sparepart') {
-                    $sparepart = Sparepart::find($item->item_id);
+                    // Use lockForUpdate() here as well to prevent race conditions during stock return
+                    $sparepart = Sparepart::lockForUpdate()->find($item->item_id);
                     if ($sparepart) {
                         $sparepart->increment('quantity', $item->quantity);
                         Log::info('Sparepart ' . $sparepart->name . ' (ID: ' . $item->item_id . ') stock returned by ' . $item->quantity . ' due to transaction deletion. New stock: ' . $sparepart->quantity);
@@ -410,13 +515,14 @@ class TransactionController extends Controller
      */
     public function exportPdf(Transaction $transaction)
     {
-        $transaction->load(['items.service', 'items.sparepart']);
+        // Pastikan relasi customer dimuat saat membuat PDF
+        $transaction->load(['customer', 'items.service', 'items.sparepart']);
 
         $data = [
             'transaction' => $transaction,
             'nama_bengkel' => 'BengkelKu',
-            'alamat_bengkel' => 'Jl. Contoh No. 123, Godean, Yogyakarta', 
-            'telepon_bengkel' => '0812-3456-7890', 
+            'alamat_bengkel' => 'Jl. Contoh No. 123, Godean, Yogyakarta',
+            'telepon_bengkel' => '0812-3456-7890',
             'tanggal_cetak' => Carbon::now()->isoFormat('D MMMM YYYY, HH:mm:ss'),
         ];
 

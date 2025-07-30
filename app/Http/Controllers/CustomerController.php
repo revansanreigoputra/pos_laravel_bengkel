@@ -8,7 +8,6 @@ use App\Http\Requests\StoreCustomerRequest;
 use App\Services\CustomerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-// exp PDF
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\Customer;
 

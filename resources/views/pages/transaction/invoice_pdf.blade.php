@@ -55,7 +55,7 @@
             background: #eee;
             border-bottom: 1px solid #ddd;
             font-weight: bold;
-            padding: 8px; 
+            padding: 8px;
         }
 
         .invoice-box table tr.details td {
@@ -114,6 +114,7 @@
                     <table>
                         <tr>
                             <td class="title">
+                                {{-- Pastikan path logo benar --}}
                                 <img src="{{ public_path('assets/logo.png') }}" style="width:100%; max-width:150px;">
                                 <h1>{{ $nama_bengkel ?? 'Nama Bengkel Anda' }}</h1>
                             </td>
@@ -139,8 +140,13 @@
                             </td>
 
                             <td class="text-right">
-                                Pelanggan: {{ $transaction->customer_name }}<br>
-                                No. Kendaraan: {{ $transaction->vehicle_number }}<br>
+                                {{-- Mengakses nama pelanggan dari relasi customer --}}
+                                Pelanggan: {{ $transaction->customer->name ?? 'N/A' }}<br>
+                                {{-- Menambahkan nomor telepon pelanggan dari relasi customer --}}
+                                No. Telp: {{ $transaction->customer->phone ?? 'N/A' }}<br>
+                                {{-- Menambahkan alamat pelanggan dari relasi customer --}}
+                                Alamat: {{ $transaction->customer->address ?? 'N/A' }}<br>
+                                No. Kendaraan: {{ $transaction->vehicle_number ?? '-' }}<br>
                                 Merk/Model: {{ $transaction->vehicle_model ?? '-' }}
                             </td>
                         </tr>
@@ -214,7 +220,8 @@
                     <td>
                         Tanda Tangan Pelanggan,<br><br><br>
                         (..............................)<br>
-                        {{ $transaction->customer_name }}
+                        {{-- Mengakses nama pelanggan dari relasi customer --}}
+                        {{ $transaction->customer->name ?? 'Pelanggan' }}
                     </td>
                 </tr>
             </table>

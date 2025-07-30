@@ -6,7 +6,7 @@ use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\TransactionsExport;
+use App\Exports\TransactionsExport; // Pastikan ini diimpor jika digunakan
 
 class ReportController extends Controller
 {
@@ -18,7 +18,8 @@ class ReportController extends Controller
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
 
-        $query = Transaction::query()->where('status', 'completed');
+        // PENTING: Memuat relasi 'customer' di sini
+        $query = Transaction::query()->where('status', 'completed')->with('customer');
 
         if ($startDate) {
             $query->whereDate('transaction_date', '>=', $startDate);
@@ -31,7 +32,9 @@ class ReportController extends Controller
                               ->orderBy('transaction_date', 'desc')
                               ->get();
 
-        $cardQuery = Transaction::query();
+        // Query untuk kartu ringkasan
+        // PENTING: Juga memuat relasi 'customer' jika data customer digunakan di kartu ringkasan
+        $cardQuery = Transaction::query()->with('customer');
         if ($startDate) {
             $cardQuery->whereDate('transaction_date', '>=', $startDate);
         }
@@ -72,6 +75,7 @@ class ReportController extends Controller
         }
         $filename .= '.xlsx';
 
+        // Pastikan TransactionsExport juga memuat relasi customer jika data customer ditampilkan di Excel
         return Excel::download(new TransactionsExport($startDate, $endDate, $exportTitle), $filename);
     }
 }

@@ -12,7 +12,7 @@ class CategorySeeder extends Seeder
         $categories = [
             'Mesin',
             'Sistem Transmisi',
-            'Nody dan Aksesoris',
+            'Body dan Aksesoris',
             'Oli dan Cairan',
             'Ban dan Velg',
             'Sistem Pendingin',

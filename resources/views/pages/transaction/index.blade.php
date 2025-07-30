@@ -58,7 +58,8 @@
                             <tr>
                                 <td>{{ $loop->iteration }}</td>
                                 <td>{{ $trx->invoice_number }}</td>
-                                <td>{{ $trx->customer_name }}</td>
+                                {{-- <td>{{ $trx->customer_name }}</td> --}}
+                                <td>{{ $trx->customer->name ?? 'N/A' }}</td>
                                 <td>{{ $trx->vehicle_number }}</td>
                                 <td>{{ $trx->vehicle_model ?? '-' }}</td>
                                 <td>{{ $trx->transaction_date->format('d-m-Y') }}</td>

@@ -87,7 +87,8 @@
                     @forelse ($transactions as $transaction)
                     <tr>
                         <td>{{ $transaction->invoice_number }}</td>
-                        <td>{{ $transaction->customer_name }}</td>
+                        {{-- <td>{{ $transaction->customer_name }}</td> --}}
+                        <td>{{ $transaction->customer->name ?? 'N/A' }}</td>
                         <td>{{ $transaction->vehicle_number }}</td>
                         <td>{{ $transaction->vehicle_model ?? '-' }}</td>
                         <td>{{ $transaction->transaction_date->format('d-m-Y H:i') }}</td>

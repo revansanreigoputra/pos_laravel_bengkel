@@ -14,7 +14,7 @@
                         </h4>
                     </div>
                     <div class="card-body">
-                        <form action="{{ route('transaction.store') }}" method="POST" id="createTransactionForm">
+                        <form action="{{ route('transaction.store') }}" method="POST" id="createTransactionForm" enctype="multipart/form-data">
                             @csrf
 
                             {{-- Section 1: Invoice Information --}}
@@ -31,8 +31,8 @@
                                                     <i class="fas fa-hashtag me-1"></i>
                                                     Nomor Invoice
                                                 </label>
-                                                <input type="text" class="form-control form-control @error('invoice_number') is-invalid @enderror" 
-                                                       id="invoice_number" name="invoice_number" 
+                                                <input type="text" class="form-control form-control @error('invoice_number') is-invalid @enderror"
+                                                       id="invoice_number" name="invoice_number"
                                                        value="{{ old('invoice_number', 'INV-' . date('Ymd') . '-' . mt_rand(1000, 9999)) }}" readonly>
                                                 @error('invoice_number')
                                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -45,8 +45,8 @@
                                                     <i class="fas fa-calendar me-1"></i>
                                                     Tanggal Transaksi
                                                 </label>
-                                                <input type="date" class="form-control form-control @error('transaction_date') is-invalid @enderror" 
-                                                       id="transaction_date" name="transaction_date" 
+                                                <input type="date" class="form-control form-control @error('transaction_date') is-invalid @enderror"
+                                                       id="transaction_date" name="transaction_date"
                                                        value="{{ old('transaction_date', now()->format('Y-m-d')) }}" required>
                                                 @error('transaction_date')
                                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -71,8 +71,8 @@
                                                     <i class="fas fa-user-tag me-1"></i>
                                                     Nama Pelanggan <span class="text-danger">*</span>
                                                 </label>
-                                                <input type="text" class="form-control @error('customer_name') is-invalid @enderror" 
-                                                       id="customer_name" name="customer_name" value="{{ old('customer_name') }}" 
+                                                <input type="text" class="form-control @error('customer_name') is-invalid @enderror"
+                                                       id="customer_name" name="customer_name" value="{{ old('customer_name') }}"
                                                        placeholder="Masukkan nama pelanggan" required>
                                                 @error('customer_name')
                                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -81,28 +81,72 @@
                                         </div>
                                         <div class="col-md-6">
                                             <div class="form-group">
-                                                <label for="vehicle_number" class="form-label fw-semibold">
-                                                    <i class="fas fa-id-card me-1"></i>
-                                                    Nomor Kendaraan <span class="text-danger">*</span>
+                                                <label for="customer_phone" class="form-label fw-semibold">
+                                                    <i class="fas fa-phone me-1"></i>
+                                                    Nomor Telepon Pelanggan <span class="text-danger">*</span>
                                                 </label>
-                                                <input type="text" class="form-control @error('vehicle_number') is-invalid @enderror" 
-                                                       id="vehicle_number" name="vehicle_number" value="{{ old('vehicle_number') }}" 
-                                                       placeholder="Contoh: B 1234 XYZ" required>
-                                                @error('vehicle_number')
+                                                <input type="text" class="form-control @error('customer_phone') is-invalid @enderror"
+                                                       id="customer_phone" name="customer_phone" value="{{ old('customer_phone') }}"
+                                                       placeholder="Contoh: 081234567890" required>
+                                                @error('customer_phone')
                                                     <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
                                             </div>
                                         </div>
                                     </div>
                                     <div class="row">
-                                        <div class="col-md-12">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="customer_email" class="form-label fw-semibold">
+                                                    <i class="fas fa-envelope me-1"></i>
+                                                    Email Pelanggan (Opsional)
+                                                </label>
+                                                <input type="email" class="form-control @error('customer_email') is-invalid @enderror"
+                                                       id="customer_email" name="customer_email" value="{{ old('customer_email') }}"
+                                                       placeholder="Masukkan email pelanggan">
+                                                @error('customer_email')
+                                                    <div class="invalid-feedback">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="customer_address" class="form-label fw-semibold">
+                                                    <i class="fas fa-map-marker-alt me-1"></i>
+                                                    Alamat Pelanggan (Opsional)
+                                                </label>
+                                                <textarea class="form-control @error('customer_address') is-invalid @enderror"
+                                                          id="customer_address" name="customer_address" rows="1"
+                                                          placeholder="Masukkan alamat lengkap pelanggan">{{ old('customer_address') }}</textarea>
+                                                @error('customer_address')
+                                                    <div class="invalid-feedback">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="vehicle_number" class="form-label fw-semibold">
+                                                    <i class="fas fa-id-card me-1"></i>
+                                                    Nomor Kendaraan
+                                                </label>
+                                                <input type="text" class="form-control @error('vehicle_number') is-invalid @enderror"
+                                                       id="vehicle_number" name="vehicle_number" value="{{ old('vehicle_number') }}"
+                                                       placeholder="Contoh: B 1234 XYZ"> {{-- 'required' dihapus, karena sudah nullable di controller --}}
+                                                @error('vehicle_number')
+                                                    <div class="invalid-feedback">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="vehicle_model" class="form-label fw-semibold">
                                                     <i class="fas fa-car me-1"></i>
                                                     Merk/Model Kendaraan
                                                 </label>
-                                                <input type="text" class="form-control @error('vehicle_model') is-invalid @enderror" 
-                                                       id="vehicle_model" name="vehicle_model" value="{{ old('vehicle_model') }}" 
+                                                <input type="text" class="form-control @error('vehicle_model') is-invalid @enderror"
+                                                       id="vehicle_model" name="vehicle_model" value="{{ old('vehicle_model') }}"
                                                        placeholder="Contoh: Toyota Avanza, Honda Vario">
                                                 @error('vehicle_model')
                                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -134,7 +178,7 @@
                                                             <i class="fas fa-box me-1"></i>
                                                             Pilih Item <span class="text-danger">*</span>
                                                         </label>
-                                                        <select class="form-select item-select @error('items.0.item_full_id') is-invalid @enderror" 
+                                                        <select class="form-select item-select @error('items.0.item_full_id') is-invalid @enderror"
                                                                 name="items[0][item_full_id]" id="item-0" required>
                                                             <option value="">-- Pilih Item --</option>
                                                             <optgroup label="🔧 Layanan Service">
@@ -169,7 +213,7 @@
                                                             <i class="fas fa-tag me-1"></i>
                                                             Harga
                                                         </label>
-                                                        <input type="number" class="form-control price-input @error('items.0.price') is-invalid @enderror" 
+                                                        <input type="number" class="form-control price-input @error('items.0.price') is-invalid @enderror"
                                                                name="items[0][price]" id="price-0" step="0.01" placeholder="0" required>
                                                         @error('items.0.price')
                                                             <div class="invalid-feedback">{{ $message }}</div>
@@ -185,8 +229,8 @@
                                                             <button class="btn btn-outline-secondary btn-qty-minus" type="button" data-action="minus">
                                                                 <i class="fas fa-minus text-dark">-</i>
                                                             </button>
-                                                            <input type="number" class="form-control qty-input @error('items.0.quantity') is-invalid @enderror" 
-                                                                name="items[0][quantity]" id="qty-0" value="1" required> {{-- min="1" MUST BE REMOVED HERE --}}
+                                                            <input type="number" class="form-control qty-input @error('items.0.quantity') is-invalid @enderror"
+                                                                   name="items[0][quantity]" id="qty-0" value="1" required>
                                                             <button class="btn btn-outline-secondary btn-qty-plus" type="button" data-action="plus">
                                                                 <i class="fas fa-plus text-dark">+</i>
                                                             </button>
@@ -201,7 +245,7 @@
                                                             <i class="fas fa-calculator me-1"></i>
                                                             Subtotal
                                                         </label>
-                                                        <input type="text" class="form-control item-subtotal-display bg-white" 
+                                                        <input type="text" class="form-control item-subtotal-display bg-white"
                                                                id="item_subtotal_display-0" value="Rp 0" readonly>
                                                     </div>
 
@@ -233,7 +277,7 @@
                                                         <i class="fas fa-receipt me-1"></i>
                                                         Total Harga Semua Item
                                                     </label>
-                                                    <input type="text" class="form-control form-control bg-light" 
+                                                    <input type="text" class="form-control form-control bg-light"
                                                            id="overall_sub_total_display" value="Rp 0" readonly>
                                                 </div>
 
@@ -242,8 +286,8 @@
                                                         <i class="fas fa-percent me-1"></i>
                                                         Diskon Transaksi (Rp)
                                                     </label>
-                                                    <input type="number" class="form-control @error('global_discount') is-invalid @enderror" 
-                                                           id="global_discount" name="global_discount" 
+                                                    <input type="number" class="form-control @error('global_discount') is-invalid @enderror"
+                                                           id="global_discount" name="global_discount"
                                                            value="{{ old('global_discount', 0) }}" min="0" step="0.01" placeholder="0">
                                                     @error('global_discount')
                                                         <div class="invalid-feedback">{{ $message }}</div>
@@ -255,7 +299,7 @@
                                                         <i class="fas fa-dollar-sign me-1"></i>
                                                         TOTAL AKHIR
                                                     </label>
-                                                    <input type="text" class="form-control form-control fw-bold text-primary border-primary" 
+                                                    <input type="text" class="form-control form-control fw-bold text-primary border-primary"
                                                            id="final_total_display" value="Rp 0" readonly>
                                                     <input type="hidden" id="final_total_hidden" name="total_price">
                                                 </div>
@@ -267,8 +311,8 @@
                                                     <i class="fas fa-credit-card me-1"></i>
                                                     Metode Pembayaran <span class="text-danger">*</span>
                                                 </label>
-                                                <select class="form-select @error('payment_method') is-invalid @enderror" 
-                                                        id="payment_method" name="payment_method" required>
+                                                <select class="form-select @error('payment_method') is-invalid @enderror"
+                                                         id="payment_method" name="payment_method" required>
                                                     <option value="">-- Pilih Metode --</option>
                                                     <option value="tunai" {{ old('payment_method') == 'tunai' ? 'selected' : '' }}>
                                                         Tunai
@@ -288,13 +332,25 @@
                                                 @enderror
                                             </div>
 
+                                            {{-- <div class="form-group">
+                                                <label for="proof_of_transfer_file" class="form-label fw-semibold">
+                                                    <i class="fas fa-upload me-1"></i>
+                                                    Bukti Transfer (Jika Transfer Bank)
+                                                </label>
+                                                <input type="file" class="form-control @error('proof_of_transfer_file') is-invalid @enderror"
+                                                       id="proof_of_transfer_file" name="proof_of_transfer_file" accept="image/*,application/pdf">
+                                                @error('proof_of_transfer_file')
+                                                    <div class="invalid-feedback">{{ $message }}</div>
+                                                @enderror
+                                            </div> --}}
+
                                             <div class="form-group">
                                                 <label for="status" class="form-label fw-semibold">
                                                     <i class="fas fa-flag me-1"></i>
                                                     Status Transaksi <span class="text-danger">*</span>
                                                 </label>
-                                                <select class="form-select @error('status') is-invalid @enderror" 
-                                                        id="status" name="status" required>
+                                                <select class="form-select @error('status') is-invalid @enderror"
+                                                         id="status" name="status" required>
                                                     <option value="pending" {{ old('status') == 'pending' ? 'selected' : '' }}>
                                                         Pending
                                                     </option>
@@ -377,11 +433,6 @@
             box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
         }
 
-        /* .form-control-lg {
-            padding: 12px 20px;
-            font-size: 1.1rem;
-        } */
-
         .item-row {
             background: #f8f9fc;
             border: 2px solid #e3e6f0;
@@ -417,11 +468,6 @@
             transition: all 0.3s ease;
         }
 
-        /* .btn-lg {
-            padding: 12px 30px;
-            font-size: 1.1rem;
-        } */
-
         .btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
@@ -443,12 +489,12 @@
             .section-body {
                 padding: 15px;
             }
-            
+
             .item-row {
                 margin-bottom: 1rem;
             }
-            
-            .item-row .col-md-2, 
+
+            .item-row .col-md-2,
             .item-row .col-md-4 {
                 margin-bottom: 1rem;
             }
@@ -488,13 +534,13 @@
                 const price = priceInput ? parseFloat(priceInput.value) : 0;
                 // Parse quantity, if empty or invalid, treat as 0 for calculation, but
                 // the event listener on qtyInput will correct it to 1
-                const qty = qtyInput ? parseInt(qtyInput.value) || 0 : 0; 
+                const qty = qtyInput ? parseInt(qtyInput.value) || 0 : 0;
 
                 let itemSubtotal = 0;
                 if (!isNaN(price) && !isNaN(qty)) {
                     itemSubtotal = price * qty;
                 }
-                
+
                 if (itemSubtotalDisplay) {
                     itemSubtotalDisplay.value = formatRupiah(itemSubtotal);
                 }
@@ -519,7 +565,7 @@
             const itemTypeInput = row.querySelector('.item-type-input');
             const itemIdInput = row.querySelector('.item-id-input');
             const itemSubtotalDisplay = row.querySelector('.item-subtotal-display');
-            
+
             // New: Quantity buttons
             const qtyMinusButton = row.querySelector('.btn-qty-minus');
             const qtyPlusButton = row.querySelector('.btn-qty-plus');
@@ -613,6 +659,7 @@
                 });
             }
 
+            // Initial setup for existing rows or newly cloned rows
             if (itemSelect.value) {
                 const selectedOption = itemSelect.options[itemSelect.selectedIndex];
                 const price = selectedOption.dataset.price || 0;
@@ -636,7 +683,7 @@
 
             const newRow = firstRowTemplate.cloneNode(true);
             newRow.setAttribute('data-item-index', itemIndex);
-            
+
             // Add fade in animation
             newRow.style.opacity = '0';
             newRow.style.transform = 'translateY(20px)';
@@ -651,13 +698,13 @@
                 if (el.tagName === 'LABEL' && el.htmlFor) {
                     el.htmlFor = el.htmlFor.replace(/-\d+/, `-${itemIndex}`);
                 }
-                
+
                 // Clear values for the new row
                 if (el.classList.contains('price-input') || el.classList.contains('item-type-input') || el.classList.contains('item-id-input')) {
                     el.value = '';
                 } else if (el.tagName === 'SELECT') {
                     el.selectedIndex = 0;
-                } else if (el.type === 'number') {
+                } else if (el.type === 'number' && el.classList.contains('qty-input')) {
                     el.value = 1; // Always start new quantity at 1
                 } else if (el.type === 'text' && el.classList.contains('item-subtotal-display')) {
                     el.value = formatRupiah(0);
@@ -667,20 +714,20 @@
             });
 
             itemsContainer.appendChild(newRow);
-            
+
             // Animate in
             setTimeout(() => {
                 newRow.style.transition = 'all 0.3s ease';
                 newRow.style.opacity = '1';
                 newRow.style.transform = 'translateY(0)';
             }, 10);
-            
+
             addEventListenersToNewRow(newRow);
             itemIndex++;
             calculateTotals();
         });
 
-        // Initialize listeners for the first item row
+        // Initialize listeners for the first item row (data-item-index="0")
         const initialItemRow = document.querySelector('.item-row[data-item-index="0"]');
         if (initialItemRow) {
             addEventListenersToNewRow(initialItemRow);
@@ -689,10 +736,10 @@
         globalDiscountInput.addEventListener('input', calculateTotals);
 
         calculateTotals();
-        
+
         form.addEventListener('submit', function (e) {
             // Re-calculate totals one last time before submission to ensure accuracy
-            calculateTotals(); 
+            calculateTotals();
 
             const total = parseFloat(finalTotalHidden.value);
             if (isNaN(total) || total < 0) {
@@ -700,6 +747,15 @@
                 alert('Total harga tidak valid. Periksa kembali data item dan diskon.');
             }
         });
+
+        // Optional: Tampilkan pesan error validasi global jika ada
+        @if ($errors->any())
+            let errorMessages = [];
+            @foreach ($errors->all() as $error)
+                errorMessages.push("{{ $error }}");
+            @endforeach
+            alert('Terjadi kesalahan validasi:\n\n' + errorMessages.join('\n'));
+        @endif
     });
 </script>
 @endpush
