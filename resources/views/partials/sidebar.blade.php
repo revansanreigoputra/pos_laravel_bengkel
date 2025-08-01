@@ -141,6 +141,11 @@
                                 <a class="dropdown-item {{ request()->is('laporan/pembelian') ? 'active' : '' }}"
                                     href="{{ route('laporan.pembelian') }}">Laporan Pembelian</a>
                                 @endcan --}}
+
+                                {{-- @can('report.availble-stock') --}}
+                                <a href="{{ route('report.sparepart-report') }}" class="dropdown-item">Laporan Stok Sparepart</a>
+                                {{-- @endcan --}}
+
                             </div>
                         </div>
                     </div>
