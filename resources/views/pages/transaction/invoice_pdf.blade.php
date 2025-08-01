@@ -162,7 +162,6 @@
                     <table>
                         <tr>
                             <td class="title text-left">
-                                {{-- Pastikan path logo benar --}}
                                 <img src="{{ public_path('assets/logo.png') }}" class="logo">
                                 <h1 class="company-name-header">{{ $nama_bengkel ?? 'Nama Bengkel Anda' }}</h1>
                             </td>
@@ -221,7 +220,7 @@
             </tr>
 
             @foreach ($transaction->items as $item)
-                <tr class="item {{ $loop->last ? 'last' : '' }}"> {{-- Tambahkan kelas 'last' untuk item terakhir --}}
+                <tr class="item {{ $loop->last ? 'last' : '' }}">
                     <td class="text-left">
                         @if ($item->item_type == 'service' && $item->service)
                             {{ $item->service->nama }} (Jasa)

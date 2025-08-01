@@ -62,7 +62,7 @@
                                 @endcan
                                 @can('sparepart.view')
                                 <a class="dropdown-item {{ request()->is('sparepart*') ? 'active' : '' }}"
-                                    href="{{ route('sparepart.index') }}">Sparepart</a>
+                                    href="{{ route('spareparts.index') }}">Sparepart</a>
                                 @endcan
                                 @can('service.view')
                                 <a class="dropdown-item {{ request()->is('service*') ? 'active' : '' }}"
@@ -86,7 +86,7 @@
                 </li>
 
                 <!-- Transaksi -->
-                <li class="nav-item dropdown {{ request()->is('pembelian*') || request()->is('transaction*') || request()->is('stock-handle*') ? 'active' : '' }}">
+                <li class="nav-item dropdown {{ request()->is('purchase_orders*') || request()->is('transaction*') || request()->is('stock-handle*') ? 'active' : '' }}">
                     <a class="nav-link dropdown-toggle" href="#" aria-expanded="false">
                         <span class="nav-link-icon d-md-none d-lg-inline-block">
                             <!-- Icon Transaksi -->
@@ -100,12 +100,12 @@
                         </span>
                         <span class="nav-link-title">Transaksi</span>
                     </a>
-                    <div class="dropdown-menu {{ request()->is('pembelian*') || request()->is('transaction*') || request()->is('stock-handle*') ? 'show' : '' }}">
+                    <div class="dropdown-menu {{ request()->is('purchase_orders*') || request()->is('transaction*') || request()->is('stock-handle*') ? 'show' : '' }}">
                         <div class="dropdown-menu-columns">
                             <div class="dropdown-menu-column">
-                                @can('stock-handle.view')
-                                    <a class="dropdown-item {{ request()->is('stock-handle*') ? 'active' : '' }}"
-                                        href="{{ route('stock-handle.index') }}">Pembelian Sparepart</a>
+                                @can('purchase_order.view')
+                                    <a class="dropdown-item {{ request()->is('purchase_orders*') ? 'active' : '' }}"
+                                        href="{{ route('purchase_orders.index') }}">Pesanan Pembelian</a>
                                 @endcan
                                 @can('transaction.view')
                                     <a class="dropdown-item {{ request()->is('transaction*') ? 'active' : '' }}"

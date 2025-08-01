@@ -64,14 +64,28 @@ class PermissionSeeder extends Seeder
             'jenis-kendaraan.store',
             'jenis-kendaraan.update',
             'jenis-kendaraan.delete',
-            'stock-handle.view',
-            'stock-handle.create',
-            'stock-handle.store',
-            'stock-handle.edit',
-            'stock-handle.update',
-            'stock-handle.delete',
-            'stock-handle.quick-create-sparepart',
+            // 'stock-handle.view',
+            // 'stock-handle.create',
+            // 'stock-handle.store',
+            // 'stock-handle.edit',
+            // 'stock-handle.update',
+            // 'stock-handle.delete',
+            // 'stock-handle.quick-create-sparepart',
             'report.transaction',
+            // --- Permissions baru untuk Purchase Orders ---
+            'purchase_order.view',
+            'purchase_order.create',
+            'purchase_order.store',
+            'purchase_order.edit',
+            'purchase_order.update',
+            'purchase_order.delete',
+            // --- Permissions baru untuk Purchase Order Items ---
+            'purchase_order_item.view',
+            'purchase_order_item.create',
+            'purchase_order_item.store',
+            'purchase_order_item.edit',
+            'purchase_order_item.update',
+            'purchase_order_item.delete',
         ];
 
         foreach ($permissions as $permission) {
@@ -85,10 +99,6 @@ class PermissionSeeder extends Seeder
         // Beri permission tertentu ke kasir
         $kasirRole = Role::firstOrCreate(['name' => 'kasir']);
         $kasirPermissions = [
-            // 'category.view',
-            // 'service.view',
-            // 'supplier.view',
-            // 'customer.view',
             'service.view',
             'category.view',
             'supplier.view',
@@ -96,7 +106,7 @@ class PermissionSeeder extends Seeder
             'user.view',
             'sparepart.view',
             'jenis-kendaraan.view',
-            'stock-handle.view',
+            // 'stock-handle.view',
             'transaction.view',
             'transaction.create',
             'transaction.store',
@@ -104,6 +114,9 @@ class PermissionSeeder extends Seeder
             'transaction.update',
             'transaction.delete',
             'report.transaction',
+            // Jika kasir perlu melihat pesanan pembelian (tapi tidak mengelola)
+            // 'purchase_order.view',
+            // 'purchase_order_item.view',
         ];
         $kasirRole->syncPermissions($kasirPermissions);
     }

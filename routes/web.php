@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\SupplierSparepartStockController;
 use App\Http\Controllers\SparepartController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CategoryController;
@@ -11,10 +10,12 @@ use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\TransactionController;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\JenisKendaraanController;
-use App\Models\Supplier; // Ini sepertinya tidak digunakan di routes, bisa dihapus jika tidak ada keperluan lain
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\PurchaseOrderController;     // Import controller baru
+use App\Http\Controllers\PurchaseOrderItemController; // Import controller baru
+
+use Illuminate\Support\Facades\Route;
 
 // Route untuk Dashboard
 Route::get('/', [DashboardController::class, 'index'])
@@ -77,7 +78,7 @@ Route::middleware('auth')->group(function () {
         Route::middleware('permission:user.delete')->delete('/{user}', [UserController::class, 'destroy'])->name('user.destroy');
     });
 
-    // Transaction
+    // Transaction (Penjualan)
     Route::prefix('transaction')->group(function () {
         Route::middleware('permission:transaction.view')->get('/', [TransactionController::class, 'index'])->name('transaction.index');
         Route::middleware('permission:transaction.create')->get('/create', [TransactionController::class, 'create'])->name('transaction.create');
@@ -86,6 +87,14 @@ Route::middleware('auth')->group(function () {
         Route::middleware('permission:transaction.update')->put('/{transaction}', [TransactionController::class, 'update'])->name('transaction.update');
         Route::middleware('permission:transaction.delete')->delete('/{transaction}', [TransactionController::class, 'destroy'])->name('transaction.destroy');
     });
+
+    // Purchase Orders (Pembelian) - Menggantikan 'stock-handle' untuk manajemen pembelian utama
+    Route::resource('purchase_orders', PurchaseOrderController::class)
+        ->middleware('permission:purchase_order.view'); // Terapkan permission ke resource controller
+
+    // Purchase Order Items - Untuk mengelola item di dalam pesanan pembelian
+    Route::resource('purchase_order_items', PurchaseOrderItemController::class)
+        ->middleware('permission:purchase_order_item.view'); // Terapkan permission ke resource controller
 
     // Jenis Kendaraan
     Route::prefix('jenis-kendaraan')->group(function () {
@@ -98,39 +107,35 @@ Route::middleware('auth')->group(function () {
     // Laporan
     Route::prefix('laporan')->group(function () {
         Route::middleware('permission:report.transaction')->get('/transaksi', [ReportController::class, 'transactionReport'])->name('report.transaction');
+        // Jika Anda menambahkan laporan pembelian di masa mendatang, bisa ditambahkan di sini:
+        // Route::middleware('permission:report.purchase')->get('/pembelian', [ReportController::class, 'purchaseReport'])->name('report.purchase');
     });
 
 });
 
 require __DIR__ . '/auth.php';
 
-// Sparepart (resource route)
-// Catatan: Route::resource secara otomatis membuat banyak rute.
-// Pastikan tidak ada duplikasi rute GET/POST/PUT/DELETE yang didefinisikan secara manual
-// sebelum atau sesudah resource route jika mereka mengarah ke URI yang sama.
-Route::resource('sparepart', SparepartController::class);
+// Sparepart (resource route) - Mengubah URI menjadi plural untuk konsistensi
+Route::resource('spareparts', SparepartController::class);
 
-// Route untuk penanganan stok sparepart (SupplierSparepartStockController)
-// Penting: Definisi rute spesifik harus diletakkan sebelum resource route
-// jika mereka memiliki pola URL yang tumpang tindih.
-Route::get('/stock-handle/{stock}/download-invoice', [SupplierSparepartStockController::class, 'downloadInvoice'])
-    ->name('stock-handle.download-invoice');
+// Rute 'stock-handle' yang lama telah dihapus atau dikomentari
+// karena fungsionalitasnya kini ditangani oleh 'purchase_orders' dan 'purchase_order_items'
+// Route::get('/stock-handle/{stock}/download-invoice', [SupplierSparepartStockController::class, 'downloadInvoice'])->name('stock-handle.download-invoice');
+// Route::resource('stock-handle', SupplierSparepartStockController::class)
+//     ->parameters([
+//         'stock-handle' => 'stock'
+//     ])
+//     ->names([
+//         'index' => 'stock-handle.index',
+//         'create' => 'stock-handle.create',
+//         'store' => 'stock-handle.store',
+//         'show' => 'stock-handle.show',
+//         'edit' => 'stock-handle.edit',
+//         'update' => 'stock-handle.update',
+//         'destroy' => 'stock-handle.destroy',
+//     ]);
+// Route::post('/stock-handle/quick-store', [SupplierSparepartStockController::class, 'quickStore'])->name('stock-handle.quick-store');
 
-Route::resource('stock-handle', SupplierSparepartStockController::class)
-    ->parameters([
-        'stock-handle' => 'stock'
-    ])
-    ->names([
-        'index' => 'stock-handle.index',
-        'create' => 'stock-handle.create',
-        'store' => 'stock-handle.store',
-        'show' => 'stock-handle.show',
-        'edit' => 'stock-handle.edit',
-        'update' => 'stock-handle.update',
-        'destroy' => 'stock-handle.destroy',
-    ]);
-
-Route::post('/stock-handle/quick-store', [SupplierSparepartStockController::class, 'quickStore'])->name('stock-handle.quick-store');
 
 // Export PDF/Excel
 Route::get('/supplier/export-pdf', [SupplierController::class, 'exportPDF'])->name('supplier.export-pdf');
