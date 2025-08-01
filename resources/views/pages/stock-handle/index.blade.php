@@ -4,15 +4,14 @@
 
 @section('action')
     @can('stock-handle.create')
-          <a class="btn btn-warning"  href="{{ route('stock-handle.create') }}">Tambah Pembelian</a>
+        <a class="btn btn-warning" href="{{ route('stock-handle.create') }}">Tambah Pembelian</a>
     @endcan
-   {{-- @can('stock-handle.quick-create-sparepart')
+    {{-- @can('stock-handle.quick-create-sparepart')
     <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#quickAddSparepartModal">
         Tambah Sparepart
     </button>
-    @include('pages.stock-handle.quick-create-sparepart') --}}
-{{-- @endcan --}}
-
+    @include('pages.stock-handle.quick-create-sparepart')
+    @endcan --}}
 @endsection
 
 @section('content')
@@ -31,6 +30,8 @@
                                         <th>Kuantitas</th>
                                         <th>Harga Beli</th>
                                         <th>Tanggal Terima</th>
+                                        <th>Nomor Invoice</th> {{-- Tambah Kolom Nomor Invoice --}}
+                                        <th>File Invoice</th> {{-- Tambah Kolom File Invoice --}}
                                         <th>Catatan</th>
                                         <th>Aksi</th>
                                     </tr>
@@ -44,6 +45,16 @@
                                             <td>{{ $stock->quantity }}</td>
                                             <td>Rp {{ number_format($stock->purchase_price, 0, ',', '.') }}</td>
                                             <td>{{ $stock->received_date ? \Carbon\Carbon::parse($stock->received_date)->format('d M Y') : '-' }}</td>
+                                            <td>{{ $stock->invoice_number ?? '-' }}</td> {{-- Tampilkan Nomor Invoice --}}
+                                            <td>
+                                                @if($stock->invoice_file_path)
+                                                    <a href="{{ route('stock-handle.download-invoice', $stock->id) }}" class="btn btn-info btn-sm" title="Download Invoice">
+                                                        <i class="fas fa-file-invoice"></i> Lihat
+                                                    </a>
+                                                @else
+                                                    -
+                                                @endif
+                                            </td> {{-- Tampilkan Link Download File Invoice --}}
                                             <td>{{ $stock->note ?? '-' }}</td>
                                             <td>
                                                 @can('stock-handle.update')
@@ -55,7 +66,7 @@
                                                     <button class="btn btn-danger btn-sm" data-bs-toggle="modal"
                                                         data-bs-target="#deleteStockHandleModal-{{ $stock->id }}">Hapus</button>
                                                     <x-modal.delete-confirm id="deleteStockHandleModal-{{ $stock->id }}"
-                                                        :route="route('stock-handle.destroy', $stock->id)" item="{{ $stock->name }}"
+                                                        :route="route('stock-handle.destroy', $stock->id)" item="{{ $stock->sparepart->name }} ({{ $stock->quantity }})"
                                                         title="Hapus Data Pembelian?"
                                                         description="Data Pembelian yang dihapus tidak bisa dikembalikan." />
                                                 @endcan
@@ -63,7 +74,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="8" class="text-center">No stock records available.</td>
+                                            <td colspan="10" class="text-center">Belum ada catatan pembelian stok sparepart.</td> {{-- Sesuaikan colspan --}}
                                         </tr>
                                     @endforelse
                                 </tbody>
@@ -78,5 +89,4 @@
             </div>
         </div>
     </div>
-    
 @endsection

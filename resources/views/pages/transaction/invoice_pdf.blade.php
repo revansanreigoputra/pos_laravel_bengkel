@@ -3,22 +3,30 @@
 <head>
     <title>Invoice #{{ $transaction->invoice_number }}</title>
     <style>
+        @page {
+            size: landscape; /* Tetap landscape */
+            margin: 10mm; /* Mengurangi margin halaman */
+        }
+
         body {
             font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif;
             text-align: center;
-            color: #777;
-            font-size: 12px;
+            color: #555; /* Warna teks lebih gelap sedikit */
+            font-size: 11px; /* Mengurangi ukuran font dasar */
+            margin: 0;
+            padding: 0;
         }
 
         .invoice-box {
-            max-width: 800px;
-            margin: auto;
-            padding: 20px;
+            max-width: 100%; /* Gunakan lebar penuh yang tersedia di halaman landscape */
+            margin: 0 auto; /* Tengah secara horizontal */
+            padding: 15px; /* Mengurangi padding */
             border: 1px solid #eee;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
-            font-size: 14px;
-            line-height: 20px;
-            color: #555;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.1); /* Sedikit mengurangi bayangan */
+            font-size: 13px; /* Ukuran font utama invoice */
+            line-height: 18px; /* Mengurangi line-height */
+            color: #333; /* Warna teks utama */
+            box-sizing: border-box;
         }
 
         .invoice-box table {
@@ -29,7 +37,7 @@
         }
 
         .invoice-box table td {
-            padding: 5px;
+            padding: 4px; /* Mengurangi padding sel tabel */
             vertical-align: top;
         }
 
@@ -38,33 +46,33 @@
         }
 
         .invoice-box table tr.top table td {
-            padding-bottom: 20px;
+            padding-bottom: 15px; /* Mengurangi padding */
         }
 
         .invoice-box table tr.top table td.title {
-            font-size: 30px;
-            line-height: 30px;
+            font-size: 26px; /* Mengurangi ukuran font judul */
+            line-height: 26px;
             color: #333;
         }
 
         .invoice-box table tr.information table td {
-            padding-bottom: 10px;
+            padding-bottom: 8px; /* Mengurangi padding */
         }
 
         .invoice-box table tr.heading td {
-            background: #eee;
+            background: #f0f0f0; /* Warna latar belakang heading sedikit lebih terang */
             border-bottom: 1px solid #ddd;
             font-weight: bold;
-            padding: 8px;
+            padding: 6px 8px; /* Mengurangi padding */
         }
 
         .invoice-box table tr.details td {
-            padding-bottom: 15px;
+            padding-bottom: 10px; /* Mengurangi padding */
         }
 
         .invoice-box table tr.item td {
             border-bottom: 1px solid #eee;
-            padding: 8px;
+            padding: 6px 8px; /* Mengurangi padding */
         }
 
         .invoice-box table tr.item.last td {
@@ -75,19 +83,29 @@
             border-top: 2px solid #eee;
             font-weight: bold;
             text-align: right;
-            padding-top: 10px;
+            padding-top: 8px; /* Mengurangi padding */
         }
 
+        /* Adjusted column widths for landscape - more aggressive */
         .invoice-box .column-header {
-            width: 60%;
+            width: 55%; /* Deskripsi lebih lebar */
+            text-align: left !important;
         }
-        .invoice-box .column-qty, .invoice-box .column-price, .invoice-box .column-total {
-            width: 10%;
+        .invoice-box .column-qty {
+            width: 10%; /* Kuantitas lebih kecil */
+            text-align: right;
+        }
+        .invoice-box .column-price {
+            width: 18%; /* Harga satuan */
+            text-align: right;
+        }
+        .invoice-box .column-total {
+            width: 17%; /* Subtotal */
             text-align: right;
         }
 
         .signature-box {
-            margin-top: 30px;
+            margin-top: 20px; /* Mengurangi margin atas */
             width: 100%;
             text-align: center;
         }
@@ -96,14 +114,44 @@
         }
         .signature-box td {
             width: 50%;
-            padding-top: 40px;
+            padding-top: 25px; /* Mengurangi padding untuk tanda tangan */
             vertical-align: top;
             text-align: center;
+            font-size: 11px; /* Mengurangi ukuran font di tanda tangan */
         }
 
         .text-left { text-align: left !important; }
         .text-right { text-align: right !important; }
         .text-center { text-align: center !important; }
+
+        /* Styling untuk logo */
+        .invoice-box .logo {
+            width: 100%;
+            max-width: 100px; /* Mengurangi ukuran maksimal logo */
+            height: auto;
+            display: block; /* Pastikan logo adalah block element */
+            margin-bottom: 5px; /* Sedikit margin bawah */
+        }
+
+        /* Styling untuk nama bengkel di header */
+        .invoice-box .company-name-header {
+            font-size: 18px; /* Ukuran font nama bengkel di header */
+            color: #333;
+            margin-top: 5px;
+            margin-bottom: 0;
+        }
+
+        /* Styling untuk informasi bengkel di information section */
+        .invoice-box .company-info {
+            font-size: 12px; /* Ukuran font info bengkel */
+            line-height: 16px;
+        }
+
+        /* Styling untuk informasi pelanggan */
+        .invoice-box .customer-info {
+            font-size: 12px; /* Ukuran font info pelanggan */
+            line-height: 16px;
+        }
     </style>
 </head>
 <body>
@@ -113,16 +161,16 @@
                 <td colspan="4">
                     <table>
                         <tr>
-                            <td class="title">
+                            <td class="title text-left">
                                 {{-- Pastikan path logo benar --}}
-                                <img src="{{ public_path('assets/logo.png') }}" style="width:100%; max-width:150px;">
-                                <h1>{{ $nama_bengkel ?? 'Nama Bengkel Anda' }}</h1>
+                                <img src="{{ public_path('assets/logo.png') }}" class="logo">
+                                <h1 class="company-name-header">{{ $nama_bengkel ?? 'Nama Bengkel Anda' }}</h1>
                             </td>
 
                             <td class="text-right">
-                                Invoice : {{ $transaction->invoice_number }}<br>
+                                Invoice : <span style="font-weight: bold;">{{ $transaction->invoice_number }}</span><br>
                                 Tanggal : {{ $transaction->transaction_date->format('d-m-Y') }}<br>
-                                Status  : {{ ucfirst($transaction->status) }}
+                                Status  : {{ ucfirst($transaction->status) }}
                             </td>
                         </tr>
                     </table>
@@ -133,19 +181,15 @@
                 <td colspan="4">
                     <table>
                         <tr>
-                            <td>
+                            <td class="company-info text-left">
                                 {{ $nama_bengkel ?? 'Nama Bengkel Anda' }}<br>
                                 {{ $alamat_bengkel ?? 'Alamat Bengkel Anda' }}<br>
                                 Telp: {{ $telepon_bengkel ?? 'Nomor Telepon Bengkel' }}
                             </td>
 
-                            <td class="text-right">
-                                {{-- Mengakses nama pelanggan dari relasi customer --}}
+                            <td class="customer-info text-right">
                                 Pelanggan: {{ $transaction->customer->name ?? 'N/A' }}<br>
-                                {{-- Menambahkan nomor telepon pelanggan dari relasi customer --}}
                                 No. Telp: {{ $transaction->customer->phone ?? 'N/A' }}<br>
-                                {{-- Menambahkan alamat pelanggan dari relasi customer --}}
-                                Alamat: {{ $transaction->customer->address ?? 'N/A' }}<br>
                                 No. Kendaraan: {{ $transaction->vehicle_number ?? '-' }}<br>
                                 Merk/Model: {{ $transaction->vehicle_model ?? '-' }}
                             </td>
@@ -162,7 +206,7 @@
                 <td colspan="3" class="text-left">{{ ucfirst($transaction->payment_method) }}</td>
                 <td class="text-right">
                     @if ($transaction->proof_of_transfer_url)
-                        <a href="{{ asset($transaction->proof_of_transfer_url) }}" target="_blank">Lihat Bukti Transfer</a>
+                        <a href="{{ asset($transaction->proof_of_transfer_url) }}" target="_blank" style="color: #4e73df; text-decoration: none;">Lihat Bukti Transfer</a>
                     @else
                         -
                     @endif
@@ -177,7 +221,7 @@
             </tr>
 
             @foreach ($transaction->items as $item)
-                <tr class="item">
+                <tr class="item {{ $loop->last ? 'last' : '' }}"> {{-- Tambahkan kelas 'last' untuk item terakhir --}}
                     <td class="text-left">
                         @if ($item->item_type == 'service' && $item->service)
                             {{ $item->service->nama }} (Jasa)
@@ -193,6 +237,7 @@
                 </tr>
             @endforeach
 
+            {{-- Baris total disatukan untuk menghemat ruang --}}
             <tr class="total">
                 <td colspan="3" class="text-right">Subtotal:</td>
                 <td class="text-right">Rp {{ number_format($transaction->total_price + $transaction->discount_amount, 0, ',', '.') }}</td>
@@ -204,8 +249,8 @@
             </tr>
             @endif
             <tr class="total">
-                <td colspan="3" class="text-right">**TOTAL AKHIR:**</td>
-                <td class="text-right">**Rp {{ number_format($transaction->total_price, 0, ',', '.') }}**</td>
+                <td colspan="3" class="text-right" style="font-size: 15px;">**TOTAL AKHIR:**</td>
+                <td class="text-right" style="font-size: 15px;">**Rp {{ number_format($transaction->total_price, 0, ',', '.') }}**</td>
             </tr>
         </table>
 
@@ -213,21 +258,20 @@
             <table>
                 <tr>
                     <td>
-                        Hormat Kami,<br><br><br>
+                        Hormat Kami,<br><br>
                         (..............................)<br>
                         {{ $nama_bengkel ?? 'Nama Bengkel Anda' }}
                     </td>
                     <td>
-                        Tanda Tangan Pelanggan,<br><br><br>
+                        Tanda Tangan Pelanggan,<br><br>
                         (..............................)<br>
-                        {{-- Mengakses nama pelanggan dari relasi customer --}}
                         {{ $transaction->customer->name ?? 'Pelanggan' }}
                     </td>
                 </tr>
             </table>
         </div>
 
-        <p style="margin-top: 30px;">
+        <p style="margin-top: 20px; font-size: 11px;">
             Terima kasih atas kunjungan Anda!
         </p>
     </div>
