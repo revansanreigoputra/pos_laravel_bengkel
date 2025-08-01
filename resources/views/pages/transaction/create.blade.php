@@ -178,7 +178,7 @@
                                                             <i class="fas fa-box me-1"></i>
                                                             Pilih Item <span class="text-danger">*</span>
                                                         </label>
-                                                        <select class="form-select item-select @error('items.0.item_full_id') is-invalid @enderror"
+                                                        <select class="form-select item-select select2-init @error('items.0.item_full_id') is-invalid @enderror"
                                                                 name="items[0][item_full_id]" id="item-0" required>
                                                             <option value="">-- Pilih Item --</option>
                                                             <optgroup label="🔧 Layanan Service">
@@ -332,18 +332,6 @@
                                                 @enderror
                                             </div>
 
-                                            {{-- <div class="form-group">
-                                                <label for="proof_of_transfer_file" class="form-label fw-semibold">
-                                                    <i class="fas fa-upload me-1"></i>
-                                                    Bukti Transfer (Jika Transfer Bank)
-                                                </label>
-                                                <input type="file" class="form-control @error('proof_of_transfer_file') is-invalid @enderror"
-                                                       id="proof_of_transfer_file" name="proof_of_transfer_file" accept="image/*,application/pdf">
-                                                @error('proof_of_transfer_file')
-                                                    <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                            </div> --}}
-
                                             <div class="form-group">
                                                 <label for="status" class="form-label fw-semibold">
                                                     <i class="fas fa-flag me-1"></i>
@@ -485,6 +473,36 @@
             border-color: #4e73df !important;
         }
 
+        /* Style untuk Select2 */
+        .select2-container .select2-selection--single {
+            height: 42px;
+            border: 2px solid #e3e6f0;
+            border-radius: 8px;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 38px;
+            padding-left: 15px;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 40px;
+        }
+
+        .select2-container--default .select2-results__option--highlighted {
+            background-color: #4e73df;
+            color: white;
+        }
+
+        .select2-container--default .select2-results__option[aria-selected=true] {
+            background-color: #f8f9fa;
+        }
+
+        .select2-container--default .select2-results__option[aria-selected=true]:hover {
+            background-color: #4e73df;
+            color: white;
+        }
+
         @media (max-width: 768px) {
             .section-body {
                 padding: 15px;
@@ -503,6 +521,10 @@
 @endsection
 
 @push('addon-script')
+<!-- Include Select2 CSS and JS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         let itemIndex = 1;
@@ -514,6 +536,21 @@
         const finalTotalDisplay = document.getElementById('final_total_display');
         const finalTotalHidden = document.getElementById('final_total_hidden');
         const form = document.getElementById('createTransactionForm');
+
+        // Initialize Select2 for all dropdowns with class 'select2-init'
+        function initSelect2() {
+            $('.select2-init').select2({
+                placeholder: 'Pilih Item',
+                allowClear: true,
+                width: '100%',
+                dropdownParent: $('#items-container')
+            });
+        }
+
+        // Call initSelect2 when document is ready
+        $(document).ready(function() {
+            initSelect2();
+        });
 
         function formatRupiah(number) {
             return new Intl.NumberFormat('id-ID', {
@@ -532,8 +569,6 @@
                 const itemSubtotalDisplay = row.querySelector('.item-subtotal-display');
 
                 const price = priceInput ? parseFloat(priceInput.value) : 0;
-                // Parse quantity, if empty or invalid, treat as 0 for calculation, but
-                // the event listener on qtyInput will correct it to 1
                 const qty = qtyInput ? parseInt(qtyInput.value) || 0 : 0;
 
                 let itemSubtotal = 0;
@@ -565,13 +600,17 @@
             const itemTypeInput = row.querySelector('.item-type-input');
             const itemIdInput = row.querySelector('.item-id-input');
             const itemSubtotalDisplay = row.querySelector('.item-subtotal-display');
-
-            // New: Quantity buttons
             const qtyMinusButton = row.querySelector('.btn-qty-minus');
             const qtyPlusButton = row.querySelector('.btn-qty-plus');
 
             if (itemSelect) {
-                itemSelect.addEventListener('change', function () {
+                // Initialize Select2 for this dropdown
+                $(itemSelect).select2({
+                    placeholder: 'Pilih Item',
+                    allowClear: true,
+                    width: '100%',
+                    dropdownParent: $('#items-container')
+                }).on('change', function() {
                     const selected = this.options[this.selectedIndex];
                     const price = selected.dataset.price || 0;
 
@@ -594,39 +633,34 @@
                 priceInput.addEventListener('input', calculateTotals);
             }
 
-            // Updated: Quantity input event listener
             if (qtyInput) {
                 qtyInput.addEventListener('input', function() {
                     let value = this.value;
-                    // Allow empty input for a moment, but then correct to 1 if it's invalid
                     if (value.trim() === '' || isNaN(parseInt(value)) || parseInt(value) < 1) {
-                        this.value = 1; // Default to 1 if empty, not a number, or less than 1
+                        this.value = 1;
                     }
                     calculateTotals();
                 });
             }
 
-            // New: Event listeners for plus/minus buttons
             if (qtyMinusButton) {
                 qtyMinusButton.addEventListener('click', function() {
-                    let currentVal = parseInt(qtyInput.value) || 0; // Handle empty/invalid as 0
-                    if (currentVal > 1) { // Ensure it doesn't go below 1
+                    let currentVal = parseInt(qtyInput.value) || 0;
+                    if (currentVal > 1) {
                         qtyInput.value = currentVal - 1;
-                        qtyInput.dispatchEvent(new Event('input')); // Trigger input event to recalculate
+                        qtyInput.dispatchEvent(new Event('input'));
                     } else if (currentVal === 1) {
-                        // If it's 1, allow it to be cleared if you want, but the input handler will set it back to 1
-                        // Or, you can just do nothing to prevent going below 1
-                        qtyInput.value = ''; // Temporarily clear
-                        qtyInput.dispatchEvent(new Event('input')); // Trigger input event
+                        qtyInput.value = '';
+                        qtyInput.dispatchEvent(new Event('input'));
                     }
                 });
             }
 
             if (qtyPlusButton) {
                 qtyPlusButton.addEventListener('click', function() {
-                    let currentVal = parseInt(qtyInput.value) || 0; // Handle empty/invalid as 0
+                    let currentVal = parseInt(qtyInput.value) || 0;
                     qtyInput.value = currentVal + 1;
-                    qtyInput.dispatchEvent(new Event('input')); // Trigger input event to recalculate
+                    qtyInput.dispatchEvent(new Event('input'));
                 });
             }
 
@@ -634,21 +668,24 @@
                 removeItemButton.addEventListener('click', function () {
                     const currentRows = itemsContainer.querySelectorAll('.item-row');
                     if (currentRows.length > 1) {
-                        // Add fade out animation
                         row.style.transition = 'opacity 0.3s ease';
                         row.style.opacity = '0';
                         setTimeout(() => {
+                            // Destroy Select2 before removing the row
+                            $(row).find('.item-select').select2('destroy');
                             row.remove();
                             calculateTotals();
                         }, 300);
                     } else {
                         // Reset the last row
                         const selectEl = row.querySelector('.item-select');
-                        if (selectEl) selectEl.selectedIndex = 0;
+                        if (selectEl) {
+                            $(selectEl).val('').trigger('change');
+                        }
                         const priceIn = row.querySelector('.price-input');
                         if (priceIn) priceIn.value = '';
                         const qtyIn = row.querySelector('.qty-input');
-                        if (qtyIn) qtyIn.value = 1; // Reset to 1
+                        if (qtyIn) qtyIn.value = 1;
                         const typeIn = row.querySelector('.item-type-input');
                         if (typeIn) typeIn.value = '';
                         const idIn = row.querySelector('.item-id-input');
@@ -659,8 +696,7 @@
                 });
             }
 
-            // Initial setup for existing rows or newly cloned rows
-            if (itemSelect.value) {
+            if (itemSelect && itemSelect.value) {
                 const selectedOption = itemSelect.options[itemSelect.selectedIndex];
                 const price = selectedOption.dataset.price || 0;
                 if (priceInput) priceInput.value = price;
@@ -705,7 +741,7 @@
                 } else if (el.tagName === 'SELECT') {
                     el.selectedIndex = 0;
                 } else if (el.type === 'number' && el.classList.contains('qty-input')) {
-                    el.value = 1; // Always start new quantity at 1
+                    el.value = 1;
                 } else if (el.type === 'text' && el.classList.contains('item-subtotal-display')) {
                     el.value = formatRupiah(0);
                 } else if (el.type === 'text') {
@@ -727,7 +763,7 @@
             calculateTotals();
         });
 
-        // Initialize listeners for the first item row (data-item-index="0")
+        // Initialize listeners for the first item row
         const initialItemRow = document.querySelector('.item-row[data-item-index="0"]');
         if (initialItemRow) {
             addEventListenersToNewRow(initialItemRow);
@@ -738,9 +774,7 @@
         calculateTotals();
 
         form.addEventListener('submit', function (e) {
-            // Re-calculate totals one last time before submission to ensure accuracy
             calculateTotals();
-
             const total = parseFloat(finalTotalHidden.value);
             if (isNaN(total) || total < 0) {
                 e.preventDefault();
@@ -748,7 +782,6 @@
             }
         });
 
-        // Optional: Tampilkan pesan error validasi global jika ada
         @if ($errors->any())
             let errorMessages = [];
             @foreach ($errors->all() as $error)

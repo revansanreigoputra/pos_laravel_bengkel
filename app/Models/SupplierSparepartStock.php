@@ -12,6 +12,8 @@ class SupplierSparepartStock extends Model
         'quantity',
         'purchase_price',
         'received_date',
+        'invoice_number',    // Baru
+        'invoice_file_path', // Baru
         'note',
     ];
 
@@ -25,26 +27,44 @@ class SupplierSparepartStock extends Model
         return $this->belongsTo(Sparepart::class);
     }
 
-    // auto-syncs the quantity column in the spareparts table
+    /**
+     * The "booted" method of the model.
+     *
+     * @return void
+     */
     protected static function booted()
     {
+        // Sinkronkan kuantitas sparepart saat entri stok baru dibuat
         static::created(function ($stock) {
             $stock->syncSparepartQuantity();
         });
 
+        // Sinkronkan kuantitas sparepart saat entri stok diperbarui
         static::updated(function ($stock) {
             $stock->syncSparepartQuantity();
         });
 
+        // Sinkronkan kuantitas sparepart saat entri stok dihapus
         static::deleted(function ($stock) {
             $stock->syncSparepartQuantity();
         });
     }
 
+    /**
+     * Calculates and updates the total quantity of the associated sparepart.
+     * This method assumes that the 'sparepart' model has a 'stockBatches'
+     * relationship that returns all related SupplierSparepartStock entries.
+     *
+     * @return void
+     */
     protected function syncSparepartQuantity()
     {
         $sparepart = $this->sparepart;
-        $sparepart->quantity = $sparepart->stockBatches()->sum('quantity');
-        $sparepart->save();
+        // Pastikan relasi 'stockBatches' ada di model Sparepart
+        // dan mengembalikan semua stok terkait untuk perhitungan total kuantitas.
+        if ($sparepart) {
+            $sparepart->quantity = $sparepart->stockBatches()->sum('quantity');
+            $sparepart->save();
+        }
     }
 }
