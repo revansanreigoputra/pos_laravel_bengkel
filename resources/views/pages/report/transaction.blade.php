@@ -60,7 +60,7 @@
                     <label for="end_date" class="form-label">Sampai Tanggal</label>
                     <input type="date" class="form-control" id="end_date" name="end_date" value="{{ request('end_date') }}">
                 </div>
-                <div class="col-md-4 d-flex justify-content-end">
+                <div class="col-md-2 d-flex justify-content-end">
                     <button type="submit" class="btn btn-primary me-2">Filter</button>
                     <a href="{{ route('report.transaction') }}" class="btn btn-secondary">Reset</a>
                 </div>

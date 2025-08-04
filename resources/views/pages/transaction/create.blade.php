@@ -14,10 +14,25 @@
                         </h4>
                     </div>
                     <div class="card-body">
+                        {{-- Menampilkan pesan sukses atau error dari session --}}
+                        @if (session('success'))
+                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                {{ session('success') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        @endif
+
+                        @if (session('error'))
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                {{ session('error') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        @endif
+
                         <form action="{{ route('transaction.store') }}" method="POST" id="createTransactionForm" enctype="multipart/form-data">
                             @csrf
 
-                            {{-- Section 1: Invoice Information --}}
+                            {{-- Section 1: Informasi Invoice --}}
                             <div class="section-card mb-4">
                                 <div class="section-header">
                                     <i class="fas fa-file-invoice text-primary me-2"></i>
@@ -31,7 +46,7 @@
                                                     <i class="fas fa-hashtag me-1"></i>
                                                     Nomor Invoice
                                                 </label>
-                                                <input type="text" class="form-control form-control @error('invoice_number') is-invalid @enderror"
+                                                <input type="text" class="form-control @error('invoice_number') is-invalid @enderror"
                                                        id="invoice_number" name="invoice_number"
                                                        value="{{ old('invoice_number', 'INV-' . date('Ymd') . '-' . mt_rand(1000, 9999)) }}" readonly>
                                                 @error('invoice_number')
@@ -45,7 +60,7 @@
                                                     <i class="fas fa-calendar me-1"></i>
                                                     Tanggal Transaksi
                                                 </label>
-                                                <input type="date" class="form-control form-control @error('transaction_date') is-invalid @enderror"
+                                                <input type="date" class="form-control @error('transaction_date') is-invalid @enderror"
                                                        id="transaction_date" name="transaction_date"
                                                        value="{{ old('transaction_date', now()->format('Y-m-d')) }}" required>
                                                 @error('transaction_date')
@@ -57,7 +72,7 @@
                                 </div>
                             </div>
 
-                            {{-- Section 2: Customer Information --}}
+                            {{-- Section 2: Informasi Pelanggan --}}
                             <div class="section-card mb-4">
                                 <div class="section-header">
                                     <i class="fas fa-user text-success me-2"></i>
@@ -133,7 +148,7 @@
                                                 </label>
                                                 <input type="text" class="form-control @error('vehicle_number') is-invalid @enderror"
                                                        id="vehicle_number" name="vehicle_number" value="{{ old('vehicle_number') }}"
-                                                       placeholder="Contoh: B 1234 XYZ"> {{-- 'required' dihapus, karena sudah nullable di controller --}}
+                                                       placeholder="Contoh: B 1234 XYZ">
                                                 @error('vehicle_number')
                                                     <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
@@ -157,7 +172,7 @@
                                 </div>
                             </div>
 
-                            {{-- Section 3: Transaction Items --}}
+                            {{-- Section 3: Item Transaksi --}}
                             <div class="section-card mb-4">
                                 <div class="section-header">
                                     <i class="fas fa-shopping-cart text-warning me-2"></i>
@@ -170,7 +185,7 @@
                                 <div class="section-body">
                                     <div class="table-responsive">
                                         <div id="items-container">
-                                            {{-- Item Row Template --}}
+                                            {{-- Item Row Template (akan di-clone atau dibuat baru oleh JS) --}}
                                             <div class="item-row mb-3 p-3 border rounded bg-light" data-item-index="0">
                                                 <div class="row align-items-end">
                                                     <div class="col-md-4">
@@ -190,13 +205,16 @@
                                                             </optgroup>
                                                             <optgroup label="🔩 Sparepart">
                                                                 @foreach ($spareparts as $sparepart)
-                                                                    <option value="sparepart-{{ $sparepart->id }}" data-price="{{ $sparepart->final_selling_price }}">
+                                                                    <option value="sparepart-{{ $sparepart->id }}"
+                                                                            data-price="{{ $sparepart->final_selling_price }}"
+                                                                            data-stock="{{ $sparepart->stock }}">
                                                                         {{ $sparepart->name }}
                                                                         @if($sparepart->isDiscountActive())
                                                                             (Diskon {{ $sparepart->discount_percentage }}% - Rp {{ number_format($sparepart->final_selling_price, 0, ',', '.') }})
                                                                         @else
                                                                             (Rp {{ number_format($sparepart->selling_price, 0, ',', '.') }})
                                                                         @endif
+                                                                        (Stok: {{ $sparepart->stock }})
                                                                     </option>
                                                                 @endforeach
                                                             </optgroup>
@@ -214,7 +232,7 @@
                                                             Harga
                                                         </label>
                                                         <input type="number" class="form-control price-input @error('items.0.price') is-invalid @enderror"
-                                                               name="items[0][price]" id="price-0" step="0.01" placeholder="0" required>
+                                                               name="items[0][price]" id="price-0" step="0.01" placeholder="0" required readonly>
                                                         @error('items.0.price')
                                                             <div class="invalid-feedback">{{ $message }}</div>
                                                         @enderror
@@ -230,11 +248,12 @@
                                                                 <i class="fas fa-minus text-dark">-</i>
                                                             </button>
                                                             <input type="number" class="form-control qty-input @error('items.0.quantity') is-invalid @enderror"
-                                                                   name="items[0][quantity]" id="qty-0" value="1" required>
+                                                                   name="items[0][quantity]" id="qty-0" value="1" required min="1">
                                                             <button class="btn btn-outline-secondary btn-qty-plus" type="button" data-action="plus">
                                                                 <i class="fas fa-plus text-dark">+</i>
                                                             </button>
                                                         </div>
+                                                        <div class="text-danger mt-1 stock-warning" style="display: none;">Stok tidak cukup!</div>
                                                         @error('items.0.quantity')
                                                             <div class="invalid-feedback">{{ $message }}</div>
                                                         @enderror
@@ -262,7 +281,7 @@
                                 </div>
                             </div>
 
-                            {{-- Section 4: Payment Summary --}}
+                            {{-- Section 4: Ringkasan Pembayaran --}}
                             <div class="section-card mb-4">
                                 <div class="section-header">
                                     <i class="fas fa-money-bill-wave text-info me-2"></i>
@@ -277,7 +296,7 @@
                                                         <i class="fas fa-receipt me-1"></i>
                                                         Total Harga Semua Item
                                                     </label>
-                                                    <input type="text" class="form-control form-control bg-light"
+                                                    <input type="text" class="form-control bg-light"
                                                            id="overall_sub_total_display" value="Rp 0" readonly>
                                                 </div>
 
@@ -299,7 +318,7 @@
                                                         <i class="fas fa-dollar-sign me-1"></i>
                                                         TOTAL AKHIR
                                                     </label>
-                                                    <input type="text" class="form-control form-control fw-bold text-primary border-primary"
+                                                    <input type="text" class="form-control fw-bold text-primary border-primary"
                                                            id="final_total_display" value="Rp 0" readonly>
                                                     <input type="hidden" id="final_total_hidden" name="total_price">
                                                 </div>
@@ -365,7 +384,7 @@
                                         <i class="fas fa-arrow-left me-1"></i>
                                         Kembali
                                     </a>
-                                    <button type="submit" class="btn btn-primary btn">
+                                    <button type="submit" class="btn btn-primary btn" id="submitTransactionBtn">
                                         <i class="fas fa-save me-1"></i>
                                         Simpan Transaksi
                                     </button>
@@ -378,6 +397,7 @@
         </div>
     </div>
 
+    {{-- Custom Styles --}}
     <style>
         .section-card {
             border: 1px solid #e3e6f0;
@@ -448,347 +468,222 @@
             border: 2px solid #e3e6f0;
             margin-top: 20px;
         }
-
-        .btn {
-            border-radius: 8px;
-            font-weight: 600;
-            padding: 10px 20px;
-            transition: all 0.3s ease;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-
-        .text-danger {
-            color: #e74a3b !important;
-        }
-
-        .bg-light {
-            background-color: #f8f9fc !important;
-        }
-
-        .border-primary {
-            border-color: #4e73df !important;
-        }
-
-        /* Style untuk Select2 */
-        .select2-container .select2-selection--single {
-            height: 42px;
-            border: 2px solid #e3e6f0;
-            border-radius: 8px;
-        }
-
-        .select2-container--default .select2-selection--single .select2-selection__rendered {
-            line-height: 38px;
-            padding-left: 15px;
-        }
-
-        .select2-container--default .select2-selection--single .select2-selection__arrow {
-            height: 40px;
-        }
-
-        .select2-container--default .select2-results__option--highlighted {
-            background-color: #4e73df;
-            color: white;
-        }
-
-        .select2-container--default .select2-results__option[aria-selected=true] {
-            background-color: #f8f9fa;
-        }
-
-        .select2-container--default .select2-results__option[aria-selected=true]:hover {
-            background-color: #4e73df;
-            color: white;
-        }
-
-        @media (max-width: 768px) {
-            .section-body {
-                padding: 15px;
-            }
-
-            .item-row {
-                margin-bottom: 1rem;
-            }
-
-            .item-row .col-md-2,
-            .item-row .col-md-4 {
-                margin-bottom: 1rem;
-            }
-        }
     </style>
-@endsection
 
-@push('addon-script')
-<!-- Include Select2 CSS and JS -->
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    {{-- JavaScript for dynamic item addition, price calculation, and stock check --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let itemIndex = 0; // Keep track of the item index for naming inputs
 
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        let itemIndex = 1;
+            // Function to format number to Rupiah
+            function formatRupiah(number) {
+                return new Intl.NumberFormat('id-ID', {
+                    style: 'currency',
+                    currency: 'IDR',
+                    minimumFractionDigits: 0
+                }).format(number);
+            }
 
-        const itemsContainer = document.getElementById('items-container');
-        const addItemButton = document.getElementById('add-item');
-        const globalDiscountInput = document.getElementById('global_discount');
-        const overallSubTotalDisplay = document.getElementById('overall_sub_total_display');
-        const finalTotalDisplay = document.getElementById('final_total_display');
-        const finalTotalHidden = document.getElementById('final_total_hidden');
-        const form = document.getElementById('createTransactionForm');
+            // Function to calculate and update item subtotal and overall totals
+            function updateTotals() {
+                let overallSubTotal = 0;
+                document.querySelectorAll('.item-row').forEach(function(row) {
+                    const price = parseFloat(row.querySelector('.price-input').value) || 0;
+                    const quantity = parseInt(row.querySelector('.qty-input').value) || 0;
+                    const itemSubtotal = price * quantity;
+                    row.querySelector('.item-subtotal-display').value = formatRupiah(itemSubtotal);
+                    overallSubTotal += itemSubtotal;
+                });
 
-        // Initialize Select2 for all dropdowns with class 'select2-init'
-        function initSelect2() {
-            $('.select2-init').select2({
-                placeholder: 'Pilih Item',
-                allowClear: true,
-                width: '100%',
-                dropdownParent: $('#items-container')
-            });
-        }
+                const globalDiscount = parseFloat(document.getElementById('global_discount').value) || 0;
+                const finalTotal = overallSubTotal - globalDiscount;
 
-        // Call initSelect2 when document is ready
-        $(document).ready(function() {
-            initSelect2();
-        });
+                document.getElementById('overall_sub_total_display').value = formatRupiah(overallSubTotal);
+                document.getElementById('final_total_display').value = formatRupiah(finalTotal);
+                document.getElementById('final_total_hidden').value = finalTotal; // Hidden input for form submission
+            }
 
-        function formatRupiah(number) {
-            return new Intl.NumberFormat('id-ID', {
-                style: 'currency',
-                currency: 'IDR',
-                minimumFractionDigits: 0
-            }).format(number);
-        }
+            // Function to check stock for a given item row
+            function checkStock(itemRow) {
+                const itemSelect = itemRow.querySelector('.item-select');
+                const qtyInput = itemRow.querySelector('.qty-input');
+                const stockWarning = itemRow.querySelector('.stock-warning');
+                // Get the currently selected option from the native select element
+                const selectedNativeOption = itemSelect.options[itemSelect.selectedIndex];
 
-        function calculateTotals() {
-            let overallSubTotal = 0;
+                // Only check stock for spareparts
+                if (selectedNativeOption && selectedNativeOption.value.startsWith('sparepart-')) {
+                    // Use the data-stock attribute directly from the native option
+                    const availableStock = parseInt(selectedNativeOption.dataset.stock) || 0;
+                    const currentQuantity = parseInt(qtyInput.value) || 0;
 
-            document.querySelectorAll('.item-row').forEach(row => {
+                    if (currentQuantity > availableStock) {
+                        stockWarning.textContent = `Stok tidak cukup! (Sisa: ${availableStock})`; // More informative message
+                        stockWarning.style.display = 'block';
+                        qtyInput.classList.add('is-invalid');
+                        return false; // Stock insufficient
+                    } else {
+                        stockWarning.style.display = 'none';
+                        qtyInput.classList.remove('is-invalid');
+                        return true; // Stock sufficient
+                    }
+                } else {
+                    stockWarning.style.display = 'none'; // Hide warning for services or unselected items
+                    qtyInput.classList.remove('is-invalid');
+                    return true;
+                }
+            }
+
+            // Function to add event listeners to a new item row
+            function setupItemRowListeners(row) {
+                const itemSelect = row.querySelector('.item-select');
                 const priceInput = row.querySelector('.price-input');
                 const qtyInput = row.querySelector('.qty-input');
-                const itemSubtotalDisplay = row.querySelector('.item-subtotal-display');
+                const itemTypeInput = row.querySelector('.item-type-input');
+                const itemIdInput = row.querySelector('.item-id-input');
+                const removeButton = row.querySelector('.remove-item');
 
-                const price = priceInput ? parseFloat(priceInput.value) : 0;
-                const qty = qtyInput ? parseInt(qtyInput.value) || 0 : 0;
+                // Initialize Select2 (if available)
+                if (typeof jQuery !== 'undefined' && typeof jQuery.fn.select2 !== 'undefined') {
+                    jQuery(itemSelect).select2();
 
-                let itemSubtotal = 0;
-                if (!isNaN(price) && !isNaN(qty)) {
-                    itemSubtotal = price * qty;
-                }
+                    // Use Select2's custom 'change' event for better compatibility
+                    jQuery(itemSelect).on('change', function() {
+                        // Get the selected option using jQuery's find and data method
+                        const selectedOption = jQuery(this).find(':selected');
+                        if (selectedOption.length > 0) {
+                            const fullId = selectedOption.val();
+                            const [type, id] = fullId.split('-');
+                            itemTypeInput.value = type;
+                            itemIdInput.value = id;
 
-                if (itemSubtotalDisplay) {
-                    itemSubtotalDisplay.value = formatRupiah(itemSubtotal);
-                }
-
-                overallSubTotal += itemSubtotal;
-            });
-
-            const globalDiscount = parseFloat(globalDiscountInput.value) || 0;
-            let finalTotal = overallSubTotal - globalDiscount;
-            if (finalTotal < 0) finalTotal = 0;
-
-            overallSubTotalDisplay.value = formatRupiah(overallSubTotal);
-            finalTotalDisplay.value = formatRupiah(finalTotal);
-            finalTotalHidden.value = finalTotal.toFixed(2);
-        }
-
-        function addEventListenersToNewRow(row) {
-            const itemSelect = row.querySelector('.item-select');
-            const priceInput = row.querySelector('.price-input');
-            const qtyInput = row.querySelector('.qty-input');
-            const removeItemButton = row.querySelector('.remove-item');
-            const itemTypeInput = row.querySelector('.item-type-input');
-            const itemIdInput = row.querySelector('.item-id-input');
-            const itemSubtotalDisplay = row.querySelector('.item-subtotal-display');
-            const qtyMinusButton = row.querySelector('.btn-qty-minus');
-            const qtyPlusButton = row.querySelector('.btn-qty-plus');
-
-            if (itemSelect) {
-                // Initialize Select2 for this dropdown
-                $(itemSelect).select2({
-                    placeholder: 'Pilih Item',
-                    allowClear: true,
-                    width: '100%',
-                    dropdownParent: $('#items-container')
-                }).on('change', function() {
-                    const selected = this.options[this.selectedIndex];
-                    const price = selected.dataset.price || 0;
-
-                    if (priceInput) priceInput.value = price;
-
-                    const fullId = selected.value;
-                    if (fullId) {
-                        const [type, id] = fullId.split('-');
-                        if (itemTypeInput) itemTypeInput.value = type;
-                        if (itemIdInput) itemIdInput.value = id;
-                    } else {
-                        if (itemTypeInput) itemTypeInput.value = '';
-                        if (itemIdInput) itemIdInput.value = '';
-                    }
-                    calculateTotals();
-                });
-            }
-
-            if (priceInput) {
-                priceInput.addEventListener('input', calculateTotals);
-            }
-
-            if (qtyInput) {
-                qtyInput.addEventListener('input', function() {
-                    let value = this.value;
-                    if (value.trim() === '' || isNaN(parseInt(value)) || parseInt(value) < 1) {
-                        this.value = 1;
-                    }
-                    calculateTotals();
-                });
-            }
-
-            if (qtyMinusButton) {
-                qtyMinusButton.addEventListener('click', function() {
-                    let currentVal = parseInt(qtyInput.value) || 0;
-                    if (currentVal > 1) {
-                        qtyInput.value = currentVal - 1;
-                        qtyInput.dispatchEvent(new Event('input'));
-                    } else if (currentVal === 1) {
-                        qtyInput.value = '';
-                        qtyInput.dispatchEvent(new Event('input'));
-                    }
-                });
-            }
-
-            if (qtyPlusButton) {
-                qtyPlusButton.addEventListener('click', function() {
-                    let currentVal = parseInt(qtyInput.value) || 0;
-                    qtyInput.value = currentVal + 1;
-                    qtyInput.dispatchEvent(new Event('input'));
-                });
-            }
-
-            if (removeItemButton) {
-                removeItemButton.addEventListener('click', function () {
-                    const currentRows = itemsContainer.querySelectorAll('.item-row');
-                    if (currentRows.length > 1) {
-                        row.style.transition = 'opacity 0.3s ease';
-                        row.style.opacity = '0';
-                        setTimeout(() => {
-                            // Destroy Select2 before removing the row
-                            $(row).find('.item-select').select2('destroy');
-                            row.remove();
-                            calculateTotals();
-                        }, 300);
-                    } else {
-                        // Reset the last row
-                        const selectEl = row.querySelector('.item-select');
-                        if (selectEl) {
-                            $(selectEl).val('').trigger('change');
+                            // Get data-price using jQuery's .data() method
+                            const price = parseFloat(selectedOption.data('price')) || 0;
+                            priceInput.value = price;
+                        } else {
+                            itemTypeInput.value = '';
+                            itemIdInput.value = '';
+                            priceInput.value = 0;
                         }
-                        const priceIn = row.querySelector('.price-input');
-                        if (priceIn) priceIn.value = '';
-                        const qtyIn = row.querySelector('.qty-input');
-                        if (qtyIn) qtyIn.value = 1;
-                        const typeIn = row.querySelector('.item-type-input');
-                        if (typeIn) typeIn.value = '';
-                        const idIn = row.querySelector('.item-id-input');
-                        if (idIn) idIn.value = '';
-                        if (itemSubtotalDisplay) itemSubtotalDisplay.value = formatRupiah(0);
-                        calculateTotals();
+                        checkStock(row);
+                        updateTotals();
+                    });
+                } else {
+                    // Fallback for native select if Select2 is not loaded
+                    itemSelect.addEventListener('change', function() {
+                        const selectedOption = this.options[this.selectedIndex];
+                        if (selectedOption) {
+                            const fullId = selectedOption.value;
+                            const [type, id] = fullId.split('-');
+                            itemTypeInput.value = type;
+                            itemIdInput.value = id;
+                            const price = parseFloat(selectedOption.dataset.price) || 0;
+                            priceInput.value = price;
+                        } else {
+                            itemTypeInput.value = '';
+                            itemIdInput.value = '';
+                            priceInput.value = 0;
+                        }
+                        checkStock(row);
+                        updateTotals();
+                    });
+                }
+
+
+                // Event listeners for quantity changes
+                qtyInput.addEventListener('input', function() {
+                    if (this.value < 1) this.value = 1; // Ensure quantity is at least 1
+                    checkStock(row); // Check stock when quantity changes
+                    updateTotals();
+                });
+
+                row.querySelectorAll('.btn-qty-minus, .btn-qty-plus').forEach(button => {
+                    button.addEventListener('click', function() {
+                        let currentQty = parseInt(qtyInput.value);
+                        if (this.dataset.action === 'minus' && currentQty > 1) {
+                            qtyInput.value = currentQty - 1;
+                        } else if (this.dataset.action === 'plus') {
+                            qtyInput.value = currentQty + 1;
+                        }
+                        qtyInput.dispatchEvent(new Event('input')); // Trigger input event to update totals and check stock
+                    });
+                });
+
+                // Event listener for remove item button
+                removeButton.addEventListener('click', function() {
+                    row.remove();
+                    updateTotals();
+                });
+
+                // Initial calculation and stock check for the first item row
+                // Trigger change event to populate price and run initial stock check
+                if (itemSelect.value) { // Only trigger if an option is already selected (e.g., from old('items'))
+                    if (typeof jQuery !== 'undefined' && typeof jQuery.fn.select2 !== 'undefined') {
+                        jQuery(itemSelect).trigger('change');
+                    } else {
+                        itemSelect.dispatchEvent(new Event('change'));
+                    }
+                }
+            }
+
+            // Add new item row
+            document.getElementById('add-item').addEventListener('click', function() {
+                itemIndex++;
+                const originalRow = document.querySelector('.item-row');
+                const newItemRow = originalRow.cloneNode(true);
+
+                // Update IDs and names for new row elements
+                newItemRow.setAttribute('data-item-index', itemIndex);
+                newItemRow.querySelectorAll('[id]').forEach(el => {
+                    el.id = el.id.replace(/-\d+$/, `-${itemIndex}`);
+                });
+                newItemRow.querySelectorAll('[name]').forEach(el => {
+                    el.name = el.name.replace(/\[\d+\]/, `[${itemIndex}]`);
+                });
+
+                // Reset values for new row
+                newItemRow.querySelector('.item-select').value = '';
+                newItemRow.querySelector('.price-input').value = '0';
+                newItemRow.querySelector('.qty-input').value = '1';
+                newItemRow.querySelector('.item-subtotal-display').value = 'Rp 0';
+                newItemRow.querySelector('.item-type-input').value = '';
+                newItemRow.querySelector('.item-id-input').value = '';
+                newItemRow.querySelector('.stock-warning').style.display = 'none'; // Hide warning for new item
+                newItemRow.querySelector('.qty-input').classList.remove('is-invalid'); // Remove invalid state
+
+                document.getElementById('items-container').appendChild(newItemRow);
+                setupItemRowListeners(newItemRow); // Setup listeners for the new row
+                updateTotals();
+            });
+
+            // Initial setup for the first item row (if it exists)
+            const initialItemRow = document.querySelector('.item-row');
+            if (initialItemRow) {
+                setupItemRowListeners(initialItemRow);
+            }
+
+            // Event listener for global discount input
+            document.getElementById('global_discount').addEventListener('input', function() {
+                updateTotals();
+            });
+
+            // Form submission validation for stock
+            document.getElementById('createTransactionForm').addEventListener('submit', function(event) {
+                let allStockSufficient = true;
+                document.querySelectorAll('.item-row').forEach(function(row) {
+                    if (!checkStock(row)) {
+                        allStockSufficient = false;
                     }
                 });
-            }
 
-            if (itemSelect && itemSelect.value) {
-                const selectedOption = itemSelect.options[itemSelect.selectedIndex];
-                const price = selectedOption.dataset.price || 0;
-                if (priceInput) priceInput.value = price;
-
-                const fullId = selectedOption.value;
-                if (fullId) {
-                    const [type, id] = fullId.split('-');
-                    if (itemTypeInput) itemTypeInput.value = type;
-                    if (itemIdInput) itemIdInput.value = id;
-                }
-            }
-        }
-
-        addItemButton.addEventListener('click', function () {
-            const firstRowTemplate = itemsContainer.querySelector('.item-row');
-            if (!firstRowTemplate) {
-                console.error("No item-row template found to clone.");
-                return;
-            }
-
-            const newRow = firstRowTemplate.cloneNode(true);
-            newRow.setAttribute('data-item-index', itemIndex);
-
-            // Add fade in animation
-            newRow.style.opacity = '0';
-            newRow.style.transform = 'translateY(20px)';
-
-            newRow.querySelectorAll('input, select, label').forEach(el => {
-                if (el.name) {
-                    el.name = el.name.replace(/\[\d+\]/, `[${itemIndex}]`);
-                }
-                if (el.id) {
-                    el.id = el.id.replace(/-\d+/, `-${itemIndex}`);
-                }
-                if (el.tagName === 'LABEL' && el.htmlFor) {
-                    el.htmlFor = el.htmlFor.replace(/-\d+/, `-${itemIndex}`);
-                }
-
-                // Clear values for the new row
-                if (el.classList.contains('price-input') || el.classList.contains('item-type-input') || el.classList.contains('item-id-input')) {
-                    el.value = '';
-                } else if (el.tagName === 'SELECT') {
-                    el.selectedIndex = 0;
-                } else if (el.type === 'number' && el.classList.contains('qty-input')) {
-                    el.value = 1;
-                } else if (el.type === 'text' && el.classList.contains('item-subtotal-display')) {
-                    el.value = formatRupiah(0);
-                } else if (el.type === 'text') {
-                    el.value = '';
+                if (!allStockSufficient) {
+                    event.preventDefault(); // Prevent form submission
+                    alert('Mohon periksa kembali jumlah item. Ada stok yang tidak mencukupi.');
                 }
             });
 
-            itemsContainer.appendChild(newRow);
-
-            // Animate in
-            setTimeout(() => {
-                newRow.style.transition = 'all 0.3s ease';
-                newRow.style.opacity = '1';
-                newRow.style.transform = 'translateY(0)';
-            }, 10);
-
-            addEventListenersToNewRow(newRow);
-            itemIndex++;
-            calculateTotals();
+            // Initial total calculation on page load
+            updateTotals();
         });
-
-        // Initialize listeners for the first item row
-        const initialItemRow = document.querySelector('.item-row[data-item-index="0"]');
-        if (initialItemRow) {
-            addEventListenersToNewRow(initialItemRow);
-        }
-
-        globalDiscountInput.addEventListener('input', calculateTotals);
-
-        calculateTotals();
-
-        form.addEventListener('submit', function (e) {
-            calculateTotals();
-            const total = parseFloat(finalTotalHidden.value);
-            if (isNaN(total) || total < 0) {
-                e.preventDefault();
-                alert('Total harga tidak valid. Periksa kembali data item dan diskon.');
-            }
-        });
-
-        @if ($errors->any())
-            let errorMessages = [];
-            @foreach ($errors->all() as $error)
-                errorMessages.push("{{ $error }}");
-            @endforeach
-            alert('Terjadi kesalahan validasi:\n\n' + errorMessages.join('\n'));
-        @endif
-    });
-</script>
-@endpush
+    </script>
+@endsection

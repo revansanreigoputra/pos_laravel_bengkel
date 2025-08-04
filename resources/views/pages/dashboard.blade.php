@@ -98,7 +98,7 @@
 @endsection
 
 @section('styles')
-<style>
+{{-- <style>
     /* Color Variables */
     :root {
         --primary-color: #4361ee;
@@ -287,7 +287,7 @@
     .chart-card .card-body {
         padding: 1.5rem;
     }
-</style>
+</style> --}}
 @endsection
 
 @section('scripts')

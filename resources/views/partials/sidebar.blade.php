@@ -105,11 +105,11 @@
                             <div class="dropdown-menu-column">
                                 @can('purchase_order.view')
                                     <a class="dropdown-item {{ request()->is('purchase_orders*') ? 'active' : '' }}"
-                                        href="{{ route('purchase_orders.index') }}">Pesanan Pembelian</a>
+                                        href="{{ route('purchase_orders.index') }}">Transaksi Pembelian</a>
                                 @endcan
                                 @can('transaction.view')
                                     <a class="dropdown-item {{ request()->is('transaction*') ? 'active' : '' }}"
-                                        href="{{ route('transaction.index') }}">Penjualan Sparepart</a>
+                                        href="{{ route('transaction.index') }}">Transaksi Penjualan</a>
                                 @endcan
                             </div>
                         </div>

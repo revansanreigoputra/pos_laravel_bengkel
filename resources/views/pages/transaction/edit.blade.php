@@ -14,10 +14,25 @@
                         </h4>
                     </div>
                     <div class="card-body">
-                        {{-- Form untuk mengupdate transaksi --}}
+                        {{-- Menampilkan pesan sukses atau error dari session --}}
+                        @if (session('success'))
+                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                {{ session('success') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        @endif
+
+                        @if (session('error'))
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                {{ session('error') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        @endif
+
+                        {{-- Form action points to update method --}}
                         <form action="{{ route('transaction.update', $transaction->id) }}" method="POST" id="editTransactionForm" enctype="multipart/form-data">
                             @csrf
-                            @method('PUT') {{-- Penting untuk metode UPDATE --}}
+                            @method('PUT') {{-- Use PUT method for update --}}
 
                             {{-- Section 1: Informasi Invoice --}}
                             <div class="section-card mb-4">
@@ -33,9 +48,9 @@
                                                     <i class="fas fa-hashtag me-1"></i>
                                                     Nomor Invoice
                                                 </label>
-                                                <input type="text" class="form-control form-control @error('invoice_number') is-invalid @enderror"
+                                                <input type="text" class="form-control @error('invoice_number') is-invalid @enderror"
                                                        id="invoice_number" name="invoice_number"
-                                                       value="{{ old('invoice_number', $transaction->invoice_number) }}" required>
+                                                       value="{{ old('invoice_number', $transaction->invoice_number) }}" readonly>
                                                 @error('invoice_number')
                                                     <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
@@ -47,9 +62,9 @@
                                                     <i class="fas fa-calendar me-1"></i>
                                                     Tanggal Transaksi
                                                 </label>
-                                                <input type="date" class="form-control form-control @error('transaction_date') is-invalid @enderror"
+                                                <input type="date" class="form-control @error('transaction_date') is-invalid @enderror"
                                                        id="transaction_date" name="transaction_date"
-                                                       value="{{ old('transaction_date', $transaction->transaction_date->format('Y-m-d')) }}" required>
+                                                       value="{{ old('transaction_date', Carbon\Carbon::parse($transaction->transaction_date)->format('Y-m-d')) }}" required>
                                                 @error('transaction_date')
                                                     <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
@@ -74,7 +89,7 @@
                                                     Nama Pelanggan <span class="text-danger">*</span>
                                                 </label>
                                                 <input type="text" class="form-control @error('customer_name') is-invalid @enderror"
-                                                       id="customer_name" name="customer_name" value="{{ old('customer_name', $transaction->customer->name ?? '') }}"
+                                                       id="customer_name" name="customer_name" value="{{ old('customer_name', $transaction->customer->name) }}"
                                                        placeholder="Masukkan nama pelanggan" required>
                                                 @error('customer_name')
                                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -88,7 +103,7 @@
                                                     Nomor Telepon Pelanggan <span class="text-danger">*</span>
                                                 </label>
                                                 <input type="text" class="form-control @error('customer_phone') is-invalid @enderror"
-                                                       id="customer_phone" name="customer_phone" value="{{ old('customer_phone', $transaction->customer->phone ?? '') }}"
+                                                       id="customer_phone" name="customer_phone" value="{{ old('customer_phone', $transaction->customer->phone) }}"
                                                        placeholder="Contoh: 081234567890" required>
                                                 @error('customer_phone')
                                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -104,7 +119,7 @@
                                                     Email Pelanggan (Opsional)
                                                 </label>
                                                 <input type="email" class="form-control @error('customer_email') is-invalid @enderror"
-                                                       id="customer_email" name="customer_email" value="{{ old('customer_email', $transaction->customer->email ?? '') }}"
+                                                       id="customer_email" name="customer_email" value="{{ old('customer_email', $transaction->customer->email) }}"
                                                        placeholder="Masukkan email pelanggan">
                                                 @error('customer_email')
                                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -119,7 +134,7 @@
                                                 </label>
                                                 <textarea class="form-control @error('customer_address') is-invalid @enderror"
                                                           id="customer_address" name="customer_address" rows="1"
-                                                          placeholder="Masukkan alamat lengkap pelanggan">{{ old('customer_address', $transaction->customer->address ?? '') }}</textarea>
+                                                          placeholder="Masukkan alamat lengkap pelanggan">{{ old('customer_address', $transaction->customer->address) }}</textarea>
                                                 @error('customer_address')
                                                     <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
@@ -164,7 +179,7 @@
                                 <div class="section-header">
                                     <i class="fas fa-shopping-cart text-warning me-2"></i>
                                     <h5 class="mb-0">Detail Item Transaksi</h5>
-                                    <button type="button" class="btn btn-success btn-sm ms-auto" id="add-item">
+                                    <button type="button" class="btn btn-success btn ms-auto px-2" id="add-item">
                                         <i class="fas fa-plus me-1"></i>
                                         Tambah Item
                                     </button>
@@ -172,98 +187,94 @@
                                 <div class="section-body">
                                     <div class="table-responsive">
                                         <div id="items-container">
-                                            {{-- Loop untuk menampilkan item transaksi yang sudah ada --}}
-                                            @forelse ($transaction->items as $index => $item)
-                                                <div class="item-row mb-3 p-3 border rounded bg-light" data-item-index="{{ $index }}">
-                                                    <div class="row align-items-end">
-                                                        <div class="col-md-4">
-                                                            <label for="item-{{ $index }}" class="form-label fw-semibold">
-                                                                <i class="fas fa-box me-1"></i>
-                                                                Pilih Item <span class="text-danger">*</span>
-                                                            </label>
-                                                            <select class="form-select item-select @error('items.'.$index.'.item_full_id') is-invalid @enderror"
-                                                                    name="items[{{ $index }}][item_full_id]" id="item-{{ $index }}" required>
-                                                                <option value="">-- Pilih Item --</option>
-                                                                <optgroup label="🔧 Layanan Service">
-                                                                    @foreach ($services as $service)
-                                                                        <option value="service-{{ $service->id }}" data-price="{{ $service->harga_standar }}"
-                                                                            {{ (old('items.'.$index.'.item_full_id', $item->item_type.'-'.$item->item_id) == 'service-'.$service->id) ? 'selected' : '' }}>
-                                                                            {{ $service->nama }} (Rp {{ number_format($service->harga_standar, 0, ',', '.') }})
-                                                                        </option>
-                                                                    @endforeach
-                                                                </optgroup>
-                                                                <optgroup label="🔩 Sparepart">
-                                                                    @foreach ($spareparts as $sparepart)
-                                                                        <option value="sparepart-{{ $sparepart->id }}" data-price="{{ $sparepart->final_selling_price }}"
-                                                                            {{ (old('items.'.$index.'.item_full_id', $item->item_type.'-'.$item->item_id) == 'sparepart-'.$sparepart->id) ? 'selected' : '' }}>
-                                                                            {{ $sparepart->name }}
-                                                                            @if($sparepart->isDiscountActive())
-                                                                                (Diskon {{ $sparepart->discount_percentage }}% - Rp {{ number_format($sparepart->final_selling_price, 0, ',', '.') }})
-                                                                            @else
-                                                                                (Rp {{ number_format($sparepart->selling_price, 0, ',', '.') }})
-                                                                            @endif
-                                                                        </option>
-                                                                    @endforeach
-                                                                </optgroup>
-                                                            </select>
-                                                            @error('items.'.$index.'.item_full_id')
-                                                                <div class="invalid-feedback">{{ $message }}</div>
-                                                            @enderror
-                                                            <input type="hidden" class="item-type-input" name="items[{{ $index }}][item_type]" value="{{ old('items.'.$index.'.item_type', $item->item_type) }}">
-                                                            <input type="hidden" class="item-id-input" name="items[{{ $index }}][item_id]" value="{{ old('items.'.$index.'.item_id', $item->item_id) }}">
-                                                        </div>
+                                            {{-- Loop through existing transaction items to populate rows --}}
+                                            @if(isset($transaction) && $transaction->items->isNotEmpty())
+                                                @foreach($transaction->items as $idx => $item)
+                                                    <div class="item-row mb-3 p-3 border rounded bg-light" data-item-index="{{ $idx }}">
+                                                        <div class="row align-items-end">
+                                                            <div class="col-md-4">
+                                                                <label for="item-{{ $idx }}" class="form-label fw-semibold">
+                                                                    <i class="fas fa-box me-1"></i>
+                                                                    Pilih Item <span class="text-danger">*</span>
+                                                                </label>
+                                                                <select class="form-select item-select select2-init"
+                                                                        name="items[{{ $idx }}][item_full_id]" id="item-{{ $idx }}" required>
+                                                                    <option value="">-- Pilih Item --</option>
+                                                                    <optgroup label="🔧 Layanan Service">
+                                                                        @foreach ($services as $service)
+                                                                            <option value="service-{{ $service->id }}" data-price="{{ $service->harga_standar }}"
+                                                                                {{ ($item->item_type == 'service' && $item->item_id == $service->id) ? 'selected' : '' }}>
+                                                                                {{ $service->nama }} (Rp {{ number_format($service->harga_standar, 0, ',', '.') }})
+                                                                            </option>
+                                                                        @endforeach
+                                                                    </optgroup>
+                                                                    <optgroup label="🔩 Sparepart">
+                                                                        @foreach ($spareparts as $sparepart)
+                                                                            <option value="sparepart-{{ $sparepart->id }}"
+                                                                                    data-price="{{ $sparepart->final_selling_price }}"
+                                                                                    data-stock="{{ $sparepart->stock }}"
+                                                                                    {{ ($item->item_type == 'sparepart' && $item->item_id == $sparepart->id) ? 'selected' : '' }}>
+                                                                                {{ $sparepart->name }}
+                                                                                @if($sparepart->isDiscountActive())
+                                                                                    (Diskon {{ $sparepart->discount_percentage }}% - Rp {{ number_format($sparepart->final_selling_price, 0, ',', '.') }})
+                                                                                @else
+                                                                                    (Rp {{ number_format($sparepart->selling_price, 0, ',', '.') }})
+                                                                                @endif
+                                                                                (Stok: {{ $sparepart->stock }})
+                                                                            </option>
+                                                                        @endforeach
+                                                                    </optgroup>
+                                                                </select>
+                                                                <input type="hidden" class="item-type-input" name="items[{{ $idx }}][item_type]" value="{{ $item->item_type }}">
+                                                                <input type="hidden" class="item-id-input" name="items[{{ $idx }}][item_id]" value="{{ $item->item_id }}">
+                                                            </div>
 
-                                                        <div class="col-md-2">
-                                                            <label for="price-{{ $index }}" class="form-label fw-semibold">
-                                                                <i class="fas fa-tag me-1"></i>
-                                                                Harga
-                                                            </label>
-                                                            <input type="number" class="form-control price-input @error('items.'.$index.'.price') is-invalid @enderror"
-                                                                   name="items[{{ $index }}][price]" id="price-{{ $index }}" step="0.01" placeholder="0" value="{{ old('items.'.$index.'.price', $item->price) }}" required>
-                                                            @error('items.'.$index.'.price')
-                                                                <div class="invalid-feedback">{{ $message }}</div>
-                                                            @enderror
-                                                        </div>
+                                                            <div class="col-md-2">
+                                                                <label for="price-{{ $idx }}" class="form-label fw-semibold">
+                                                                    <i class="fas fa-tag me-1"></i>
+                                                                    Harga
+                                                                </label>
+                                                                <input type="number" class="form-control price-input"
+                                                                       name="items[{{ $idx }}][price]" id="price-{{ $idx }}" step="0.01" value="{{ old('items.' . $idx . '.price', $item->price) }}" readonly>
+                                                            </div>
 
-                                                        <div class="col-md-2">
-                                                            <label for="qty-{{ $index }}" class="form-label fw-semibold">
-                                                                <i class="fas fa-sort-numeric-up me-1"></i>
-                                                                Jumlah
-                                                            </label>
-                                                            <div class="input-group">
-                                                                <button class="btn btn-outline-secondary btn-qty-minus" type="button" data-action="minus">
-                                                                    <i class="fas fa-minus text-dark">-</i>
-                                                                </button>
-                                                                <input type="number" class="form-control qty-input @error('items.'.$index.'.quantity') is-invalid @enderror"
-                                                                       name="items[{{ $index }}][quantity]" id="qty-{{ $index }}" value="{{ old('items.'.$index.'.quantity', $item->quantity) }}" required>
-                                                                <button class="btn btn-outline-secondary btn-qty-plus" type="button" data-action="plus">
-                                                                    <i class="fas fa-plus text-dark">+</i>
+                                                            <div class="col-md-2">
+                                                                <label for="qty-{{ $idx }}" class="form-label fw-semibold">
+                                                                    <i class="fas fa-sort-numeric-up me-1"></i>
+                                                                    Jumlah
+                                                                </label>
+                                                                <div class="input-group">
+                                                                    <button class="btn btn-outline-secondary btn-qty-minus" type="button" data-action="minus">
+                                                                        <i class="fas fa-minus text-dark"></i>
+                                                                    </button>
+                                                                    <input type="number" class="form-control qty-input"
+                                                                           name="items[{{ $idx }}][quantity]" id="qty-{{ $idx }}" value="{{ old('items.' . $idx . '.quantity', $item->quantity) }}" required min="1">
+                                                                    <button class="btn btn-outline-secondary btn-qty-plus" type="button" data-action="plus">
+                                                                        <i class="fas fa-plus text-dark"></i>
+                                                                    </button>
+                                                                </div>
+                                                                <div class="text-danger mt-1 stock-warning" style="display: none;">Stok tidak cukup!</div>
+                                                            </div>
+
+                                                            <div class="col-md-2">
+                                                                <label for="item_subtotal_display-{{ $idx }}" class="form-label fw-semibold">
+                                                                    <i class="fas fa-calculator me-1"></i>
+                                                                    Subtotal
+                                                                </label>
+                                                                <input type="text" class="form-control item-subtotal-display bg-white"
+                                                                       id="item_subtotal_display-{{ $idx }}" value="Rp 0" readonly>
+                                                            </div>
+
+                                                            <div class="col-md-2">
+                                                                <button type="button" class="btn btn-danger remove-item w-100">
+                                                                    <i class="fas fa-trash me-1"></i> Hapus
                                                                 </button>
                                                             </div>
-                                                            @error('items.'.$index.'.quantity')
-                                                                <div class="invalid-feedback">{{ $message }}</div>
-                                                            @enderror
-                                                        </div>
-
-                                                        <div class="col-md-2">
-                                                            <label for="item_subtotal_display-{{ $index }}" class="form-label fw-semibold">
-                                                                <i class="fas fa-calculator me-1"></i>
-                                                                Subtotal
-                                                            </label>
-                                                            <input type="text" class="form-control item-subtotal-display bg-white"
-                                                                   id="item_subtotal_display-{{ $index }}" value="Rp 0" readonly>
-                                                        </div>
-
-                                                        <div class="col-md-2">
-                                                            <button type="button" class="btn btn-danger remove-item w-100">
-                                                                <i class="fas fa-trash me-1"></i>
-                                                                Hapus
-                                                            </button>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            @empty
-                                                {{-- Template untuk item baru jika tidak ada item yang dimuat --}}
+                                                @endforeach
+                                            @else
+                                                {{-- Initial empty row for new transactions or if no items exist on edit --}}
                                                 <div class="item-row mb-3 p-3 border rounded bg-light" data-item-index="0">
                                                     <div class="row align-items-end">
                                                         <div class="col-md-4">
@@ -271,7 +282,7 @@
                                                                 <i class="fas fa-box me-1"></i>
                                                                 Pilih Item <span class="text-danger">*</span>
                                                             </label>
-                                                            <select class="form-select item-select"
+                                                            <select class="form-select item-select select2-init @error('items.0.item_full_id') is-invalid @enderror"
                                                                     name="items[0][item_full_id]" id="item-0" required>
                                                                 <option value="">-- Pilih Item --</option>
                                                                 <optgroup label="🔧 Layanan Service">
@@ -283,28 +294,39 @@
                                                                 </optgroup>
                                                                 <optgroup label="🔩 Sparepart">
                                                                     @foreach ($spareparts as $sparepart)
-                                                                        <option value="sparepart-{{ $sparepart->id }}" data-price="{{ $sparepart->final_selling_price }}">
+                                                                        <option value="sparepart-{{ $sparepart->id }}"
+                                                                                data-price="{{ $sparepart->final_selling_price }}"
+                                                                                data-stock="{{ $sparepart->stock }}">
                                                                             {{ $sparepart->name }}
                                                                             @if($sparepart->isDiscountActive())
                                                                                 (Diskon {{ $sparepart->discount_percentage }}% - Rp {{ number_format($sparepart->final_selling_price, 0, ',', '.') }})
                                                                             @else
                                                                                 (Rp {{ number_format($sparepart->selling_price, 0, ',', '.') }})
                                                                             @endif
+                                                                            (Stok: {{ $sparepart->stock }})
                                                                         </option>
                                                                     @endforeach
                                                                 </optgroup>
                                                             </select>
+                                                            @error('items.0.item_full_id')
+                                                                <div class="invalid-feedback">{{ $message }}</div>
+                                                            @enderror
                                                             <input type="hidden" class="item-type-input" name="items[0][item_type]">
                                                             <input type="hidden" class="item-id-input" name="items[0][item_id]">
                                                         </div>
+
                                                         <div class="col-md-2">
                                                             <label for="price-0" class="form-label fw-semibold">
                                                                 <i class="fas fa-tag me-1"></i>
                                                                 Harga
                                                             </label>
-                                                            <input type="number" class="form-control price-input"
-                                                                   name="items[0][price]" id="price-0" step="0.01" placeholder="0" required>
+                                                            <input type="number" class="form-control price-input @error('items.0.price') is-invalid @enderror"
+                                                                   name="items[0][price]" id="price-0" step="0.01" placeholder="0" required readonly>
+                                                            @error('items.0.price')
+                                                                <div class="invalid-feedback">{{ $message }}</div>
+                                                            @enderror
                                                         </div>
+
                                                         <div class="col-md-2">
                                                             <label for="qty-0" class="form-label fw-semibold">
                                                                 <i class="fas fa-sort-numeric-up me-1"></i>
@@ -312,15 +334,20 @@
                                                             </label>
                                                             <div class="input-group">
                                                                 <button class="btn btn-outline-secondary btn-qty-minus" type="button" data-action="minus">
-                                                                    <i class="fas fa-minus text-dark">-</i>
+                                                                    <i class="fas fa-minus text-dark"></i>
                                                                 </button>
-                                                                <input type="number" class="form-control qty-input"
-                                                                       name="items[0][quantity]" id="qty-0" value="1" required>
+                                                                <input type="number" class="form-control qty-input @error('items.0.quantity') is-invalid @enderror"
+                                                                       name="items[0][quantity]" id="qty-0" value="1" required min="1">
                                                                 <button class="btn btn-outline-secondary btn-qty-plus" type="button" data-action="plus">
-                                                                    <i class="fas fa-plus text-dark">+</i>
+                                                                    <i class="fas fa-plus text-dark"></i>
                                                                 </button>
                                                             </div>
+                                                            <div class="text-danger mt-1 stock-warning" style="display: none;">Stok tidak cukup!</div>
+                                                            @error('items.0.quantity')
+                                                                <div class="invalid-feedback">{{ $message }}</div>
+                                                            @enderror
                                                         </div>
+
                                                         <div class="col-md-2">
                                                             <label for="item_subtotal_display-0" class="form-label fw-semibold">
                                                                 <i class="fas fa-calculator me-1"></i>
@@ -329,6 +356,7 @@
                                                             <input type="text" class="form-control item-subtotal-display bg-white"
                                                                    id="item_subtotal_display-0" value="Rp 0" readonly>
                                                         </div>
+
                                                         <div class="col-md-2">
                                                             <button type="button" class="btn btn-danger remove-item w-100">
                                                                 <i class="fas fa-trash me-1"></i>
@@ -337,7 +365,7 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                            @endforelse
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
@@ -358,7 +386,7 @@
                                                         <i class="fas fa-receipt me-1"></i>
                                                         Total Harga Semua Item
                                                     </label>
-                                                    <input type="text" class="form-control form-control bg-light"
+                                                    <input type="text" class="form-control bg-light"
                                                            id="overall_sub_total_display" value="Rp 0" readonly>
                                                 </div>
 
@@ -380,7 +408,7 @@
                                                         <i class="fas fa-dollar-sign me-1"></i>
                                                         TOTAL AKHIR
                                                     </label>
-                                                    <input type="text" class="form-control form-control fw-bold text-primary border-primary"
+                                                    <input type="text" class="form-control fw-bold text-primary border-primary"
                                                            id="final_total_display" value="Rp 0" readonly>
                                                     <input type="hidden" id="final_total_hidden" name="total_price">
                                                 </div>
@@ -395,44 +423,20 @@
                                                 <select class="form-select @error('payment_method') is-invalid @enderror"
                                                          id="payment_method" name="payment_method" required>
                                                     <option value="">-- Pilih Metode --</option>
-                                                    <option value="tunai" {{ (old('payment_method', $transaction->payment_method) == 'tunai') ? 'selected' : '' }}>
+                                                    <option value="tunai" {{ old('payment_method', $transaction->payment_method) == 'tunai' ? 'selected' : '' }}>
                                                         Tunai
                                                     </option>
-                                                    <option value="transfer bank" {{ (old('payment_method', $transaction->payment_method) == 'transfer bank') ? 'selected' : '' }}>
+                                                    <option value="transfer bank" {{ old('payment_method', $transaction->payment_method) == 'transfer bank' ? 'selected' : '' }}>
                                                         Transfer Bank
                                                     </option>
-                                                    <option value="kartu debit" {{ (old('payment_method', $transaction->payment_method) == 'kartu debit') ? 'selected' : '' }}>
+                                                    <option value="kartu debit" {{ old('payment_method', $transaction->payment_method) == 'kartu debit' ? 'selected' : '' }}>
                                                         Kartu Debit
                                                     </option>
-                                                    <option value="e-wallet" {{ (old('payment_method', $transaction->payment_method) == 'e-wallet') ? 'selected' : '' }}>
+                                                    <option value="e-wallet" {{ old('payment_method', $transaction->payment_method) == 'e-wallet' ? 'selected' : '' }}>
                                                         E-Wallet
                                                     </option>
                                                 </select>
                                                 @error('payment_method')
-                                                    <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                            </div>
-
-                                            <div class="form-group">
-                                                <label for="proof_of_transfer_file" class="form-label fw-semibold">
-                                                    <i class="fas fa-upload me-1"></i>
-                                                    Bukti Transfer (Jika Transfer Bank)
-                                                </label>
-                                                @if ($transaction->proof_of_transfer_url)
-                                                    <div class="mb-2">
-                                                        <a href="{{ asset($transaction->proof_of_transfer_url) }}" target="_blank" class="btn btn-sm btn-info">Lihat Bukti Transfer Saat Ini</a>
-                                                    </div>
-                                                    <div class="form-check mb-2">
-                                                        <input class="form-check-input" type="checkbox" id="clear_proof_of_transfer" name="clear_proof_of_transfer" value="1">
-                                                        <label class="form-check-label" for="clear_proof_of_transfer">
-                                                            Hapus Bukti Transfer Saat Ini
-                                                        </label>
-                                                    </div>
-                                                @endif
-                                                <input type="file" class="form-control @error('proof_of_transfer_file') is-invalid @enderror"
-                                                       id="proof_of_transfer_file" name="proof_of_transfer_file" accept="image/*,application/pdf">
-                                                <small class="form-text text-muted">Biarkan kosong jika tidak ingin mengubah.</small>
-                                                @error('proof_of_transfer_file')
                                                     <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
                                             </div>
@@ -444,13 +448,13 @@
                                                 </label>
                                                 <select class="form-select @error('status') is-invalid @enderror"
                                                          id="status" name="status" required>
-                                                    <option value="pending" {{ (old('status', $transaction->status) == 'pending') ? 'selected' : '' }}>
+                                                    <option value="pending" {{ old('status', $transaction->status) == 'pending' ? 'selected' : '' }}>
                                                         Pending
                                                     </option>
-                                                    <option value="completed" {{ (old('status', $transaction->status) == 'completed') ? 'selected' : '' }}>
+                                                    <option value="completed" {{ old('status', $transaction->status) == 'completed' ? 'selected' : '' }}>
                                                         Selesai
                                                     </option>
-                                                    <option value="cancelled" {{ (old('status', $transaction->status) == 'cancelled') ? 'selected' : '' }}>
+                                                    <option value="cancelled" {{ old('status', $transaction->status) == 'cancelled' ? 'selected' : '' }}>
                                                         Dibatalkan
                                                     </option>
                                                 </select>
@@ -470,7 +474,7 @@
                                         <i class="fas fa-arrow-left me-1"></i>
                                         Kembali
                                     </a>
-                                    <button type="submit" class="btn btn-primary btn">
+                                    <button type="submit" class="btn btn-primary btn" id="submitTransactionBtn">
                                         <i class="fas fa-save me-1"></i>
                                         Simpan Perubahan
                                     </button>
@@ -483,8 +487,8 @@
         </div>
     </div>
 
+    {{-- Custom Styles --}}
     <style>
-        /* Gaya CSS dari create.blade.php Anda */
         .section-card {
             border: 1px solid #e3e6f0;
             border-radius: 10px;
@@ -554,328 +558,245 @@
             border: 2px solid #e3e6f0;
             margin-top: 20px;
         }
-
-        .btn {
-            border-radius: 8px;
-            font-weight: 600;
-            padding: 10px 20px;
-            transition: all 0.3s ease;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-
-        .text-danger {
-            color: #e74a3b !important;
-        }
-
-        .bg-light {
-            background-color: #f8f9fc !important;
-        }
-
-        .border-primary {
-            border-color: #4e73df !important;
-        }
-
-        @media (max-width: 768px) {
-            .section-body {
-                padding: 15px;
-            }
-
-            .item-row {
-                margin-bottom: 1rem;
-            }
-
-            .item-row .col-md-2,
-            .item-row .col-md-4 {
-                margin-bottom: 1rem;
-            }
-        }
     </style>
-@endsection
 
-@push('addon-script')
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // Inisialisasi itemIndex berdasarkan jumlah item-row yang sudah ada saat halaman dimuat.
-        // Ini penting untuk penamaan input item yang benar saat menambah item baru di halaman edit.
-        let itemIndex = document.querySelectorAll('.item-row').length;
+    {{-- JavaScript for dynamic item addition, price calculation, and stock check --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let itemIndex = 0; // Default for create page
 
-        const itemsContainer = document.getElementById('items-container');
-        const addItemButton = document.getElementById('add-item');
-        const globalDiscountInput = document.getElementById('global_discount');
-        const overallSubTotalDisplay = document.getElementById('overall_sub_total_display');
-        const finalTotalDisplay = document.getElementById('final_total_display');
-        const finalTotalHidden = document.getElementById('final_total_hidden');
-        const form = document.getElementById('editTransactionForm'); // Menggunakan ID form yang berbeda
+            // Find existing item rows and set itemIndex accordingly
+            const existingItemRows = document.querySelectorAll('.item-row');
+            if (existingItemRows.length > 0) {
+                // Find the maximum data-item-index among existing rows
+                let maxIndex = 0;
+                existingItemRows.forEach(row => {
+                    const index = parseInt(row.dataset.itemIndex);
+                    if (!isNaN(index) && index > maxIndex) {
+                        maxIndex = index;
+                    }
+                });
+                itemIndex = maxIndex; // Start new items from the next available index
+            }
 
-        /**
-         * Mengubah angka menjadi format mata uang Rupiah.
-         * @param {number} number - Angka yang akan diformat.
-         * @returns {string} - Angka dalam format Rupiah.
-         */
-        function formatRupiah(number) {
-            return new Intl.NumberFormat('id-ID', {
-                style: 'currency',
-                currency: 'IDR',
-                minimumFractionDigits: 0
-            }).format(number);
-        }
 
-        /**
-         * Menghitung ulang total subtotal setiap item, diskon global, dan total akhir transaksi.
-         */
-        function calculateTotals() {
-            let overallSubTotal = 0;
+            // Function to format number to Rupiah
+            function formatRupiah(number) {
+                return new Intl.NumberFormat('id-ID', {
+                    style: 'currency',
+                    currency: 'IDR',
+                    minimumFractionDigits: 0
+                }).format(number);
+            }
 
-            document.querySelectorAll('.item-row').forEach(row => {
+            // Function to calculate and update item subtotal and overall totals
+            function updateTotals() {
+                let overallSubTotal = 0;
+                document.querySelectorAll('.item-row').forEach(function(row) {
+                    const price = parseFloat(row.querySelector('.price-input').value) || 0;
+                    const quantity = parseInt(row.querySelector('.qty-input').value) || 0;
+                    const itemSubtotal = price * quantity;
+                    row.querySelector('.item-subtotal-display').value = formatRupiah(itemSubtotal);
+                    overallSubTotal += itemSubtotal;
+                });
+
+                const globalDiscount = parseFloat(document.getElementById('global_discount').value) || 0;
+                const finalTotal = overallSubTotal - globalDiscount;
+
+                document.getElementById('overall_sub_total_display').value = formatRupiah(overallSubTotal);
+                document.getElementById('final_total_display').value = formatRupiah(finalTotal);
+                document.getElementById('final_total_hidden').value = finalTotal; // Hidden input for form submission
+            }
+
+            // Function to check stock for a given item row
+            function checkStock(itemRow) {
+                const itemSelect = itemRow.querySelector('.item-select');
+                const qtyInput = itemRow.querySelector('.qty-input');
+                const stockWarning = itemRow.querySelector('.stock-warning');
+                // Get the currently selected option from the native select element
+                const selectedNativeOption = itemSelect.options[itemSelect.selectedIndex];
+
+                // Only check stock for spareparts
+                if (selectedNativeOption && selectedNativeOption.value.startsWith('sparepart-')) {
+                    // Use the data-stock attribute directly from the native option
+                    const availableStock = parseInt(selectedNativeOption.dataset.stock) || 0;
+                    const currentQuantity = parseInt(qtyInput.value) || 0;
+
+                    if (currentQuantity > availableStock) {
+                        stockWarning.textContent = `Stok tidak cukup! (Sisa: ${availableStock})`; // More informative message
+                        stockWarning.style.display = 'block';
+                        qtyInput.classList.add('is-invalid');
+                        return false; // Stock insufficient
+                    } else {
+                        stockWarning.style.display = 'none';
+                        qtyInput.classList.remove('is-invalid');
+                        return true; // Stock sufficient
+                    }
+                } else {
+                    stockWarning.style.display = 'none'; // Hide warning for services or unselected items
+                    qtyInput.classList.remove('is-invalid');
+                    return true;
+                }
+            }
+
+            // Function to add event listeners to a new item row
+            function setupItemRowListeners(row) {
+                const itemSelect = row.querySelector('.item-select');
                 const priceInput = row.querySelector('.price-input');
                 const qtyInput = row.querySelector('.qty-input');
-                const itemSubtotalDisplay = row.querySelector('.item-subtotal-display');
+                const itemTypeInput = row.querySelector('.item-type-input');
+                const itemIdInput = row.querySelector('.item-id-input');
+                const removeButton = row.querySelector('.remove-item');
 
-                const price = parseFloat(priceInput.value) || 0;
-                // Pastikan kuantitas selalu minimal 1 jika input kosong atau kurang dari 1
-                let qty = parseInt(qtyInput.value) || 0;
-                if (qty < 1) {
-                    qty = 1;
-                    qtyInput.value = 1; // Memperbarui nilai input di UI
-                }
-
-                const itemSubtotal = price * qty;
-
-                if (itemSubtotalDisplay) {
-                    itemSubtotalDisplay.value = formatRupiah(itemSubtotal);
-                }
-
-                overallSubTotal += itemSubtotal;
-            });
-
-            const globalDiscount = parseFloat(globalDiscountInput.value) || 0;
-            let finalTotal = overallSubTotal - globalDiscount;
-            if (finalTotal < 0) finalTotal = 0;
-
-            overallSubTotalDisplay.value = formatRupiah(overallSubTotal);
-            finalTotalDisplay.value = formatRupiah(finalTotal);
-            finalTotalHidden.value = finalTotal.toFixed(2); // Untuk dikirim ke backend
-        }
-
-        /**
-         * Melampirkan semua event listener yang diperlukan ke baris item transaksi.
-         * @param {HTMLElement} row - Elemen baris item transaksi (div.item-row).
-         */
-        function attachEventListenersToItemRow(row) {
-            const itemSelect = row.querySelector('.item-select');
-            const priceInput = row.querySelector('.price-input');
-            const qtyInput = row.querySelector('.qty-input');
-            const removeItemButton = row.querySelector('.remove-item');
-            const itemTypeInput = row.querySelector('.item-type-input');
-            const itemIdInput = row.querySelector('.item-id-input');
-            const itemSubtotalDisplay = row.querySelector('.item-subtotal-display');
-
-            const qtyMinusButton = row.querySelector('.btn-qty-minus');
-            const qtyPlusButton = row.querySelector('.btn-qty-plus');
-
-            // Event listener saat item dipilih dari dropdown
-            if (itemSelect) {
-                itemSelect.addEventListener('change', function () {
-                    const selectedOption = this.options[this.selectedIndex];
-                    const price = selectedOption.dataset.price || 0;
-
-                    if (priceInput) priceInput.value = price;
-
-                    const fullId = selectedOption.value;
-                    if (fullId) {
-                        const [type, id] = fullId.split('-');
-                        if (itemTypeInput) itemTypeInput.value = type;
-                        if (itemIdInput) itemIdInput.value = id;
-                    } else {
-                        // Reset if no item is selected
-                        if (itemTypeInput) itemTypeInput.value = '';
-                        if (itemIdInput) itemIdInput.value = '';
+                // Initialize Select2 (if available)
+                if (typeof jQuery !== 'undefined' && typeof jQuery.fn.select2 !== 'undefined') {
+                    // Destroy existing Select2 instance before re-initializing on cloned elements
+                    if (jQuery(itemSelect).data('select2')) {
+                        jQuery(itemSelect).select2('destroy');
                     }
-                    calculateTotals();
-                });
-            }
+                    jQuery(itemSelect).select2();
 
-            // Event listener saat harga item diubah secara manual
-            if (priceInput) {
-                priceInput.addEventListener('input', calculateTotals);
-            }
+                    // Use Select2's custom 'change' event for better compatibility
+                    jQuery(itemSelect).on('change', function() {
+                        // Get the selected option using jQuery's find and data method
+                        const selectedOption = jQuery(this).find(':selected');
+                        if (selectedOption.length > 0) {
+                            const fullId = selectedOption.val();
+                            const [type, id] = fullId.split('-');
+                            itemTypeInput.value = type;
+                            itemIdInput.value = id;
 
-            // Event listener saat kuantitas item diubah
-            if (qtyInput) {
+                            // Get data-price using jQuery's .data() method
+                            const price = parseFloat(selectedOption.data('price')) || 0;
+                            priceInput.value = price;
+                        } else {
+                            itemTypeInput.value = '';
+                            itemIdInput.value = '';
+                            priceInput.value = 0;
+                        }
+                        checkStock(row);
+                        updateTotals();
+                    });
+                } else {
+                    // Fallback for native select if Select2 is not loaded
+                    itemSelect.addEventListener('change', function() {
+                        const selectedOption = this.options[this.selectedIndex];
+                        if (selectedOption) {
+                            const fullId = selectedOption.value;
+                            const [type, id] = fullId.split('-');
+                            itemTypeInput.value = type;
+                            itemIdInput.value = id;
+                            const price = parseFloat(selectedOption.dataset.price) || 0;
+                            priceInput.value = price;
+                        } else {
+                            itemTypeInput.value = '';
+                            itemIdInput.value = '';
+                            priceInput.value = 0;
+                        }
+                        checkStock(row);
+                        updateTotals();
+                    });
+                }
+
+
+                // Event listeners for quantity changes
                 qtyInput.addEventListener('input', function() {
-                    let value = this.value;
-                    // Memastikan nilai kuantitas valid (minimal 1)
-                    if (value.trim() === '' || isNaN(parseInt(value)) || parseInt(value) < 1) {
-                        this.value = 1;
-                    }
-                    calculateTotals();
+                    if (this.value < 1) this.value = 1; // Ensure quantity is at least 1
+                    checkStock(row); // Check stock when quantity changes
+                    updateTotals();
                 });
-            }
 
-            // Event listener untuk tombol minus kuantitas
-            if (qtyMinusButton) {
-                qtyMinusButton.addEventListener('click', function() {
-                    let currentVal = parseInt(qtyInput.value) || 0;
-                    if (currentVal > 1) {
-                        qtyInput.value = currentVal - 1;
-                        qtyInput.dispatchEvent(new Event('input')); // Trigger input event
-                    } else if (currentVal === 1) {
-                        // Jika sudah 1, mengosongkan untuk memicu validasi/reset ke 1 oleh input listener
-                        qtyInput.value = '';
-                        qtyInput.dispatchEvent(new Event('input'));
-                    }
+                row.querySelectorAll('.btn-qty-minus, .btn-qty-plus').forEach(button => {
+                    button.addEventListener('click', function() {
+                        let currentQty = parseInt(qtyInput.value);
+                        if (this.dataset.action === 'minus' && currentQty > 1) {
+                            qtyInput.value = currentQty - 1;
+                        } else if (this.dataset.action === 'plus') {
+                            qtyInput.value = currentQty + 1;
+                        }
+                        qtyInput.dispatchEvent(new Event('input')); // Trigger input event to update totals and check stock
+                    });
                 });
-            }
 
-            // Event listener untuk tombol plus kuantitas
-            if (qtyPlusButton) {
-                qtyPlusButton.addEventListener('click', function() {
-                    let currentVal = parseInt(qtyInput.value) || 0;
-                    qtyInput.value = currentVal + 1;
-                    qtyInput.dispatchEvent(new Event('input')); // Trigger input event
+                // Event listener for remove item button
+                removeButton.addEventListener('click', function() {
+                    row.remove();
+                    updateTotals();
                 });
-            }
 
-            // Event listener untuk tombol hapus item
-            if (removeItemButton) {
-                removeItemButton.addEventListener('click', function () {
-                    const currentRows = itemsContainer.querySelectorAll('.item-row');
-                    if (currentRows.length > 1) {
-                        // Animasi fade out sebelum dihapus
-                        row.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-                        row.style.opacity = '0';
-                        row.style.transform = 'translateX(-20px)';
+                // Initial calculation and stock check for the item row
+                // Trigger change event to populate price and run initial stock check
+                // This is crucial for pre-filled forms (edit page)
+                if (itemSelect.value) {
+                    if (typeof jQuery !== 'undefined' && typeof jQuery.fn.select2 !== 'undefined') {
+                        // For Select2, trigger the change event after Select2 has been initialized
+                        // A small delay might be needed to ensure Select2 is fully ready
                         setTimeout(() => {
-                            row.remove();
-                            calculateTotals();
-                        }, 300);
+                            jQuery(itemSelect).trigger('change');
+                        }, 50); // Small delay
                     } else {
-                        // Jika hanya ada satu baris, reset nilainya daripada menghapus
-                        const selectEl = row.querySelector('.item-select');
-                        if (selectEl) selectEl.selectedIndex = 0;
-                        if (priceInput) priceInput.value = '';
-                        if (qtyInput) qtyInput.value = 1;
-                        if (itemTypeInput) itemTypeInput.value = '';
-                        if (itemIdInput) itemIdInput.value = '';
-                        if (itemSubtotalDisplay) itemSubtotalDisplay.value = formatRupiah(0);
-                        calculateTotals();
+                        itemSelect.dispatchEvent(new Event('change'));
+                    }
+                }
+            }
+
+            // Add new item row
+            document.getElementById('add-item').addEventListener('click', function() {
+                itemIndex++; // Increment index for the new item
+                const originalRow = document.querySelector('.item-row');
+                const newItemRow = originalRow.cloneNode(true);
+
+                // Update IDs and names for new row elements
+                newItemRow.setAttribute('data-item-index', itemIndex);
+                newItemRow.querySelectorAll('[id]').forEach(el => {
+                    el.id = el.id.replace(/-\d+$/, `-${itemIndex}`);
+                });
+                newItemRow.querySelectorAll('[name]').forEach(el => {
+                    el.name = el.name.replace(/\[\d+\]/, `[${itemIndex}]`);
+                });
+
+                // Reset values for new row
+                newItemRow.querySelector('.item-select').value = ''; // Clear selected option
+                newItemRow.querySelector('.price-input').value = '0';
+                newItemRow.querySelector('.qty-input').value = '1';
+                newItemRow.querySelector('.item-subtotal-display').value = 'Rp 0';
+                newItemRow.querySelector('.item-type-input').value = '';
+                newItemRow.querySelector('.item-id-input').value = '';
+                newItemRow.querySelector('.stock-warning').style.display = 'none'; // Hide warning for new item
+                newItemRow.querySelector('.qty-input').classList.remove('is-invalid'); // Remove invalid state
+
+                document.getElementById('items-container').appendChild(newItemRow);
+                setupItemRowListeners(newItemRow); // Setup listeners for the new row
+                updateTotals();
+            });
+
+            // Initial setup for ALL existing item rows on page load
+            document.querySelectorAll('.item-row').forEach(row => {
+                setupItemRowListeners(row);
+            });
+
+            // Event listener for global discount input
+            document.getElementById('global_discount').addEventListener('input', function() {
+                updateTotals();
+            });
+
+            // Form submission validation for stock
+            document.getElementById('editTransactionForm').addEventListener('submit', function(event) {
+                let allStockSufficient = true;
+                document.querySelectorAll('.item-row').forEach(function(row) {
+                    if (!checkStock(row)) {
+                        allStockSufficient = false;
                     }
                 });
-            }
 
-            // Inisialisasi awal nilai harga dan hidden fields jika itemSelect sudah memiliki nilai
-            // Ini penting jika 'old' value di-load atau untuk baris template pertama
-            // Ini akan dipanggil untuk setiap baris item yang dimuat dari database
-            if (itemSelect.value) {
-                const selectedOption = itemSelect.options[itemSelect.selectedIndex];
-                const price = selectedOption.dataset.price || 0;
-                if (priceInput) priceInput.value = price;
-
-                const fullId = selectedOption.value;
-                if (fullId) {
-                    const [type, id] = fullId.split('-');
-                    if (itemTypeInput) itemTypeInput.value = type;
-                    if (itemIdInput) itemIdInput.value = id;
-                }
-            }
-        }
-
-        // Event listener untuk tombol 'Tambah Item'
-        addItemButton.addEventListener('click', function () {
-            // Kita perlu mengambil template dari HTML. Jika tidak ada item, template harus disediakan di Blade.
-            // Di sini, kita asumsikan setidaknya ada satu item-row (bisa jadi yang dimuat atau yang kosong)
-            const firstRowTemplate = itemsContainer.querySelector('.item-row');
-            if (!firstRowTemplate) {
-                console.error("Tidak ditemukan template item-row untuk dikloning.");
-                return;
-            }
-
-            const newRow = firstRowTemplate.cloneNode(true);
-            newRow.setAttribute('data-item-index', itemIndex);
-
-            // Reset gaya animasi untuk baris baru
-            newRow.style.opacity = '0';
-            newRow.style.transform = 'translateY(20px)';
-            newRow.style.transition = 'none'; // Matikan transisi sementara
-
-            // Perbarui atribut name, id, dan value untuk baris baru
-            newRow.querySelectorAll('input, select, label').forEach(el => {
-                if (el.name) {
-                    el.name = el.name.replace(/\[\d+\]/, `[${itemIndex}]`);
-                }
-                if (el.id) {
-                    el.id = el.id.replace(/-\d+/, `-${itemIndex}`);
-                }
-                if (el.tagName === 'LABEL' && el.htmlFor) {
-                    el.htmlFor = el.htmlFor.replace(/-\d+/, `-${itemIndex}`);
-                }
-
-                // Bersihkan nilai untuk baris baru
-                if (el.classList.contains('price-input') || el.classList.contains('item-type-input') || el.classList.contains('item-id-input')) {
-                    el.value = '';
-                } else if (el.tagName === 'SELECT') {
-                    el.selectedIndex = 0; // Pilih opsi pertama ("-- Pilih Item --")
-                } else if (el.type === 'number' && el.classList.contains('qty-input')) {
-                    el.value = 1; // Kuantitas selalu dimulai dari 1
-                } else if (el.type === 'text' && el.classList.contains('item-subtotal-display')) {
-                    el.value = formatRupiah(0);
-                } else if (el.type === 'text') {
-                    el.value = '';
+                if (!allStockSufficient) {
+                    event.preventDefault(); // Prevent form submission
+                    alert('Mohon periksa kembali jumlah item. Ada stok yang tidak mencukupi.');
                 }
             });
 
-            itemsContainer.appendChild(newRow);
-
-            // Tunda animasi fade in
-            setTimeout(() => {
-                newRow.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-                newRow.style.opacity = '1';
-                newRow.style.transform = 'translateY(0)';
-            }, 10);
-
-            attachEventListenersToItemRow(newRow); // Lampirkan listener ke baris baru
-            itemIndex++; // Tingkatkan indeks untuk item berikutnya
-            calculateTotals(); // Hitung ulang total
+            // Initial total calculation on page load (after all item rows are set up)
+            updateTotals();
         });
-
-        // Inisialisasi event listener untuk SEMUA baris item yang sudah ada di HTML saat halaman dimuat
-        document.querySelectorAll('.item-row').forEach(row => {
-            attachEventListenersToItemRow(row);
-        });
-
-        // Event listener untuk input diskon global
-        globalDiscountInput.addEventListener('input', calculateTotals);
-
-        // Panggil calculateTotals pertama kali saat halaman dimuat untuk menghitung total awal
-        calculateTotals();
-
-        // Event listener untuk submit form
-        form.addEventListener('submit', function (e) {
-            // Hitung ulang total untuk memastikan akurasi sebelum pengiriman
-            calculateTotals();
-
-            const total = parseFloat(finalTotalHidden.value);
-            // Mencegah pengiriman jika total tidak valid (NaN atau negatif)
-            if (isNaN(total) || total < 0) {
-                e.preventDefault();
-                alert('Total harga tidak valid. Periksa kembali data item dan diskon.');
-            }
-        });
-
-        // Menampilkan pesan error validasi dari Laravel jika ada (untuk old() values)
-        @if ($errors->any())
-            let errorMessages = [];
-            @foreach ($errors->all() as $error)
-                errorMessages.push("{{ $error }}");
-            @endforeach
-            // Tidak menggunakan alert() di sini agar tidak mengganggu,
-            // tetapi error akan ditampilkan di samping input masing-masing
-            console.error('Terjadi kesalahan validasi:\n\n' + errorMessages.join('\n'));
-        @endif
-    });
-</script>
-@endpush
+    </script>
+@endsection

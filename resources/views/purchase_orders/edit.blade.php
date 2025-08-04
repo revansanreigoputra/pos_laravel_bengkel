@@ -87,7 +87,7 @@
                             <div class="section-header d-flex align-items-center">
                                 <i class="fas fa-boxes text-warning me-2"></i>
                                 <h5 class="mb-0">Detail Item Pembelian</h5>
-                                <button type="button" class="btn btn-success btn-sm ms-auto" id="add-item">
+                                <button type="button" class="btn btn-success btn ms-auto px-5" id="add-item">
                                     <i class="fas fa-plus me-1"></i> Tambah Item
                                 </button>
                             </div>
@@ -230,11 +230,11 @@
                                                         </label>
                                                         <div class="input-group">
                                                             <button class="btn btn-outline-secondary btn-qty-minus" type="button" data-action="minus">
-                                                                <i class="fas fa-minus text-dark"></i>
+                                                                <i class="fas fa-minus text-dark">_</i>
                                                             </button>
                                                             <input type="number" class="form-control qty-input" name="items[0][quantity]" id="quantity-0" value="1" min="1" required>
                                                             <button class="btn btn-outline-secondary btn-qty-plus" type="button" data-action="plus">
-                                                                <i class="fas fa-plus text-dark"></i>
+                                                                <i class="fas fa-plus text-dark">+</i>
                                                             </button>
                                                         </div>
                                                     </div>

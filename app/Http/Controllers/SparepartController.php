@@ -3,125 +3,131 @@
 namespace App\Http\Controllers;
 
 use App\Models\Sparepart;
-use App\Models\Category;
+use App\Models\Category; // Pastikan ini diimpor jika Anda menggunakannya
+use App\Models\Supplier; // Pastikan ini diimpor jika Anda menggunakannya
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Carbon; // Pastikan Carbon diimpor
 
 class SparepartController extends Controller
 {
     /**
      * Display a listing of the resource.
-     * Menampilkan daftar semua suku cadang.
+     * Menampilkan daftar sumber daya.
      */
     public function index()
     {
-        // Mengambil semua sparepart dengan relasi kategori secara eager loading.
-        // Menambahkan withSum untuk 'quantity' dan withAvg untuk 'purchase_price'
-        // dari relasi purchaseOrderItems untuk menghitung total stok dan harga beli rata-rata.
-        $spareparts = Sparepart::with('category')
-            ->withSum('purchaseOrderItems', 'quantity')
-            ->withAvg('purchaseOrderItems', 'purchase_price')
-            ->latest()
-            ->paginate(10);
+        // Memuat relasi 'category' dan 'purchaseOrderItems'
+        // dan mengurutkan purchaseOrderItems berdasarkan expired_date
+        $spareparts = Sparepart::with(['category', 'supplier', 'purchaseOrderItems' => function($query) {
+            $query->where('quantity', '>', 0) // Hanya item dengan stok > 0
+                  ->where(function($q) {
+                      $q->where('expired_date', '>=', Carbon::today()) // Belum kadaluarsa
+                        ->orWhereNull('expired_date'); // Atau tidak ada tanggal kadaluarsa
+                  })
+                  ->orderBy('expired_date', 'asc'); // Urutkan untuk mendapatkan yang terdekat
+        }])->latest()->paginate(10); // Atau gunakan get() jika tidak ada paginasi
+
+        // Jika Anda memiliki filter atau pencarian, tambahkan di sini
+        // $spareparts = Sparepart::query();
+        // if ($request->has('search')) {
+        //     $spareparts->where('name', 'like', '%' . $request->search . '%');
+        // }
+        // $spareparts = $spareparts->paginate(10);
 
         return view('pages.spareparts.index', compact('spareparts'));
     }
 
     /**
      * Show the form for creating a new resource.
-     * Menampilkan formulir untuk membuat suku cadang baru.
+     * Menampilkan formulir untuk membuat sumber daya baru.
      */
     public function create()
     {
-        // Mengambil semua kategori untuk ditampilkan di dropdown formulir.
-        $categories = Category::all();
-        return view('pages.spareparts.create', compact('categories'));
+        $categories = Category::all(); // Ambil semua kategori
+        $suppliers = Supplier::all(); // Ambil semua supplier
+        return view('pages.spareparts.create', compact('categories', 'suppliers'));
     }
 
     /**
      * Store a newly created resource in storage.
-     * Menyimpan suku cadang baru ke database.
+     * Menyimpan sumber daya yang baru dibuat ke penyimpanan.
      */
     public function store(Request $request)
     {
-        // Validasi data yang masuk dari request.
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'code_part' => 'required|string|unique:spareparts,code_part|max:255',
-            'selling_price' => 'nullable|numeric|min:0',
+            'description' => 'nullable|string',
+            'price' => 'nullable|numeric|min:0', // Harga beli
+            'selling_price' => 'required|numeric|min:0', // Harga jual standar
+            'stock' => 'nullable|integer|min:0', // Stok awal, jika diisi manual
+            'supplier_id' => 'nullable|exists:suppliers,id',
             'category_id' => 'required|exists:categories,id',
             'discount_percentage' => 'nullable|numeric|min:0|max:100',
             'discount_start_date' => 'nullable|date',
             'discount_end_date' => 'nullable|date|after_or_equal:discount_start_date',
         ]);
 
-        // Membuat entri Sparepart baru di database.
-        Sparepart::create($validatedData);
+        // Jika 'stock' diisi dari form, gunakan itu. Jika tidak, default ke 0.
+        // Namun, jika stok dihitung dari purchase_order_items, kolom 'stock' di tabel spareparts
+        // mungkin tidak perlu diisi langsung di sini.
+        // Untuk saat ini, kita akan mengasumsikan 'stock' diisi manual atau diabaikan di sini
+        // dan diupdate via purchase_order_items.
+        // Jika Anda ingin kolom 'stock' di model Sparepart mencerminkan total available_stock,
+        // Anda perlu memikirkan ulang bagaimana mengelola kolom 'stock' ini.
+        // Untuk saat ini, kita akan mengisi 'stock' dari input form jika ada.
+        $sparepart = Sparepart::create($validatedData);
 
-        // Mengarahkan kembali ke halaman index dengan pesan sukses.
         return redirect()->route('spareparts.index')->with('success', 'Sparepart berhasil ditambahkan!');
     }
 
     /**
-     * Display the specified resource.
-     * Menampilkan detail suku cadang tertentu.
-     */
-    public function show(Sparepart $sparepart)
-    {
-        // Memuat relasi category untuk ditampilkan di detail.
-        $sparepart->load('category');
-        return view('pages.spareparts.show', compact('sparepart'));
-    }
-
-    /**
      * Show the form for editing the specified resource.
-     * Menampilkan formulir untuk mengedit suku cadang tertentu.
+     * Menampilkan formulir untuk mengedit sumber daya yang ditentukan.
      */
     public function edit(Sparepart $sparepart)
     {
-        // Mengambil semua kategori untuk ditampilkan di dropdown formulir edit.
         $categories = Category::all();
-        return view('pages.spareparts.edit', compact('sparepart', 'categories'));
+        $suppliers = Supplier::all();
+        return view('pages.spareparts.edit', compact('sparepart', 'categories', 'suppliers'));
     }
 
     /**
      * Update the specified resource in storage.
-     * Memperbarui suku cadang tertentu di database.
+     * Memperbarui sumber daya yang ditentukan di penyimpanan.
      */
     public function update(Request $request, Sparepart $sparepart)
     {
-        // Validasi data yang masuk untuk pembaruan.
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
-            'code_part' => [
-                'required',
-                'string',
-                Rule::unique('spareparts')->ignore($sparepart->id),
-                'max:255',
-            ],
+            'code_part' => 'required|string|unique:spareparts,code_part,' . $sparepart->id . '|max:255',
+            'description' => 'nullable|string',
+            'price' => 'nullable|numeric|min:0',
             'selling_price' => 'required|numeric|min:0',
+            'stock' => 'nullable|integer|min:0',
+            'supplier_id' => 'nullable|exists:suppliers,id',
             'category_id' => 'required|exists:categories,id',
             'discount_percentage' => 'nullable|numeric|min:0|max:100',
             'discount_start_date' => 'nullable|date',
             'discount_end_date' => 'nullable|date|after_or_equal:discount_start_date',
         ]);
 
-        // Memperbarui entri Sparepart di database.
         $sparepart->update($validatedData);
 
-        // Mengarahkan kembali ke halaman index dengan pesan sukses.
         return redirect()->route('spareparts.index')->with('success', 'Sparepart berhasil diperbarui!');
     }
 
     /**
      * Remove the specified resource from storage.
-     * Menghapus suku cadang tertentu dari database.
+     * Menghapus sumber daya yang ditentukan dari penyimpanan.
      */
     public function destroy(Sparepart $sparepart)
     {
-        // Menghapus entri Sparepart dari database.
-        $sparepart->delete();
-        // Mengarahkan kembali ke halaman index dengan pesan sukses.
-        return redirect()->route('spareparts.index')->with('success', 'Sparepart berhasil dihapus!');
+        try {
+            $sparepart->delete();
+            return redirect()->route('spareparts.index')->with('success', 'Sparepart berhasil dihapus!');
+        } catch (\Exception $e) {
+            return redirect()->route('spareparts.index')->with('error', 'Gagal menghapus sparepart: ' . $e->getMessage());
+        }
     }
 }

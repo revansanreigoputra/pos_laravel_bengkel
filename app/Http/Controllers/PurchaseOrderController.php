@@ -46,13 +46,12 @@ class PurchaseOrderController extends Controller
             'payment_method' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
             'status' => 'required|string|in:pending,received,canceled',
-            'global_discount' => 'nullable|numeric|min:0', // Tambahkan validasi untuk diskon global
-            'total_price' => 'required|numeric|min:0', // total_price sekarang wajib karena dihitung di frontend
+            'total_price' => 'required|numeric|min:0',
         ]);
 
         // Validasi data items (Purchase Order Items)
         $request->validate([
-            'items' => 'required|array|min:1', // Pastikan ada minimal 1 item
+            'items' => 'required|array|min:1',
             'items.*.sparepart_id' => 'required|exists:spareparts,id',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.purchase_price' => 'required|numeric|min:0',
@@ -60,52 +59,29 @@ class PurchaseOrderController extends Controller
             'items.*.notes' => 'nullable|string',
         ]);
 
-        // Gunakan transaksi database untuk memastikan kedua tabel (purchase_orders dan purchase_order_items)
-        // disimpan atau di-rollback bersamaan.
         DB::beginTransaction();
 
         try {
-            // Jika order_date tidak diisi, gunakan tanggal dan waktu saat ini
-            if (empty($validatedData['order_date'])) {
-                $validatedData['order_date'] = now();
-            }
-
             // Membuat entri PurchaseOrder baru di database.
-            $purchaseOrder = PurchaseOrder::create([
-                'invoice_number' => $validatedData['invoice_number'],
-                'supplier_id' => $validatedData['supplier_id'],
-                'order_date' => $validatedData['order_date'],
-                'total_price' => $validatedData['total_price'], // Gunakan total_price dari frontend
-                'payment_method' => $validatedData['payment_method'],
-                'notes' => data_get($validatedData, 'notes'), // Menggunakan data_get untuk akses aman
-                'status' => $validatedData['status'],
-            ]);
+            $purchaseOrder = PurchaseOrder::create($validatedData);
 
             // Menyimpan setiap item pesanan pembelian
             foreach ($request->input('items') as $itemData) {
-                $purchaseOrder->items()->create([
-                    'sparepart_id' => $itemData['sparepart_id'],
-                    'quantity' => $itemData['quantity'],
-                    'purchase_price' => $itemData['purchase_price'],
-                    // Menggunakan data_get untuk mengakses expired_date dan notes dengan aman
-                    'expired_date' => data_get($itemData, 'expired_date'),
-                    'notes' => data_get($itemData, 'notes'),
-                ]);
+                $purchaseOrder->items()->create($itemData);
 
-                // **LOGIKA PENTING: Perbarui stok sparepart setelah pembelian**
+                // Tambahkan stok ke tabel spareparts
                 $sparepart = Sparepart::find($itemData['sparepart_id']);
                 if ($sparepart) {
                     $sparepart->increment('stock', $itemData['quantity']);
                 }
             }
 
-            DB::commit(); // Commit transaksi jika semua berhasil
+            DB::commit();
 
-            return redirect()->route('purchase_orders.show', $purchaseOrder->id)->with('success', 'Pesanan pembelian berhasil ditambahkan beserta itemnya!');
-
-        } catch (\Exception $e) {
-            DB::rollBack(); // Rollback transaksi jika ada error
-            return redirect()->back()->withInput()->withErrors(['error' => 'Terjadi kesalahan saat menyimpan pesanan pembelian: ' . $e->getMessage()]);
+            return redirect()->route('purchase_orders.index')->with('success', 'Pesanan pembelian berhasil dibuat!');
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return redirect()->back()->withErrors("Gagal menyimpan pesanan pembelian: " . $th->getMessage())->withInput();
         }
     }
 
