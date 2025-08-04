@@ -58,8 +58,8 @@ class SparepartController extends Controller
             'name' => 'required|string|max:255',
             'code_part' => 'required|string|unique:spareparts,code_part|max:255',
             'description' => 'nullable|string',
-            'price' => 'nullable|numeric|min:0', // Harga beli
-            'selling_price' => 'required|numeric|min:0', // Harga jual standar
+            'purchase_price' => 'nullable|numeric|min:0', // Harga beli
+            'selling_price' => 'nullable|numeric|min:0', // Harga jual standar
             'stock' => 'nullable|integer|min:0', // Stok awal, jika diisi manual
             'supplier_id' => 'nullable|exists:suppliers,id',
             'category_id' => 'required|exists:categories,id',

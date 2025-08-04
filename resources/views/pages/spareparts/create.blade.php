@@ -32,14 +32,7 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-
-                        <div class="mb-3">
-                            <label for="selling_price" class="form-label fw-semibold">Harga Jual <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control @error('selling_price') is-invalid @enderror" id="selling_price" name="selling_price" value="{{ old('selling_price') }}" step="0.01" min="0">
-                            @error('selling_price')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
+  
 
                         <div class="mb-3">
                             <label for="category_id" class="form-label fw-semibold">Kategori <span class="text-danger">*</span></label>
@@ -53,31 +46,9 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-
-                        <div class="mb-3">
-                            <label for="discount_percentage" class="form-label fw-semibold">Persentase Diskon (%)</label>
-                            <input type="number" class="form-control @error('discount_percentage') is-invalid @enderror" id="discount_percentage" name="discount_percentage" value="{{ old('discount_percentage', 0) }}" min="0" max="100" step="0.01">
-                            @error('discount_percentage')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="discount_start_date" class="form-label fw-semibold">Tanggal Mulai Diskon</label>
-                            <input type="date" class="form-control @error('discount_start_date') is-invalid @enderror" id="discount_start_date" name="discount_start_date" value="{{ old('discount_start_date') }}">
-                            @error('discount_start_date')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="mb-4">
-                            <label for="discount_end_date" class="form-label fw-semibold">Tanggal Berakhir Diskon</label>
-                            <input type="date" class="form-control @error('discount_end_date') is-invalid @enderror" id="discount_end_date" name="discount_end_date" value="{{ old('discount_end_date') }}">
-                            @error('discount_end_date')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
+                        {{-- hidden input purchase price --}}
+                        <input type="hidden" name="purchase_price" value="{{ old('purchase_price', 0) }}">
+ 
                         <div class="d-flex justify-content-between">
                             <a href="{{ route('spareparts.index') }}" class="btn btn-secondary">Batal</a>
                             <button type="submit" class="btn btn-primary">Simpan Sparepart</button>

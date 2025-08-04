@@ -12,9 +12,9 @@ class Sparepart extends Model
 
     protected $fillable = [
         'name',
-        'code',
+        'code_part',
         'description',
-        'price', // Harga beli dari supplier, mungkin bisa diubah menjadi purchase_price
+        'purchase_price', // Harga beli dari supplier, mungkin bisa diubah menjadi purchase_price
         'selling_price', // Harga jual standar
         'stock', // Tambahkan 'stock' ke fillable jika Anda mengelola stok di sini
         'supplier_id',
