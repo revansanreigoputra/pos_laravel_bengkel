@@ -14,25 +14,25 @@ class SparepartController extends Controller
      * Display a listing of the resource.
      * Menampilkan daftar sumber daya.
      */
-    public function index()
+    public function index(Request $request)
     {
         // Memuat relasi 'category' dan 'purchaseOrderItems'
         // dan mengurutkan purchaseOrderItems berdasarkan expired_date
-        $spareparts = Sparepart::with(['category', 'supplier', 'purchaseOrderItems' => function($query) {
+        $spareparts = Sparepart::with(['category', 'supplier', 'purchaseOrderItems' => function ($query) {
             $query->where('quantity', '>', 0) // Hanya item dengan stok > 0
-                  ->where(function($q) {
-                      $q->where('expired_date', '>=', Carbon::today()) // Belum kadaluarsa
+                ->where(function ($q) {
+                    $q->where('expired_date', '>=', Carbon::today()) // Belum kadaluarsa
                         ->orWhereNull('expired_date'); // Atau tidak ada tanggal kadaluarsa
-                  })
-                  ->orderBy('expired_date', 'asc'); // Urutkan untuk mendapatkan yang terdekat
+                })
+                ->orderBy('expired_date', 'asc'); // Urutkan untuk mendapatkan yang terdekat
         }])->latest()->paginate(10); // Atau gunakan get() jika tidak ada paginasi
 
         // Jika Anda memiliki filter atau pencarian, tambahkan di sini
-        // $spareparts = Sparepart::query();
-        // if ($request->has('search')) {
-        //     $spareparts->where('name', 'like', '%' . $request->search . '%');
-        // }
-        // $spareparts = $spareparts->paginate(10);
+        $spareparts = Sparepart::query();
+        if ($request->has('search')) {
+            $spareparts->where('name', 'like', '%' . $request->search . '%');
+        }
+        $spareparts = $spareparts->paginate(10);
 
         return view('pages.spareparts.index', compact('spareparts'));
     }
@@ -67,8 +67,29 @@ class SparepartController extends Controller
             'discount_start_date' => 'nullable|date',
             'discount_end_date' => 'nullable|date|after_or_equal:discount_start_date',
         ]);
-        
-        $sparepart = Sparepart::create($validatedData);
+
+        // Get category name
+        $category =  Category::find($validatedData['category_id']);
+        $categoryName = $category ? $category->name : '';
+
+        // Generate code_part on the server
+        $namePart = strtoupper(substr($validatedData['name'], 0, 3));
+        $catPart = strtoupper(substr($categoryName, 0, 3));
+        $random = mt_rand(100, 9999);  
+
+        $generatedCodePart = "{$catPart}-{$namePart}-{$random}";
+
+        // Ensure uniqueness (add a loop to regenerate if it exists)
+        while ( Sparepart::where('code_part', $generatedCodePart)->exists()) {
+            $random = mt_rand(100, 9999);
+            $generatedCodePart = "{$catPart}-{$namePart}-{$random}";
+        }
+
+        $sparepart = Sparepart::create(array_merge($validatedData, [
+            'code_part' => $generatedCodePart,
+        ]));
+
+ 
 
         return redirect()->route('spareparts.index')->with('success', 'Sparepart berhasil ditambahkan!');
     }
