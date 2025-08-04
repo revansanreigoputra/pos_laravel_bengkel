@@ -67,15 +67,7 @@ class SparepartController extends Controller
             'discount_start_date' => 'nullable|date',
             'discount_end_date' => 'nullable|date|after_or_equal:discount_start_date',
         ]);
-
-        // Jika 'stock' diisi dari form, gunakan itu. Jika tidak, default ke 0.
-        // Namun, jika stok dihitung dari purchase_order_items, kolom 'stock' di tabel spareparts
-        // mungkin tidak perlu diisi langsung di sini.
-        // Untuk saat ini, kita akan mengasumsikan 'stock' diisi manual atau diabaikan di sini
-        // dan diupdate via purchase_order_items.
-        // Jika Anda ingin kolom 'stock' di model Sparepart mencerminkan total available_stock,
-        // Anda perlu memikirkan ulang bagaimana mengelola kolom 'stock' ini.
-        // Untuk saat ini, kita akan mengisi 'stock' dari input form jika ada.
+        
         $sparepart = Sparepart::create($validatedData);
 
         return redirect()->route('spareparts.index')->with('success', 'Sparepart berhasil ditambahkan!');
