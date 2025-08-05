@@ -145,6 +145,10 @@ Route::get('/report/transactions/export-excel', [ReportController::class, 'expor
   
 
 // direct blade route
- Route::get('/report/sparepart-report', function () {
-    return view('pages.report.sparepart-report');
-})->name('report.sparepart-report');
+Route::get('/report/sparepart-report', [ReportController::class, 'stockReport'])->name('report.sparepart-report');
+Route::get('/reports/export-excel', [ReportController::class, 'exportExcel'])->name('reports.export-excel');
+
+
+use App\Http\Controllers\InventoryReportController;
+
+Route::get('/inventory/report', [InventoryReportController::class, 'index'])->name('inventory.report');

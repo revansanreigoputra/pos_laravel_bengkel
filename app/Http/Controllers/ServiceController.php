@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Service;
-use Illuminate\Http\Request;
 use App\Models\JenisKendaraan;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB; // Import DB facade untuk transaksi
+use Illuminate\Support\Facades\Log; // Import Log facade untuk logging error
+use Exception;
 
 class ServiceController extends Controller
 {
@@ -19,13 +22,12 @@ class ServiceController extends Controller
         return view('pages.service.index', compact('services', 'jenisKendaraans'));
     }
 
-
     public function create()
     {
         $jenisKendaraans = JenisKendaraan::all();
-        $services = Service::all(); // You might not need $services for a new create form
-        return view('pages.service.modal-create', compact('services', 'jenisKendaraans'));
+        return view('pages.service.modal-create', compact('jenisKendaraans'));
     }
+
     /**
      * Simpan data baru ke database.
      */
@@ -40,16 +42,13 @@ class ServiceController extends Controller
             'deskripsi' => 'nullable|string',
         ]);
 
-        Service::create([
-            'nama' => $request->nama,
-            'jenis_kendaraan_id' => $request->jenis_kendaraan_id,
-            'durasi_estimasi' => $request->durasi_estimasi,
-            'harga_standar' => $request->harga_standar,
-            'status' => $request->status,
-            'deskripsi' => $request->deskripsi,
-        ]);
-
-        return redirect()->route('service.index')->with('success', 'Service berhasil ditambahkan.');
+        try {
+            Service::create($request->all());
+            return redirect()->route('service.index')->with('success', 'Service berhasil ditambahkan.');
+        } catch (Exception $e) {
+            Log::error('Error storing service: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal menambahkan service: ' . $e->getMessage())->withInput();
+        }
     }
 
     /**
@@ -57,7 +56,7 @@ class ServiceController extends Controller
      */
     public function edit(Service $service)
     {
-       $jenisKendaraans = JenisKendaraan::all();
+        $jenisKendaraans = JenisKendaraan::all();
         return view('pages.service.modal-edit', compact('service', 'jenisKendaraans'));
     }
 
@@ -75,24 +74,35 @@ class ServiceController extends Controller
             'deskripsi' => 'nullable|string',
         ]);
 
-        $service->update([
-            'nama' => $request->nama,
-            'jenis_kendaraan_id' => $request->jenis_kendaraan_id,
-            'durasi_estimasi' => $request->durasi_estimasi,
-            'harga_standar' => $request->harga_standar,
-            'status' => $request->status,
-            'deskripsi' => $request->deskripsi,
-        ]);
-
-        return redirect()->route('service.index')->with('success', 'Service berhasil diperbarui.');
+        try {
+            $service->update($request->all());
+            return redirect()->route('service.index')->with('success', 'Service berhasil diperbarui.');
+        } catch (Exception $e) {
+            Log::error('Error updating service: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal memperbarui service: ' . $e->getMessage())->withInput();
+        }
     }
 
     /**
      * Hapus data dari database.
+     * Menambahkan validasi untuk mencegah penghapusan service yang sudah terpakai.
      */
     public function destroy(Service $service)
     {
-        $service->delete();
-        return redirect()->route('service.index')->with('success', 'Service berhasil dihapus.');
+        DB::beginTransaction();
+        try {
+            // Periksa apakah service ini sudah pernah digunakan dalam transaksi
+            if ($service->transactionItems()->exists()) {
+                throw new Exception('Tidak dapat menghapus service yang sudah digunakan dalam transaksi.');
+            }
+            
+            $service->delete();
+            DB::commit();
+            return redirect()->route('service.index')->with('success', 'Service berhasil dihapus.');
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error('Error deleting service: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal menghapus service: ' . $e->getMessage());
+        }
     }
 }

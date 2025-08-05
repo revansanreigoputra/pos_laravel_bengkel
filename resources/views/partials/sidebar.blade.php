@@ -1,13 +1,11 @@
 <aside class="navbar navbar-vertical navbar-expand-lg">
     <div class="container-fluid">
-        <!-- NAVBAR TOGGLER -->
         <button class="navbar-toggler collapsed" type="button" data-bs-toggle="collapse"
             data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false"
             aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
 
-        <!-- NAVBAR LOGO -->
         <div class="navbar-brand navbar-brand-autodark">
             <a href="#" class="d-flex align-items-center">
                 <img src="{{ asset('assets/logo.png') }}" alt="Logo BengkelKu" class="me-2" style="height: 50px;">
@@ -15,15 +13,12 @@
             </a>
         </div>
 
-        <!-- SIDEBAR MENU -->
         <div class="navbar-collapse collapse" id="sidebar-menu">
             <ul class="navbar-nav pt-lg-3">
 
-                <!-- Dashboard -->
                 <li class="nav-item {{ request()->is('/') ? 'active' : '' }}">
                     <a class="nav-link" href="{{ route('dashboard') }}">
                         <span class="nav-link-icon d-md-none d-lg-inline-block">
-                            <!-- Icon Home -->
                             <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-1" width="24" height="24"
                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                 stroke-linecap="round" stroke-linejoin="round">
@@ -36,11 +31,9 @@
                     </a>
                 </li>
 
-                <!-- Master Data -->
                 <li class="nav-item dropdown {{ request()->is('kategori*') || request()->is('sparepart*') || request()->is('service*') || request()->is('supplier*') || request()->is('konsumen*') || request()->is('jenis-kendaraan*') ? 'active' : '' }}">
                     <a class="nav-link dropdown-toggle" href="#" aria-expanded="false">
                         <span class="nav-link-icon d-md-none d-lg-inline-block">
-                            <!-- Icon Folder -->
                             <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-1" width="24" height="24"
                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                 stroke-linecap="round" stroke-linejoin="round">
@@ -85,11 +78,9 @@
                     </div>
                 </li>
 
-                <!-- Transaksi -->
                 <li class="nav-item dropdown {{ request()->is('purchase_orders*') || request()->is('transaction*') || request()->is('stock-handle*') ? 'active' : '' }}">
                     <a class="nav-link dropdown-toggle" href="#" aria-expanded="false">
                         <span class="nav-link-icon d-md-none d-lg-inline-block">
-                            <!-- Icon Transaksi -->
                             <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-1" width="24" height="24"
                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                 stroke-linecap="round" stroke-linejoin="round">
@@ -116,8 +107,7 @@
                     </div>
                 </li>
 
-                <!-- Laporan -->
-                <li class="nav-item dropdown {{ request()->is('laporan*') ? 'active' : '' }}">
+                <li class="nav-item dropdown {{ request()->is('laporan*') || request()->is('inventory/report') ? 'active' : '' }}">
                     <a class="nav-link dropdown-toggle" href="#" aria-expanded="false">
                         <span class="nav-link-icon d-md-none d-lg-inline-block">
                             <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-1" width="24" height="24"
@@ -130,32 +120,30 @@
                         </span>
                         <span class="nav-link-title">Laporan</span>
                     </a>
-                    <div class="dropdown-menu {{ request()->is('laporan*') ? 'show' : '' }}">
+                    <div class="dropdown-menu {{ request()->is('laporan*') || request()->is('inventory/report') ? 'show' : '' }}">
                         <div class="dropdown-menu-columns">
                             <div class="dropdown-menu-column">
                                 @can('report.transaction')
                                 <a class="dropdown-item {{ request()->is('laporan/transaksi') ? 'active' : '' }}"
                                     href="{{ route('report.transaction') }}">Laporan Penjualan</a>
                                 @endcan
-                                {{-- @can('report.stock-handle')
-                                <a class="dropdown-item {{ request()->is('laporan/pembelian') ? 'active' : '' }}"
-                                    href="{{ route('laporan.pembelian') }}">Laporan Pembelian</a>
-                                @endcan --}}
 
-                                {{-- @can('report.availble-stock') --}}
-                                <a href="{{ route('report.sparepart-report') }}" class="dropdown-item">Laporan Stok Sparepart</a>
-                                {{-- @endcan --}}
+                                @can('report.sparepart-report')
+                                <a class="dropdown-item {{ request()->is('laporan/stok-sparepart') ? 'active' : '' }}"
+                                    href="{{ route('report.sparepart-report') }}">
+                                    Laporan Stok Sparepart
+                                </a>
+                                @endcan
 
+                                {{-- Menghapus link duplikat 'Laporan Stok Sparepart' --}}
                             </div>
                         </div>
                     </div>
                 </li>
 
-                <!-- Manajemen Pengguna -->
                 <li class="nav-item dropdown {{ request()->is('user*') || request()->is('roles*') ? 'active' : '' }}">
                     <a class="nav-link dropdown-toggle" href="#" aria-expanded="false">
                         <span class="nav-link-icon d-md-none d-lg-inline-block">
-                            <!-- Icon User -->
                             <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-1" width="24" height="24"
                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                 stroke-linecap="round" stroke-linejoin="round">
@@ -187,7 +175,6 @@
     </div>
 </aside>
 
-<!-- SCRIPT -->
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const dropdowns = document.querySelectorAll('.nav-item.dropdown');
@@ -195,6 +182,11 @@
         dropdowns.forEach(dropdown => {
             const toggle = dropdown.querySelector('.nav-link.dropdown-toggle');
             const menu = dropdown.querySelector('.dropdown-menu');
+
+            // Set status awal aria-expanded berdasarkan class 'show' dari Blade.
+            if (menu.classList.contains('show')) {
+                toggle.setAttribute('aria-expanded', 'true');
+            }
 
             toggle.addEventListener('click', function (e) {
                 e.preventDefault();
@@ -219,8 +211,12 @@
                 }
             });
         });
-
-        // Klik di luar sidebar, tutup semua
+        
+        // Perbaikan: Menghapus event listener global yang agresif.
+        // Logika penutupan menu sekarang akan ditangani oleh sistem navigasi halaman.
+        // Saat halaman dimuat ulang, server akan me-render menu dengan status 'show' yang benar.
+        // Bagian di bawah ini adalah yang dihapus dari kode Anda sebelumnya:
+        /*
         document.addEventListener('click', function (e) {
             if (!e.target.closest('.navbar-vertical')) {
                 dropdowns.forEach(dropdown => {
@@ -229,5 +225,6 @@
                 });
             }
         });
+        */
     });
 </script>

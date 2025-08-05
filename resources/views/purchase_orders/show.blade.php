@@ -100,11 +100,13 @@
                             <tbody>
                                 @forelse ($purchaseOrder->items as $item)
                                 <tr>
+                                    {{-- Menggunakan null coalescing operator untuk menghindari error jika sparepart tidak ada --}}
                                     <td>{{ $item->sparepart->name ?? 'N/A' }}</td>
                                     <td>{{ $item->sparepart->code_part ?? 'N/A' }}</td>
                                     <td>{{ $item->quantity }}</td>
                                     <td>Rp{{ number_format($item->purchase_price, 0, ',', '.') }}</td> {{-- Menggunakan 0 desimal --}}
                                     <td>Rp{{ number_format($item->quantity * $item->purchase_price, 0, ',', '.') }}</td> {{-- Menggunakan 0 desimal --}}
+                                    {{-- Menggunakan ternary operator untuk menghindari error jika tanggal kadaluarsa kosong --}}
                                     <td>{{ $item->expired_date ? $item->expired_date->format('d M Y') : '-' }}</td>
                                     <td>{{ $item->notes ?? '-' }}</td>
                                     <td class="text-center">
