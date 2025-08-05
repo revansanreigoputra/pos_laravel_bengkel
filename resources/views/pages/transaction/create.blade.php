@@ -198,7 +198,8 @@
                                                             <option value="">-- Pilih Item --</option>
                                                             <optgroup label="🔧 Layanan Service">
                                                                 @foreach ($services as $service)
-                                                                    <option value="service-{{ $service->id }}" data-price="{{ $service->harga_standar }}">
+                                                                    <option value="service-{{ $service->id }}"
+                                                                            data-price="{{ $service->harga_standar }}">
                                                                         {{ $service->nama }} (Rp {{ number_format($service->harga_standar, 0, ',', '.') }})
                                                                     </option>
                                                                 @endforeach
@@ -207,14 +208,14 @@
                                                                 @foreach ($spareparts as $sparepart)
                                                                     <option value="sparepart-{{ $sparepart->id }}"
                                                                             data-price="{{ $sparepart->final_selling_price }}"
-                                                                            data-stock="{{ $sparepart->stock }}">
+                                                                            data-available-stock="{{ $sparepart->available_stock }}"> {{-- UBAH INI --}}
                                                                         {{ $sparepart->name }}
                                                                         @if($sparepart->isDiscountActive())
                                                                             (Diskon {{ $sparepart->discount_percentage }}% - Rp {{ number_format($sparepart->final_selling_price, 0, ',', '.') }})
                                                                         @else
                                                                             (Rp {{ number_format($sparepart->selling_price, 0, ',', '.') }})
                                                                         @endif
-                                                                        (Stok: {{ $sparepart->stock }})
+                                                                        (Stok: {{ $sparepart->available_stock }}) {{-- UBAH INI --}}
                                                                     </option>
                                                                 @endforeach
                                                             </optgroup>
@@ -331,7 +332,7 @@
                                                     Metode Pembayaran <span class="text-danger">*</span>
                                                 </label>
                                                 <select class="form-select @error('payment_method') is-invalid @enderror"
-                                                         id="payment_method" name="payment_method" required>
+                                                        id="payment_method" name="payment_method" required>
                                                     <option value="">-- Pilih Metode --</option>
                                                     <option value="tunai" {{ old('payment_method') == 'tunai' ? 'selected' : '' }}>
                                                         Tunai
@@ -357,7 +358,7 @@
                                                     Status Transaksi <span class="text-danger">*</span>
                                                 </label>
                                                 <select class="form-select @error('status') is-invalid @enderror"
-                                                         id="status" name="status" required>
+                                                        id="status" name="status" required>
                                                     <option value="pending" {{ old('status') == 'pending' ? 'selected' : '' }}>
                                                         Pending
                                                     </option>
@@ -455,235 +456,195 @@
         }
 
         .summary-box {
-            background: linear-gradient(135deg, #f8f9fc 0%, #eaecf4 100%);
-            padding: 20px;
-            border-radius: 10px;
-            border: 2px solid #e3e6f0;
-        }
-
-        .form-actions {
-            background: #f8f9fc;
-            padding: 20px;
-            border-radius: 10px;
-            border: 2px solid #e3e6f0;
-            margin-top: 20px;
+            /* Your existing styles */
         }
     </style>
-
-    {{-- JavaScript for dynamic item addition, price calculation, and stock check --}}
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            let itemIndex = 0; // Keep track of the item index for naming inputs
-
-            // Function to format number to Rupiah
-            function formatRupiah(number) {
-                return new Intl.NumberFormat('id-ID', {
-                    style: 'currency',
-                    currency: 'IDR',
-                    minimumFractionDigits: 0
-                }).format(number);
-            }
-
-            // Function to calculate and update item subtotal and overall totals
-            function updateTotals() {
-                let overallSubTotal = 0;
-                document.querySelectorAll('.item-row').forEach(function(row) {
-                    const price = parseFloat(row.querySelector('.price-input').value) || 0;
-                    const quantity = parseInt(row.querySelector('.qty-input').value) || 0;
-                    const itemSubtotal = price * quantity;
-                    row.querySelector('.item-subtotal-display').value = formatRupiah(itemSubtotal);
-                    overallSubTotal += itemSubtotal;
-                });
-
-                const globalDiscount = parseFloat(document.getElementById('global_discount').value) || 0;
-                const finalTotal = overallSubTotal - globalDiscount;
-
-                document.getElementById('overall_sub_total_display').value = formatRupiah(overallSubTotal);
-                document.getElementById('final_total_display').value = formatRupiah(finalTotal);
-                document.getElementById('final_total_hidden').value = finalTotal; // Hidden input for form submission
-            }
-
-            // Function to check stock for a given item row
-            function checkStock(itemRow) {
-                const itemSelect = itemRow.querySelector('.item-select');
-                const qtyInput = itemRow.querySelector('.qty-input');
-                const stockWarning = itemRow.querySelector('.stock-warning');
-                // Get the currently selected option from the native select element
-                const selectedNativeOption = itemSelect.options[itemSelect.selectedIndex];
-
-                // Only check stock for spareparts
-                if (selectedNativeOption && selectedNativeOption.value.startsWith('sparepart-')) {
-                    // Use the data-stock attribute directly from the native option
-                    const availableStock = parseInt(selectedNativeOption.dataset.stock) || 0;
-                    const currentQuantity = parseInt(qtyInput.value) || 0;
-
-                    if (currentQuantity > availableStock) {
-                        stockWarning.textContent = `Stok tidak cukup! (Sisa: ${availableStock})`; // More informative message
-                        stockWarning.style.display = 'block';
-                        qtyInput.classList.add('is-invalid');
-                        return false; // Stock insufficient
-                    } else {
-                        stockWarning.style.display = 'none';
-                        qtyInput.classList.remove('is-invalid');
-                        return true; // Stock sufficient
-                    }
-                } else {
-                    stockWarning.style.display = 'none'; // Hide warning for services or unselected items
-                    qtyInput.classList.remove('is-invalid');
-                    return true;
-                }
-            }
-
-            // Function to add event listeners to a new item row
-            function setupItemRowListeners(row) {
-                const itemSelect = row.querySelector('.item-select');
-                const priceInput = row.querySelector('.price-input');
-                const qtyInput = row.querySelector('.qty-input');
-                const itemTypeInput = row.querySelector('.item-type-input');
-                const itemIdInput = row.querySelector('.item-id-input');
-                const removeButton = row.querySelector('.remove-item');
-
-                // Initialize Select2 (if available)
-                if (typeof jQuery !== 'undefined' && typeof jQuery.fn.select2 !== 'undefined') {
-                    jQuery(itemSelect).select2();
-
-                    // Use Select2's custom 'change' event for better compatibility
-                    jQuery(itemSelect).on('change', function() {
-                        // Get the selected option using jQuery's find and data method
-                        const selectedOption = jQuery(this).find(':selected');
-                        if (selectedOption.length > 0) {
-                            const fullId = selectedOption.val();
-                            const [type, id] = fullId.split('-');
-                            itemTypeInput.value = type;
-                            itemIdInput.value = id;
-
-                            // Get data-price using jQuery's .data() method
-                            const price = parseFloat(selectedOption.data('price')) || 0;
-                            priceInput.value = price;
-                        } else {
-                            itemTypeInput.value = '';
-                            itemIdInput.value = '';
-                            priceInput.value = 0;
-                        }
-                        checkStock(row);
-                        updateTotals();
-                    });
-                } else {
-                    // Fallback for native select if Select2 is not loaded
-                    itemSelect.addEventListener('change', function() {
-                        const selectedOption = this.options[this.selectedIndex];
-                        if (selectedOption) {
-                            const fullId = selectedOption.value;
-                            const [type, id] = fullId.split('-');
-                            itemTypeInput.value = type;
-                            itemIdInput.value = id;
-                            const price = parseFloat(selectedOption.dataset.price) || 0;
-                            priceInput.value = price;
-                        } else {
-                            itemTypeInput.value = '';
-                            itemIdInput.value = '';
-                            priceInput.value = 0;
-                        }
-                        checkStock(row);
-                        updateTotals();
-                    });
-                }
-
-
-                // Event listeners for quantity changes
-                qtyInput.addEventListener('input', function() {
-                    if (this.value < 1) this.value = 1; // Ensure quantity is at least 1
-                    checkStock(row); // Check stock when quantity changes
-                    updateTotals();
-                });
-
-                row.querySelectorAll('.btn-qty-minus, .btn-qty-plus').forEach(button => {
-                    button.addEventListener('click', function() {
-                        let currentQty = parseInt(qtyInput.value);
-                        if (this.dataset.action === 'minus' && currentQty > 1) {
-                            qtyInput.value = currentQty - 1;
-                        } else if (this.dataset.action === 'plus') {
-                            qtyInput.value = currentQty + 1;
-                        }
-                        qtyInput.dispatchEvent(new Event('input')); // Trigger input event to update totals and check stock
-                    });
-                });
-
-                // Event listener for remove item button
-                removeButton.addEventListener('click', function() {
-                    row.remove();
-                    updateTotals();
-                });
-
-                // Initial calculation and stock check for the first item row
-                // Trigger change event to populate price and run initial stock check
-                if (itemSelect.value) { // Only trigger if an option is already selected (e.g., from old('items'))
-                    if (typeof jQuery !== 'undefined' && typeof jQuery.fn.select2 !== 'undefined') {
-                        jQuery(itemSelect).trigger('change');
-                    } else {
-                        itemSelect.dispatchEvent(new Event('change'));
-                    }
-                }
-            }
-
-            // Add new item row
-            document.getElementById('add-item').addEventListener('click', function() {
-                itemIndex++;
-                const originalRow = document.querySelector('.item-row');
-                const newItemRow = originalRow.cloneNode(true);
-
-                // Update IDs and names for new row elements
-                newItemRow.setAttribute('data-item-index', itemIndex);
-                newItemRow.querySelectorAll('[id]').forEach(el => {
-                    el.id = el.id.replace(/-\d+$/, `-${itemIndex}`);
-                });
-                newItemRow.querySelectorAll('[name]').forEach(el => {
-                    el.name = el.name.replace(/\[\d+\]/, `[${itemIndex}]`);
-                });
-
-                // Reset values for new row
-                newItemRow.querySelector('.item-select').value = '';
-                newItemRow.querySelector('.price-input').value = '0';
-                newItemRow.querySelector('.qty-input').value = '1';
-                newItemRow.querySelector('.item-subtotal-display').value = 'Rp 0';
-                newItemRow.querySelector('.item-type-input').value = '';
-                newItemRow.querySelector('.item-id-input').value = '';
-                newItemRow.querySelector('.stock-warning').style.display = 'none'; // Hide warning for new item
-                newItemRow.querySelector('.qty-input').classList.remove('is-invalid'); // Remove invalid state
-
-                document.getElementById('items-container').appendChild(newItemRow);
-                setupItemRowListeners(newItemRow); // Setup listeners for the new row
-                updateTotals();
-            });
-
-            // Initial setup for the first item row (if it exists)
-            const initialItemRow = document.querySelector('.item-row');
-            if (initialItemRow) {
-                setupItemRowListeners(initialItemRow);
-            }
-
-            // Event listener for global discount input
-            document.getElementById('global_discount').addEventListener('input', function() {
-                updateTotals();
-            });
-
-            // Form submission validation for stock
-            document.getElementById('createTransactionForm').addEventListener('submit', function(event) {
-                let allStockSufficient = true;
-                document.querySelectorAll('.item-row').forEach(function(row) {
-                    if (!checkStock(row)) {
-                        allStockSufficient = false;
-                    }
-                });
-
-                if (!allStockSufficient) {
-                    event.preventDefault(); // Prevent form submission
-                    alert('Mohon periksa kembali jumlah item. Ada stok yang tidak mencukupi.');
-                }
-            });
-
-            // Initial total calculation on page load
-            updateTotals();
-        });
-    </script>
 @endsection
+
+@push('addon-script')
+<script>
+    let itemIndex = 0; // Mulai dari 0 untuk item pertama
+
+    // Fungsi untuk menginisialisasi Select2 pada elemen baru
+    function initializeSelect2(element) {
+        $(element).select2({
+            theme: "bootstrap-5",
+            width: $(element).data('width') ? $(element).data('width') : ($(element).hasClass('w-100') ? '100%' : 'style'),
+            placeholder: $(element).data('placeholder') || '-- Pilih Item --',
+            allowClear: Boolean($(element).data('allow-clear')),
+        });
+    }
+
+    // Fungsi untuk menghitung ulang subtotal item
+    function calculateItemSubtotal(itemRow) {
+        const price = parseFloat(itemRow.find('.price-input').val()) || 0;
+        const qty = parseInt(itemRow.find('.qty-input').val()) || 0;
+        const subtotal = price * qty;
+        itemRow.find('.item-subtotal-display').val('Rp ' + subtotal.toLocaleString('id-ID'));
+        calculateOverallTotal();
+    }
+
+    // Fungsi untuk menghitung ulang total keseluruhan
+    function calculateOverallTotal() {
+        let overallSubTotal = 0;
+        $('.item-row').each(function() {
+            const price = parseFloat($(this).find('.price-input').val()) || 0;
+            const qty = parseInt($(this).find('.qty-input').val()) || 0;
+            overallSubTotal += (price * qty);
+        });
+
+        const globalDiscount = parseFloat($('#global_discount').val()) || 0;
+        let finalTotal = overallSubTotal - globalDiscount;
+        if (finalTotal < 0) finalTotal = 0;
+
+        $('#overall_sub_total_display').val('Rp ' + overallSubTotal.toLocaleString('id-ID'));
+        $('#final_total_display').val('Rp ' + finalTotal.toLocaleString('id-ID'));
+        $('#final_total_hidden').val(finalTotal);
+    }
+
+    // Fungsi untuk menambahkan item baru
+    function addItemRow() {
+        itemIndex++;
+        const originalRow = $('#items-container').find('.item-row[data-item-index="0"]').first();
+        const newRow = originalRow.clone(true);
+
+        newRow.attr('data-item-index', itemIndex);
+
+        newRow.find('[name^="items[0]"]').each(function() {
+            const oldName = $(this).attr('name');
+            const newName = oldName.replace(/items\[0\]/, `items[${itemIndex}]`);
+            $(this).attr('name', newName);
+            const oldId = $(this).attr('id');
+            if (oldId) {
+                const newId = oldId.replace(/-\d+$/, `-${itemIndex}`);
+                $(this).attr('id', newId);
+            }
+        });
+
+        newRow.find('label[for^="item-0"], label[for^="price-0"], label[for^="qty-0"], label[for^="item_subtotal_display-0"]').each(function() {
+            const oldFor = $(this).attr('for');
+            if (oldFor) {
+                const newFor = oldFor.replace(/-\d+$/, `-${itemIndex}`);
+                $(this).attr('for', newFor);
+            }
+        });
+
+        newRow.find('input').val('');
+        newRow.find('.qty-input').val(1);
+        newRow.find('.price-input').val(0);
+        newRow.find('.item-subtotal-display').val('Rp 0');
+        newRow.find('.stock-warning').hide(); // Sembunyikan peringatan stok
+
+        newRow.find('.item-select').removeClass('select2-hidden-accessible').next('.select2-container').remove();
+        initializeSelect2(newRow.find('.item-select'));
+
+        $('#items-container').append(newRow);
+        calculateOverallTotal();
+    }
+
+    $(document).ready(function() {
+        // Inisialisasi Select2 untuk item pertama
+        initializeSelect2($('#item-0'));
+
+        // Event listener untuk tombol "Tambah Item"
+        $('#add-item').on('click', addItemRow);
+
+        // Event listener untuk tombol "Hapus" item (delegasi event)
+        $('#items-container').on('click', '.remove-item', function() {
+            if ($('.item-row').length > 1) {
+                $(this).closest('.item-row').remove();
+                calculateOverallTotal();
+            } else {
+                alert('Tidak bisa menghapus semua item. Minimal harus ada satu item.');
+            }
+        });
+
+        // Event listener untuk perubahan harga atau kuantitas (delegasi event)
+        $('#items-container').on('input', '.price-input, .qty-input', function() {
+            const itemRow = $(this).closest('.item-row');
+            const selectedOption = itemRow.find('.item-select option:selected');
+            const itemType = selectedOption.parent().attr('label'); // '🔧 Layanan Service' or '🔩 Sparepart'
+            const currentQty = parseInt($(this).val()) || 0;
+            const availableStock = parseInt(selectedOption.data('available-stock')) || 0;
+            const stockWarning = itemRow.find('.stock-warning');
+
+            if (itemType === '🔩 Sparepart' && currentQty > availableStock) {
+                stockWarning.text(`Stok tidak cukup! Tersedia: ${availableStock}`).show();
+                $(this).addClass('is-invalid');
+                $('#submitTransactionBtn').prop('disabled', true); // Nonaktifkan tombol submit
+            } else {
+                stockWarning.hide();
+                $(this).removeClass('is-invalid');
+                // Cek semua item, jika tidak ada peringatan, aktifkan tombol submit
+                if ($('.stock-warning:visible').length === 0) {
+                    $('#submitTransactionBtn').prop('disabled', false);
+                }
+            }
+
+            calculateItemSubtotal(itemRow);
+        });
+
+        // Event listener untuk tombol plus/minus kuantitas (delegasi event)
+        $('#items-container').on('click', '.btn-qty-minus', function() {
+            const qtyInput = $(this).siblings('.qty-input');
+            let currentVal = parseInt(qtyInput.val());
+            if (currentVal > 1) {
+                qtyInput.val(currentVal - 1).trigger('input'); // Trigger input event for validation
+            }
+        });
+
+        $('#items-container').on('click', '.btn-qty-plus', function() {
+            const qtyInput = $(this).siblings('.qty-input');
+            let currentVal = parseInt(qtyInput.val());
+            qtyInput.val(currentVal + 1).trigger('input'); // Trigger input event for validation
+        });
+
+        // Event listener untuk perubahan Select2 item
+        $('#items-container').on('change', '.item-select', function() {
+            const selectedOption = $(this).find('option:selected');
+            const itemRow = $(this).closest('.item-row');
+            const priceInput = itemRow.find('.price-input');
+            const qtyInput = itemRow.find('.qty-input');
+            const itemTypeInput = itemRow.find('.item-type-input');
+            const itemIdInput = itemRow.find('.item-id-input');
+            const stockWarning = itemRow.find('.stock-warning');
+
+            const fullId = selectedOption.val();
+            if (fullId) {
+                const [type, id] = fullId.split('-');
+                itemTypeInput.val(type);
+                itemIdInput.val(id);
+            } else {
+                itemTypeInput.val('');
+                itemIdInput.val('');
+            }
+
+            const price = selectedOption.data('price');
+            if (price !== undefined) {
+                priceInput.val(price);
+            } else {
+                priceInput.val(0);
+            }
+
+            // Reset quantity to 1 and re-validate stock
+            qtyInput.val(1).trigger('input'); 
+            
+            // Sembunyikan peringatan stok saat item baru dipilih
+            stockWarning.hide();
+            qtyInput.removeClass('is-invalid');
+            // Cek semua item, jika tidak ada peringatan, aktifkan tombol submit
+            if ($('.stock-warning:visible').length === 0) {
+                $('#submitTransactionBtn').prop('disabled', false);
+            }
+
+            calculateItemSubtotal(itemRow);
+        });
+
+        // Event listener untuk perubahan diskon global
+        $('#global_discount').on('input', calculateOverallTotal);
+
+        // Hitung total awal saat halaman dimuat
+        calculateOverallTotal();
+    });
+</script>
+@endpush

@@ -321,11 +321,15 @@
 
     // Fungsi untuk menginisialisasi Select2 pada elemen baru
     function initializeSelect2(element) {
-        $(element).select2({
+        // Check if Select2 is already initialized on the element
+        if (element.data('select2')) {
+            element.select2('destroy'); // Destroy existing instance if any
+        }
+        element.select2({ // Use 'element' directly instead of $(this)
             theme: "bootstrap-5", // Jika menggunakan Bootstrap 5
-            width: $(this).data('width') ? $(this).data('width') : $(this).hasClass('w-100') ? '100%' : 'style',
-            placeholder: $(this).data('placeholder'),
-            allowClear: Boolean($(this).data('allow-clear')),
+            width: element.data('width') ? element.data('width') : (element.hasClass('w-100') ? '100%' : 'style'),
+            placeholder: element.data('placeholder'),
+            allowClear: Boolean(element.data('allow-clear')),
         });
     }
 
@@ -377,7 +381,7 @@
         });
 
         // Update for dan id atribut untuk label di baris baru
-        newRow.find('label[for^="item-0"], label[for^="price-0"], label[for^="qty-0"], label[for^="expired_date-0"], label[for^="notes-0"], label[for^="item_subtotal_display-0"]').each(function() {
+        newRow.find('label[for^="sparepart-0"], label[for^="purchase_price-0"], label[for^="quantity-0"], label[for^="expired_date-0"], label[for^="notes-0"], label[for^="item_subtotal_display-0"]').each(function() {
             const oldFor = $(this).attr('for');
             if (oldFor) {
                 const newFor = oldFor.replace(/-\d+$/, `-${itemIndex}`);
@@ -393,10 +397,14 @@
         newRow.find('textarea').val('');
         newRow.find('select').val(''); // Reset select dropdown
 
+        // Destroy existing Select2 instance on the cloned element before re-initializing
+        // This is crucial for dynamically added elements
+        const sparepartSelect = newRow.find('.sparepart-select');
+        if (sparepartSelect.data('select2')) {
+            sparepartSelect.select2('destroy');
+        }
         // Re-initialize Select2 for the cloned select element
-        // Hapus Select2 yang lama dan inisialisasi ulang
-        newRow.find('.sparepart-select').removeClass('select2-hidden-accessible').next('.select2-container').remove();
-        initializeSelect2(newRow.find('.sparepart-select')); // Inisialisasi Select2 pada elemen select yang baru
+        initializeSelect2(sparepartSelect);
 
         $('#items-container').append(newRow);
         calculateOverallTotal(); // Hitung ulang total setelah menambah item
@@ -418,6 +426,8 @@
                 $(this).closest('.item-row').remove();
                 calculateOverallTotal(); // Hitung ulang total setelah menghapus item
             } else {
+                // Using a custom modal or a more user-friendly message instead of alert()
+                // For simplicity, I'm keeping the alert for now, but consider a modal.
                 alert('Tidak bisa menghapus semua item. Minimal harus ada satu item.');
             }
         });
@@ -444,7 +454,7 @@
             calculateItemSubtotal($(this).closest('.item-row'));
         });
 
-        // Event listener untuk perubahan Select2 item sparepart
+        // Event listener untuk perubahan Select2 item sparepart (delegasi event)
         $('#items-container').on('change', '.sparepart-select', function() {
             const selectedOption = $(this).find('option:selected');
             const itemRow = $(this).closest('.item-row');

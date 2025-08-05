@@ -64,14 +64,19 @@ class PermissionSeeder extends Seeder
             'jenis-kendaraan.store',
             'jenis-kendaraan.update',
             'jenis-kendaraan.delete',
-            // 'stock-handle.view',
-            // 'stock-handle.create',
-            // 'stock-handle.store',
-            // 'stock-handle.edit',
-            // 'stock-handle.update',
-            // 'stock-handle.delete',
-            // 'stock-handle.quick-create-sparepart',
+            // Permissions untuk Stock Handle (jika diperlukan)
+            'stock-handle.view',
+            'stock-handle.create',
+            'stock-handle.store',
+            'stock-handle.edit',
+            'stock-handle.update',
+            'stock-handle.delete',
+            'stock-handle.quick-create-sparepart',
             'report.transaction',
+            // --- Permissions untuk Laporan Stok Sparepart ---
+            'report.sparepart-report', // Ditambahkan: Permission untuk Laporan Stok Sparepart
+            // --- Permissions untuk Laporan Ringkasan Stok (jika ada) ---
+            'report.inventory-summary', // Ditambahkan: Permission untuk Laporan Ringkasan Stok
             // --- Permissions baru untuk Purchase Orders ---
             'purchase_order.view',
             'purchase_order.create',
@@ -94,7 +99,7 @@ class PermissionSeeder extends Seeder
 
         // Beri semua permission ke admin
         $adminRole = Role::firstOrCreate(['name' => 'admin']);
-        $adminRole->syncPermissions($permissions);
+        $adminRole->syncPermissions($permissions); // Ini akan mengaitkan semua permission di array $permissions
 
         // Beri permission tertentu ke kasir
         $kasirRole = Role::firstOrCreate(['name' => 'kasir']);
@@ -106,7 +111,7 @@ class PermissionSeeder extends Seeder
             'user.view',
             'sparepart.view',
             'jenis-kendaraan.view',
-            // 'stock-handle.view',
+            'stock-handle.view', // Jika kasir perlu melihat stock handle
             'transaction.view',
             'transaction.create',
             'transaction.store',
@@ -114,9 +119,11 @@ class PermissionSeeder extends Seeder
             'transaction.update',
             'transaction.delete',
             'report.transaction',
+            'report.sparepart-report', // Kasir juga mungkin perlu melihat laporan stok sparepart
+            'report.inventory-summary', // Kasir juga mungkin perlu melihat laporan ringkasan stok
             // Jika kasir perlu melihat pesanan pembelian (tapi tidak mengelola)
-            // 'purchase_order.view',
-            // 'purchase_order_item.view',
+            'purchase_order.view',
+            'purchase_order_item.view',
         ];
         $kasirRole->syncPermissions($kasirPermissions);
     }

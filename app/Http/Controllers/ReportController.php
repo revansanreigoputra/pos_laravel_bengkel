@@ -3,22 +3,24 @@
 namespace App\Http\Controllers;
 
 use App\Models\Transaction;
+use App\Models\PurchaseOrderItem; // Import model PurchaseOrderItem
+use App\Models\Sparepart; // Import model Sparepart
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\TransactionsExport; // Pastikan ini diimpor jika digunakan
+use App\Exports\TransactionsExport;
 
 class ReportController extends Controller
 {
     /**
      * Display the transaction report page.
+     * Menampilkan halaman laporan transaksi (penjualan).
      */
     public function transactionReport(Request $request)
     {
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
 
-        // PENTING: Memuat relasi 'customer' di sini
         $query = Transaction::query()->where('status', 'completed')->with('customer');
 
         if ($startDate) {
@@ -32,9 +34,7 @@ class ReportController extends Controller
                               ->orderBy('transaction_date', 'desc')
                               ->get();
 
-        // Query untuk kartu ringkasan
-        // PENTING: Juga memuat relasi 'customer' jika data customer digunakan di kartu ringkasan
-        $cardQuery = Transaction::query()->with('customer');
+        $cardQuery = Transaction::query();
         if ($startDate) {
             $cardQuery->whereDate('transaction_date', '>=', $startDate);
         }
@@ -57,6 +57,41 @@ class ReportController extends Controller
     }
 
     /**
+     * Display the stock report page.
+     * Menampilkan halaman laporan stok sparepart.
+     * Ini adalah metode baru yang diperlukan.
+     */
+    public function stockReport()
+    {
+        // Mendapatkan semua sparepart dengan semua item pembelian terkait.
+        // Tidak ada filter berdasarkan kuantitas atau tanggal kadaluarsa di sini,
+        // sehingga semua item pembelian akan dimuat.
+        $spareparts = Sparepart::with(['purchaseOrderItems' => function ($query) {
+            $query->orderBy('expired_date', 'asc')
+                ->orderBy('created_at', 'asc');
+        }])->paginate(10); // ← tambahkan paginate di sini
+
+
+        return view('pages.report.sparepart-report', compact('spareparts'));
+    }
+
+    /**
+     * Display the expired stock report page.
+     * Menampilkan halaman laporan stok yang kadaluarsa.
+     * Ini adalah metode baru yang sangat penting untuk sistem FIFO/FEFO.
+     */
+    public function expiredStockReport()
+    {
+        $expiredItems = PurchaseOrderItem::where('quantity', '>', 0)
+                                         ->whereNotNull('expired_date')
+                                         ->where('expired_date', '<', Carbon::today())
+                                         ->with('sparepart', 'purchaseOrder')
+                                         ->get();
+
+        return view('pages.report.expired_stock', compact('expiredItems'));
+    }
+
+    /**
      * Export transactions to Excel.
      */
     public function exportExcel(Request $request)
@@ -75,7 +110,6 @@ class ReportController extends Controller
         }
         $filename .= '.xlsx';
 
-        // Pastikan TransactionsExport juga memuat relasi customer jika data customer ditampilkan di Excel
         return Excel::download(new TransactionsExport($startDate, $endDate, $exportTitle), $filename);
     }
 }

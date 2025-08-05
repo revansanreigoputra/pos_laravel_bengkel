@@ -56,7 +56,7 @@ class SparepartController extends Controller
     {
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
-            'code_part' => 'required|string|unique:spareparts,code_part|max:255',
+            'code_part' => 'nullable|string|unique:spareparts,code_part|max:255',
             'description' => 'nullable|string',
             'purchase_price' => 'nullable|numeric|min:0', // Harga beli
             'selling_price' => 'nullable|numeric|min:0', // Harga jual standar

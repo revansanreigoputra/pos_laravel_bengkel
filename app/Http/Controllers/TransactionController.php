@@ -3,26 +3,33 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
-use App\Models\Sparepart;
 use App\Models\Transaction;
-use App\Models\PurchaseOrderItem;
+use App\Models\Sparepart;
 use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf as PDF;
+use App\Services\TransactionService;
+use Exception;
 
 class TransactionController extends Controller
 {
+    protected TransactionService $transactionService;
+
+    // Injeksi TransactionService melalui constructor
+    public function __construct(TransactionService $transactionService)
+    {
+        $this->transactionService = $transactionService;
+    }
+
     /**
      * Menyimpan transaksi baru ke database.
      */
     public function store(Request $request)
     {
         Log::info('Incoming request for new transaction: ', $request->all());
-
-        DB::beginTransaction();
 
         try {
             // 1. Validasi Data
@@ -51,83 +58,37 @@ class TransactionController extends Controller
                 ]
             );
 
-            // 3. Proses Item Transaksi (Validasi, Perhitungan Harga, Pengecekan Stok)
-            $processedItems = $this->processTransactionItems($validatedData['items']);
-
-            // 4. Hitung total harga dan diskon
-            $totalPrice = array_sum(array_column($processedItems, 'subtotal'));
-            $totalDiscountAmount = array_sum(array_column($processedItems, 'discount_amount'));
-            $globalDiscount = $request->input('global_discount', 0);
-            $totalDiscountAmount += $globalDiscount;
-            $finalTotalPrice = $totalPrice - $globalDiscount;
-            if ($finalTotalPrice < 0) $finalTotalPrice = 0;
-
-            // 5. Buat Transaksi
-            $transaction = Transaction::create([
+            // Persiapkan data untuk service
+            $transactionData = [
                 'customer_id' => $customer->id,
                 'vehicle_number' => $validatedData['vehicle_number'] ?? null,
                 'vehicle_model' => $validatedData['vehicle_model'] ?? null,
                 'invoice_number' => $validatedData['invoice_number'],
                 'payment_method' => $validatedData['payment_method'],
-                'total_price' => $finalTotalPrice,
-                'discount_amount' => $totalDiscountAmount,
                 'transaction_date' => $validatedData['transaction_date'],
                 'status' => $request->input('status', 'pending'),
-            ]);
+                'total_price' => 0, // Akan di-update oleh service
+            ];
 
-            // 6. Kurangi Stok dan Simpan Item Transaksi
-            foreach ($processedItems as $itemData) {
-                if ($itemData['item_type'] === 'sparepart') {
-                    Sparepart::find($itemData['item_id'])->decrement('stock', $itemData['quantity']);
-                }
-                
-                $transaction->items()->create([
-                    'item_type' => $itemData['item_type'],
-                    'item_id' => $itemData['item_id'],
-                    'price' => $itemData['price'],
-                    'quantity' => $itemData['quantity'],
-                ]);
+            // Ubah format item agar service bisa memprosesnya
+            $itemsData = [];
+            foreach ($validatedData['items'] as $item) {
+                list($itemType, $itemId) = explode('-', $item['item_full_id']);
+                $itemsData[] = [
+                    'item_type' => $itemType,
+                    'item_id' => $itemId,
+                    'quantity' => $item['quantity'],
+                ];
             }
 
-            DB::commit();
+            // Panggil service untuk membuat transaksi dan memproses stok
+            $transaction = $this->transactionService->createTransaction($transactionData, $itemsData);
+
             return redirect()->route('transaction.index')->with('success', 'Transaksi berhasil dibuat!');
-        } catch (\Throwable $e) {
-            DB::rollBack();
+        } catch (Exception $e) {
             Log::error('Error storing transaction: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Gagal menyimpan transaksi: ' . $e->getMessage())->withInput();
         }
-    }
-
-    /**
-     * Tampilkan form untuk membuat transaksi baru.
-     */
-    public function create()
-    {
-        $spareparts = Sparepart::all();
-        $services = Service::all();
-
-        return view('pages.transaction.create', compact('spareparts', 'services'));
-    }
-
-    /**
-     * Tampilkan daftar transaksi.
-     */
-    public function index()
-    {
-        $transactions = Transaction::with('customer', 'items.sparepart', 'items.service')->latest()->paginate(10);
-
-        return view('pages.transaction.index', compact('transactions'));
-    }
-
-    /**
-     * Tampilkan form untuk mengedit transaksi.
-     */
-    public function edit(Transaction $transaction)
-    {
-        $spareparts = Sparepart::all();
-        $services = Service::all();
-        
-        return view('pages.transaction.edit', compact('transaction', 'spareparts', 'services'));
     }
 
     /**
@@ -155,16 +116,12 @@ class TransactionController extends Controller
             ]);
 
             // 2. Kembalikan stok lama sebelum di-update
-            foreach ($transaction->items as $oldItem) {
-                if ($oldItem->item_type === 'sparepart') {
-                    $sparepart = Sparepart::find($oldItem->item_id);
-                    if ($sparepart) {
-                        $sparepart->increment('stock', $oldItem->quantity);
-                    }
-                }
-            }
-
-            // 3. Update data pelanggan atau buat baru
+            $this->transactionService->restoreStockFromTransaction($transaction);
+            
+            // 3. Hapus item lama
+            $transaction->items()->delete();
+            
+            // 4. Update data pelanggan atau buat baru
             $customer = Customer::firstOrCreate(
                 ['phone' => $validatedData['customer_phone']],
                 [
@@ -174,44 +131,33 @@ class TransactionController extends Controller
                 ]
             );
 
-            // 4. Proses Item Transaksi (Validasi, Perhitungan Harga, Pengecekan Stok)
-            $processedItems = $this->processTransactionItems($validatedData['items']);
-
-            // 5. Hitung ulang total harga dan diskon
-            $totalPrice = array_sum(array_column($processedItems, 'subtotal'));
-            $totalDiscountAmount = array_sum(array_column($processedItems, 'discount_amount'));
-            $globalDiscount = $request->input('global_discount', 0);
-            $totalDiscountAmount += $globalDiscount;
-            $finalTotalPrice = $totalPrice - $globalDiscount;
-            if ($finalTotalPrice < 0) $finalTotalPrice = 0;
-
-            // 6. Update Transaksi
-            $transaction->update([
+            // Persiapkan data untuk service
+            $transactionData = [
                 'customer_id' => $customer->id,
                 'vehicle_number' => $validatedData['vehicle_number'] ?? null,
                 'vehicle_model' => $validatedData['vehicle_model'] ?? null,
                 'invoice_number' => $validatedData['invoice_number'],
                 'payment_method' => $validatedData['payment_method'],
-                'total_price' => $finalTotalPrice,
-                'discount_amount' => $totalDiscountAmount,
                 'transaction_date' => $validatedData['transaction_date'],
                 'status' => $request->input('status', 'pending'),
-            ]);
+                'total_price' => 0, // Akan di-update oleh service
+            ];
 
-            // 7. Hapus item lama dan buat item baru
-            $transaction->items()->delete();
-            foreach ($processedItems as $itemData) {
-                if ($itemData['item_type'] === 'sparepart') {
-                    Sparepart::find($itemData['item_id'])->decrement('stock', $itemData['quantity']);
-                }
-                
-                $transaction->items()->create([
-                    'item_type' => $itemData['item_type'],
-                    'item_id' => $itemData['item_id'],
-                    'price' => $itemData['price'],
-                    'quantity' => $itemData['quantity'],
-                ]);
+            $itemsData = [];
+            foreach ($validatedData['items'] as $item) {
+                list($itemType, $itemId) = explode('-', $item['item_full_id']);
+                $itemsData[] = [
+                    'item_type' => $itemType,
+                    'item_id' => $itemId,
+                    'quantity' => $item['quantity'],
+                ];
             }
+
+            // 5. Buat ulang item transaksi dengan logika stok yang baru
+            $updatedTransaction = $this->transactionService->createTransaction($transactionData, $itemsData);
+
+            // 6. Update transaksi utama dengan data dari service
+            $transaction->update($updatedTransaction->toArray());
 
             DB::commit();
             return redirect()->route('transaction.index')->with('success', 'Transaksi berhasil diperbarui!');
@@ -230,16 +176,11 @@ class TransactionController extends Controller
         DB::beginTransaction();
         try {
             // Kembalikan stok sparepart sebelum menghapus transaksi
-            foreach ($transaction->items as $item) {
-                if ($item->item_type === 'sparepart') {
-                    $sparepart = Sparepart::find($item->item_id);
-                    if ($sparepart) {
-                        $sparepart->increment('stock', $item->quantity);
-                    }
-                }
-            }
+            $this->transactionService->restoreStockFromTransaction($transaction);
+            
             $transaction->delete();
             DB::commit();
+            
             return redirect()->route('transaction.index')->with('success', 'Transaksi berhasil dihapus.');
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -248,94 +189,36 @@ class TransactionController extends Controller
         }
     }
 
-    /**
-     * Metode privat untuk memproses item transaksi.
-     * Melakukan validasi, pengecekan stok/kadaluarsa, dan menghitung harga.
-     * @param array $items
-     * @return array
-     * @throws \Exception
-     */
-    protected function processTransactionItems(array $items): array
+    // Metode lain tidak mengalami perubahan signifikan dan tetap berada di sini
+    public function create()
     {
-        $processedItems = [];
-        foreach ($items as $itemData) {
-            list($itemType, $itemId) = explode('-', $itemData['item_full_id']);
-            $price = 0;
-            $discountAmount = 0;
-
-            if ($itemType === 'sparepart') {
-                $sparepart = Sparepart::find($itemId);
-
-                if (!$sparepart) {
-                    throw new \Exception("Sparepart dengan ID " . $itemId . " tidak ditemukan.");
-                }
-
-                if ($sparepart->available_stock < $itemData['quantity']) {
-                    throw new \Exception("Stok sparepart '{$sparepart->name}' tidak mencukupi. Stok tersedia: {$sparepart->available_stock}");
-                }
-
-                $expiredItems = PurchaseOrderItem::where('sparepart_id', $sparepart->id)
-                    ->where('quantity', '>', 0)
-                    ->whereNotNull('expired_date')
-                    ->where('expired_date', '<', Carbon::today())
-                    ->orderBy('expired_date', 'asc')
-                    ->get();
-
-                if ($expiredItems->isNotEmpty()) {
-                    throw new \Exception("Sparepart '{$sparepart->name}' memiliki stok yang sudah kadaluarsa. Mohon periksa kembali.");
-                }
-
-                $price = $sparepart->final_selling_price;
-                if ($sparepart->isDiscountActive()) {
-                    $originalPrice = $sparepart->selling_price;
-                    $discountPerItem = $originalPrice - $price;
-                    $discountAmount = ($discountPerItem * $itemData['quantity']);
-                }
-
-            } elseif ($itemType === 'service') {
-                $service = Service::find($itemId);
-
-                if (!$service) {
-                    throw new \Exception("Jasa service dengan ID " . $itemId . " tidak ditemukan.");
-                }
-                $price = $service->harga_standar;
-            } else {
-                throw new \Exception("Tipe item tidak valid: " . $itemType);
-            }
-
-            $processedItems[] = [
-                'item_type' => $itemType,
-                'item_id' => $itemId,
-                'price' => $price,
-                'quantity' => $itemData['quantity'],
-                'subtotal' => $price * $itemData['quantity'],
-                'discount_amount' => $discountAmount,
-            ];
-        }
-
-        return $processedItems;
+        $spareparts = Sparepart::all();
+        $services = Service::all();
+        return view('pages.transaction.create', compact('spareparts', 'services'));
     }
 
-    /**
-     * Tampilkan detail transaksi.
-     */
+    public function index()
+    {
+        $transactions = Transaction::with('customer', 'items.sparepart', 'items.service')->latest()->paginate(10);
+        return view('pages.transaction.index', compact('transactions'));
+    }
+
+    public function edit(Transaction $transaction)
+    {
+        $spareparts = Sparepart::all();
+        $services = Service::all();
+        return view('pages.transaction.edit', compact('transaction', 'spareparts', 'services'));
+    }
+    
     public function show(Transaction $transaction)
     {
         $transaction->load('customer', 'items.sparepart', 'items.service');
         return view('pages.transaction.show', compact('transaction'));
     }
-
-    /**
-     * Export transactions to PDF (invoice).
-     *
-     * @param  \App\Models\Transaction  $transaction
-     * @return \Illuminate\Http\Response
-     */
+    
     public function exportPdf(Transaction $transaction)
     {
-        // Pastikan relasi customer dimuat saat membuat PDF
         $transaction->load(['customer', 'items.service', 'items.sparepart']);
-
         $data = [
             'transaction' => $transaction,
             'nama_bengkel' => 'BengkelKu',
@@ -347,5 +230,4 @@ class TransactionController extends Controller
         $pdf = PDF::loadView('pages.transaction.invoice_pdf', $data);
         return $pdf->download('invoice-' . $transaction->invoice_number . '.pdf');
     }
-    
 }

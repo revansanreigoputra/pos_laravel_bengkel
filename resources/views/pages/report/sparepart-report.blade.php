@@ -1,247 +1,420 @@
 @extends('layouts.master')
+
 @section('title', 'Laporan Sparepart')
 
 @section('styles')
-    <style>
-        .main-card {}
+<style>
+    .card {
+border: none;
+border-radius: 8px;
+box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+background-color: #fff;
+}
 
-        /* Custom styling for top navigation tabs to match reference */
-        .nav-pills .nav-link {
-            padding: 10px 25px;
-            background-color: #f7f9fc;
-            border: 1px solid #e0e6ed;
-            border-radius: 8px;
-            /* Rounded pill shape */
-            color: #6a7f8e;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
-        }
+.card-header {
+    border-bottom: none;
+    background-color: #fff;
+    padding: 1.5rem 2rem 0;
+}
 
-        .nav-pills .nav-link.active {
-            background-color: #e0e9fa !important;
-            /* Light blue for active tab */
-            border-color: #b1d4fa !important;
-            /* Matching border color */
-            color: #407bff !important;
-            /* Primary blue for active text */
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08) !important;
-            transform: translateY(-2px);
-        }
+.card-body {
+    padding: 1.5rem 2rem;
+}
 
-        .nav-pills .nav-link:hover:not(.active) {
-            background-color: #eaf1f9;
-            border-color: #d1e0f0;
-        }
+/* Custom styling for top navigation tabs (Pills) - Green Theme */
+.nav-pills .nav-link {
+    padding: 10px 20px;
+    background-color: #f0f2f5;
+    border: none;
+    border-radius: 6px;
+    color: #6a7f8e;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    box-shadow: none;
+    margin-right: 8px;
+}
 
-        /* Search and Filter Area */
-        .filter-area .form-control,
-        .filter-area .form-select {
-            height: calc(2.8rem + 2px);
-            /* Consistent height */
-            border-radius: 8px;
-            font-size: 1rem;
-        }
+.nav-pills .nav-link.active {
+    background-color: #22c55e !important; /* Green for active tab */
+    color: white !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
+    transform: translateY(-1px);
+}
 
-        .filter-area .btn {
-            height: calc(2.8rem + 2px);
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-        }
+.nav-pills .nav-link:hover:not(.active) {
+    background-color: #e0e2e5;
+}
 
-        .filter-area .btn-primary {
-            /* For Search button */
-            background-color: #407bff;
-            border-color: #407bff;
-        }
+/* Search and Filter Area - Green Primary Button */
+.filter-area {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
 
-        .filter-area .btn-success {
-            /* For Export button */
-            background-color: #1abc9c;
-            border-color: #1abc9c;
-        }
+.filter-area .form-select {
+    height: 38px;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    border: 1px solid #d1d9e6;
+    padding: 0.375rem 1rem;
+    flex-grow: 1;
+    max-width: 300px;
+}
 
+.filter-area .btn {
+    height: 38px;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 0.375rem 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
 
-        /* Status Badges */
-        .status-badge {
-            padding: 6px 12px;
-            border-radius: 20px;
-            /* Pill shape */
-            font-weight: 600;
-            font-size: 0.8rem;
-            /* Smaller font size */
-            white-space: nowrap;
-            display: inline-block;
-        }
+.filter-area .btn-primary {
+    background-color: #22c55e; /* Green for primary button */
+    border-color: #22c55e;
+    color: white;
+}
 
-        .status-badge.available {
-            background-color: #e6f7ed;
-            color: #28a745;
-            border: 1px solid #d4edda;
-        }
+.filter-area .btn-outline-success {
+    color: #22c55e;
+    border-color: #22c55e;
+    background-color: transparent;
+    transition: all 0.2s ease;
+}
 
-        .status-badge.expired {
-            background-color: #fcebeb;
-            color: #dc3545;
-            border: 1px solid #f5c6cb;
-        }
+.filter-area .btn-outline-success:hover {
+    background-color: #22c55e;
+    color: white;
+}
 
-        .status-badge.empty {
-            background-color: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeeba;
-        }
+/* Table Styling */
+.table {
+    border-collapse: separate;
+    border-spacing: 0 10px;
+    margin-bottom: 0;
+}
 
-        /* Table Action Buttons */
-        .action-buttons .btn {
-            padding: 8px 15px;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            margin-right: 8px;
-            /* Space between buttons */
-            box-shadow: none;
-            /* Remove default bootstrap shadow */
-            transition: background-color 0.2s ease, box-shadow 0.2s ease;
-        }
+.table th, .table td {
+    padding: 1rem 1.2rem;
+    vertical-align: middle;
+    background-color: #ffffff;
+    border: none;
+}
 
-        .action-buttons .btn-info-custom {
-            background-color: #e0e9fa;
-            /* Light blue */
-            color: #407bff;
-            border: 1px solid #e0e9fa;
-            /* Matching border */
-        }
+.table thead th {
+    background-color: #f7f9fc;
+    color: #6a7f8e;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+}
 
-        .action-buttons .btn-info-custom:hover {
-            background-color: #c7dbf8;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
-        }
+.table thead tr th:first-child { border-top-left-radius: 8px; }
+.table thead tr th:last-child { border-top-right-radius: 8px; }
 
-        .action-buttons .btn-success-custom {
-            background-color: #d1f2eb;
-            /* Light teal */
-            color: #1abc9c;
-            border: 1px solid #d1f2eb;
-        }
+.table tbody tr {
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    border-radius: 8px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.table tbody tr:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+}
 
-        .action-buttons .btn-success-custom:hover {
-            background-color: #b8e8de;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
-        }
+.table tbody tr td:first-child { border-bottom-left-radius: 8px; border-top-left-radius: 8px; }
+.table tbody tr td:last-child { border-bottom-right-radius: 8px; border-top-right-radius: 8px; }
 
-        .action-buttons .btn-danger-custom {
-            background-color: #fcebeb;
-            /* Light red */
-            color: #dc3545;
-            border: 1px solid #fcebeb;
-        }
+/* Status Badges */
+.status-badge {
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-weight: 600;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    display: inline-block;
+    text-align: center;
+}
 
-        .action-buttons .btn-danger-custom:hover {
-            background-color: #f8d7da;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
-        }
+.status-badge.available {
+    background-color: #e6f7ed;
+    color: #28a745;
+}
 
+.status-badge.expired {
+    background-color: #fcebeb;
+    color: #dc3545;
+}
 
-        /* Pagination */
-        .pagination-custom {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            padding-top: 25px;
-            gap: 8px;
-        }
+.status-badge.empty {
+    background-color: #fff3cd;
+    color: #856404;
+}
 
-        .pagination-custom .page-item .page-link {
-            display: inline-flex;
-            justify-content: center;
-            align-items: center;
-            min-width: 38px;
-            height: 38px;
-            padding: 0 10px;
-            border: 1px solid #e0e6ed;
-            border-radius: 8px;
-            text-decoration: none;
-            color: #6a7f8e;
-            font-weight: 500;
-            transition: all 0.2s ease;
-            background-color: #f7f9fc;
-        }
+.text-muted {
+    color: #a0a0a0 !important;
+}
 
-        .pagination-custom .page-item.active .page-link {
-            background-color: #407bff !important;
-            border-color: #407bff !important;
-            color: white !important;
-            font-weight: 600;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            /* Subtle shadow for active page */
-        }
+/* Pagination */
+.pagination-custom {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding-top: 25px;
+    gap: 8px;
+}
 
-        .pagination-custom .page-item .page-link:hover:not(.active) {
-            background-color: #eaf1f9;
-            border-color: #d1e0f0;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-        }
-    </style>
+.pagination-custom .page-item .page-link {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 38px;
+    height: 38px;
+    padding: 0 10px;
+    border: 1px solid #e0e6ed;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #6a7f8e;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    background-color: #f7f9fc;
+}
 
+.pagination-custom .page-item.active .page-link {
+    background-color: #22c55e !important; /* Green for active pagination */
+    border-color: #23ad55 !important;
+    color: white !important;
+    font-weight: 600;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.pagination-custom .page-item .page-link:hover:not(.active) {
+    background-color: #eaf1f9;
+    border-color: #d1e0f0;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+</style>
 @endsection
-@section('content') 
-        <div class="card">
-            <div class="card-header">
 
-                <ul class="nav nav-pills mb-4" id="pills-tab" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="pills-available-tab" data-bs-toggle="pill"
-                            data-bs-target="#pills-available" type="button" role="tab" aria-controls="pills-available"
-                            aria-selected="true">Available Stock</button> 
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="pills-expired-tab" data-bs-toggle="pill" data-bs-target="#pills-expired"
-                            type="button" role="tab" aria-controls="pills-expired" aria-selected="false">Expired
-                            Stock</button>
-                             
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="pills-empty-tab" data-bs-toggle="pill" data-bs-target="#pills-empty"
-                            type="button" role="tab" aria-controls="pills-empty" aria-selected="false">Empty Stock</button>
-                           
-                    </li>
-                </ul> 
-            </div>
+@section('content')
+<div class="card">
+    <div class="card-header d-flex justify-content-start align-items-center">
+        <ul class="nav nav-pills" id="pills-tab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="pills-available-tab" data-bs-toggle="pill"
+                    data-bs-target="#pills-available" type="button" role="tab" aria-controls="pills-available"
+                    aria-selected="true">Stok Tersedia</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="pills-expired-tab" data-bs-toggle="pill" data-bs-target="#pills-expired"
+                    type="button" role="tab" aria-controls="pills-expired" aria-selected="false">Stok Kadaluarsa</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="pills-empty-tab" data-bs-toggle="pill" data-bs-target="#pills-empty"
+                    type="button" role="tab" aria-controls="pills-empty" aria-selected="false">Stok Kosong</button>
+            </li>
+        </ul>
+    </div>
 
-            <div class="card-body filter-area d-flex align-items-center mb-4">
-                 
-                <select class="form-select me-3 select2-init">
-                    <option value="">Please choose</option>
-                    <option value="sparepart 1">sparepart  A  </option>
-                    <option value="sparepart 2">sparepart  B  </option>
-                    <option value="sparepart 3">sparepart  C  </option>
+    <div class="card-body">
+        <div class="filter-area">
+            <form action="{{ route('report.sparepart-report') }}" method="GET" class="d-flex me-3">
+                <select class="form-select me-3 select2-init" name="sparepart_id" id="sparepart_filter">
+                    <option value="">-- Semua Sparepart --</option>
+                    @foreach ($spareparts as $sparepart)
+                        <option value="{{ $sparepart->id }}" {{ request('sparepart_id') == $sparepart->id ? 'selected' : '' }}>
+                            {{ $sparepart->name }} ({{ $sparepart->code_part }})
+                        </option>
+                    @endforeach
                 </select>
-                <button class="btn btn-primary me-3">Cari</button>s
-                <button class="btn btn-success ms-auto">Export</button>
+                <button type="submit" class="btn btn-primary">Cari</button>
+            </form><a href="{{ route('reports.export-excel', ['report_type' => 'stock', 'sparepart_id' => request('sparepart_id'), 'export_title' => 'Laporan_Stok_Sparepart']) }}" class="btn btn-outline-success">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M14 3v4a1 1 0 0 0 1 1h4"></path><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z"></path><path d="M10 12l4 4m0 -4l-4 4"></path><path d="M12 8v8m-2 -2l2 2l2 -2"></path></svg>
+                Export Excel
+            </a>
+        </div>
+        
+        <div class="tab-content" id="pills-tabContent">
+            {{-- Available Stock Tab --}}
+            <div class="tab-pane fade show active" id="pills-available" role="tabpanel" aria-labelledby="pills-available-tab">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Kode Part</th>
+                                <th>Nama Sparepart</th>
+                                <th>Kategori</th>
+                                <th>Supplier</th>
+                                <th>Stok Tersedia</th>
+                                <th>Harga Beli Terakhir</th>
+                                <th>Tgl Kadaluarsa Terdekat</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($spareparts->filter(function($s) { return $s->available_stock > 0; }) as $index => $sparepart)
+                            <tr>
+                                <td>{{ $index + 1 }}</td>
+                                <td>{{ $sparepart->code_part ?? '-' }}</td>
+                                <td>{{ $sparepart->name }}</td>
+                                <td>{{ $sparepart->category->name ?? 'N/A' }}</td>
+                                <td>{{ $sparepart->suppliers->name ?? 'N/A' }}</td>
+                                <td>
+                                    <span class="status-badge available">{{ number_format($sparepart->available_stock) }}</span>
+                                </td>
+                                <td>
+                                    @php
+                                    $latestPurchasePrice = $sparepart->purchaseOrderItems->where('quantity', '>', 0)->sortByDesc('created_at')->first()->price ?? null;
+                                    @endphp
+                                    @if ($latestPurchasePrice)
+                                    Rp {{ number_format($latestPurchasePrice, 0, ',', '.') }}
+                                    @else
+                                    -
+                                    @endif
+                                </td>
+                                <td>
+                                    @php
+                                    $nearestExpiredDate = $sparepart->purchaseOrderItems
+                                    ->where('quantity', '>', 0)
+                                    ->whereNotNull('expired_date')
+                                    ->where('expired_date', '>=', \Carbon\Carbon::today())
+                                    ->sortBy('expired_date')
+                                    ->first()->expired_date ?? null;
+                                    @endphp
+                                    @if ($nearestExpiredDate)
+                                    {{ \Carbon\Carbon::parse($nearestExpiredDate)->format('d M Y') }}
+                                    @else
+                                    -
+                                    @endif
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-4">Tidak ada stok sparepart yang tersedia.</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                <div class="d-flex justify-content-end mt-4">
+                    {{ $spareparts->links() }}
+                </div>
             </div>
 
-            <div class="card-body table-responsive" id="pills-tabContent">
-                <div class="tab-pane fade show active" id="pills-available" role="tabpanel"
-                    aria-labelledby="pills-available-tab">  
-                    <nav class="pagination-custom">
-                        <ul class="pagination">
-                            <li class="page-item"><a class="page-link" href="#">&lt;</a></li>
-                            <li class="page-item active"><span class="page-link">1</span></li>
-                            <li class="page-item"><a class="page-link" href="#">2</a></li>
-                            <li class="page-item"><a class="page-link" href="#">3</a></li>
-                            <li class="page-item"><span class="page-link">...</span></li>
-                            <li class="page-item"><a class="page-link" href="#">17</a></li>
-                            <li class="page-item"><a class="page-link" href="#">&gt;</a></li>
-                        </ul>
-                    </nav> 
+            {{-- Expired Stock Tab --}}
+            <div class="tab-pane fade" id="pills-expired" role="tabpanel" aria-labelledby="pills-expired-tab">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Kode Part</th>
+                                <th>Nama Sparepart</th>
+                                <th>Kategori</th>
+                                <th>Supplier</th>
+                                <th>Jumlah Kadaluarsa</th>
+                                <th>Harga Beli</th>
+                                <th>Tgl Kadaluarsa</th>
+                                <th>Catatan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @php $expiredCounter = 0; @endphp
+                            @forelse ($spareparts as $sparepart)
+                            @foreach ($sparepart->purchaseOrderItems->whereNotNull('expired_date')->where('expired_date', '<', \Carbon\Carbon::today())->where('quantity', '>', 0) as $item)
+                            @php $expiredCounter++; @endphp
+                            <tr>
+                                <td>{{ $expiredCounter }}</td>
+                                <td>{{ $sparepart->code_part ?? '-' }}</td>
+                                <td>{{ $sparepart->name }}</td>
+                                <td>{{ $sparepart->category->name ?? 'N/A' }}</td>
+                                <td>{{ $sparepart->supplier->name ?? 'N/A' }}</td>
+                                <td>
+                                    <span class="status-badge expired">{{ number_format($item->quantity) }}</span>
+                                </td>
+                                <td>Rp {{ number_format($item->price, 0, ',', '.') }}</td>
+                                <td>{{ \Carbon\Carbon::parse($item->expired_date)->format('d M Y') }}</td>
+                                <td>{{ $item->notes ?? '-' }}</td>
+                            </tr>
+                            @endforeach
+                            @empty
+                            <tr>
+                                <td colspan="9" class="text-center text-muted py-4">Tidak ada stok sparepart yang kadaluarsa.</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {{-- Empty Stock Tab --}}
+            <div class="tab-pane fade" id="pills-empty" role="tabpanel" aria-labelledby="pills-empty-tab">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Kode Part</th>
+                                <th>Nama Sparepart</th>
+                                <th>Kategori</th>
+                                <th>Supplier</th>
+                                <th>Harga Jual</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($spareparts->filter(function($s) { return $s->available_stock <= 0; }) as $index => $sparepart)
+                            <tr>
+                                <td>{{ $index + 1 }}</td>
+                                <td>{{ $sparepart->code_part ?? '-' }}</td>
+                                <td>{{ $sparepart->name }}</td>
+                                <td>{{ $sparepart->category->name ?? 'N/A' }}</td>
+                                <td>{{ $sparepart->supplier->name ?? 'N/A' }}</td>
+                                <td>Rp {{ number_format($sparepart->selling_price, 0, ',', '.') }}</td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">Tidak ada sparepart dengan stok kosong.</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
-  
-
+    </div>
+</div>
 @endsection
 
-@section('scripts')
+@push('addon-script')
+<script>
+    $(document).ready(function() {
+        $('#sparepart_filter').select2({
+            theme: "bootstrap-5",
+            width: $(this).data('width') ? $(this).data('width') : $(this).hasClass('w-100') ? '100%' : 'style',
+            placeholder: "-- Semua Sparepart --",
+            allowClear: true,
+        });
 
-@endsection
+        const urlParams = new URLSearchParams(window.location.search);
+        const activeTab = urlParams.get('tab');
+        if (activeTab) {
+            $(`#pills-${activeTab}-tab`).tab('show');
+        }
+
+        $('button[data-bs-toggle="pill"]').on('shown.bs.tab', function (e) {
+            const targetTab = $(e.target).attr('data-bs-target');
+            const tabId = targetTab.replace('#pills-', '');
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('tab', tabId);
+            const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+            history.pushState(null, '', newUrl);
+        });
+    });
+</script>
+@endpush

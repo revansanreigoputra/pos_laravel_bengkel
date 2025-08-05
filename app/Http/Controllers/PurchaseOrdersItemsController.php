@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\PurchaseOrderItem;
-use App\Models\PurchaseOrder; // Import model PurchaseOrder
-use App\Models\Sparepart;     // Import model Sparepart
+use App\Models\PurchaseOrder;
+use App\Models\Sparepart;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Exception;
 
 class PurchaseOrderItemController extends Controller
 {
@@ -15,8 +18,6 @@ class PurchaseOrderItemController extends Controller
      */
     public function index()
     {
-        // Mengambil semua item pesanan pembelian dengan relasi purchaseOrder dan sparepart
-        // secara eager loading, lalu dipaginasi.
         $purchaseOrderItems = PurchaseOrderItem::with(['purchaseOrder', 'sparepart'])->latest()->paginate(10);
         return view('purchase_order_items.index', compact('purchaseOrderItems'));
     }
@@ -24,17 +25,12 @@ class PurchaseOrderItemController extends Controller
     /**
      * Show the form for creating a new resource.
      * Menampilkan formulir untuk membuat item pesanan pembelian baru.
-     * Biasanya, item ini dibuat dalam konteks PurchaseOrder tertentu.
      */
     public function create(Request $request)
     {
-        // Mengambil semua PurchaseOrder dan Sparepart untuk dropdown
         $purchaseOrders = PurchaseOrder::all();
         $spareparts = Sparepart::all();
-
-        // Jika ada purchase_order_id di query string, gunakan sebagai nilai default
         $purchaseOrderId = $request->query('purchase_order_id');
-
         return view('purchase_order_items.create', compact('purchaseOrders', 'spareparts', 'purchaseOrderId'));
     }
 
@@ -44,22 +40,34 @@ class PurchaseOrderItemController extends Controller
      */
     public function store(Request $request)
     {
-        // Validasi data yang masuk dari request.
-        $validatedData = $request->validate([
-            'purchase_order_id' => 'required|exists:purchase_orders,id', // Harus ada di tabel purchase_orders
-            'sparepart_id' => 'required|exists:spareparts,id',         // Harus ada di tabel spareparts
-            'quantity' => 'required|integer|min:1',
-            'purchase_price' => 'required|numeric|min:0',
-            'expired_date' => 'nullable|date',
-            'notes' => 'nullable|string',
-        ]);
+        DB::beginTransaction();
+        try {
+            // Validasi data yang masuk dari request.
+            $validatedData = $request->validate([
+                'purchase_order_id' => 'required|exists:purchase_orders,id',
+                'sparepart_id' => 'required|exists:spareparts,id',
+                'quantity' => 'required|integer|min:1',
+                'purchase_price' => 'required|numeric|min:0',
+                'expired_date' => 'nullable|date',
+                'notes' => 'nullable|string',
+            ]);
 
-        // Membuat entri PurchaseOrderItem baru di database.
-        PurchaseOrderItem::create($validatedData);
+            $purchaseOrder = PurchaseOrder::find($validatedData['purchase_order_id']);
 
-        // Mengarahkan kembali ke halaman detail PurchaseOrder terkait atau index.
-        // Disarankan ke detail PurchaseOrder agar bisa melihat item yang baru ditambahkan.
-        return redirect()->route('purchase_orders.show', $validatedData['purchase_order_id'])->with('success', 'Item pesanan berhasil ditambahkan!');
+            // Validasi tanggal kedaluwarsa terhadap tanggal pesanan
+            if ($validatedData['expired_date'] && $purchaseOrder->order_date && $validatedData['expired_date'] < $purchaseOrder->order_date) {
+                throw new Exception("Tanggal kedaluwarsa tidak boleh lebih awal dari tanggal pesanan.");
+            }
+
+            PurchaseOrderItem::create($validatedData);
+            DB::commit();
+
+            return redirect()->route('purchase_orders.show', $validatedData['purchase_order_id'])->with('success', 'Item pesanan berhasil ditambahkan!');
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error('Error storing purchase order item: ' . $e->getMessage());
+            return redirect()->back()->withErrors(['error' => 'Gagal menambahkan item pesanan: ' . $e->getMessage()])->withInput();
+        }
     }
 
     /**
@@ -68,7 +76,6 @@ class PurchaseOrderItemController extends Controller
      */
     public function show(PurchaseOrderItem $purchaseOrderItem)
     {
-        // Memuat relasi purchaseOrder dan sparepart untuk ditampilkan di detail.
         $purchaseOrderItem->load('purchaseOrder', 'sparepart');
         return view('purchase_order_items.show', compact('purchaseOrderItem'));
     }
@@ -79,7 +86,6 @@ class PurchaseOrderItemController extends Controller
      */
     public function edit(PurchaseOrderItem $purchaseOrderItem)
     {
-        // Mengambil semua PurchaseOrder dan Sparepart untuk dropdown di formulir edit.
         $purchaseOrders = PurchaseOrder::all();
         $spareparts = Sparepart::all();
         return view('purchase_order_items.edit', compact('purchaseOrderItem', 'purchaseOrders', 'spareparts'));
@@ -91,21 +97,48 @@ class PurchaseOrderItemController extends Controller
      */
     public function update(Request $request, PurchaseOrderItem $purchaseOrderItem)
     {
-        // Validasi data yang masuk untuk pembaruan.
-        $validatedData = $request->validate([
-            'purchase_order_id' => 'required|exists:purchase_orders,id',
-            'sparepart_id' => 'required|exists:spareparts,id',
-            'quantity' => 'required|integer|min:1',
-            'purchase_price' => 'required|numeric|min:0',
-            'expired_date' => 'nullable|date',
-            'notes' => 'nullable|string',
-        ]);
+        DB::beginTransaction();
+        try {
+            // Validasi data yang masuk untuk pembaruan.
+            $validatedData = $request->validate([
+                'purchase_order_id' => 'required|exists:purchase_orders,id',
+                'sparepart_id' => 'required|exists:spareparts,id',
+                'quantity' => 'required|integer|min:1',
+                'purchase_price' => 'required|numeric|min:0',
+                'expired_date' => 'nullable|date',
+                'notes' => 'nullable|string',
+            ]);
 
-        // Memperbarui entri PurchaseOrderItem di database.
-        $purchaseOrderItem->update($validatedData);
+            $purchaseOrder = PurchaseOrder::find($validatedData['purchase_order_id']);
 
-        // Mengarahkan kembali ke halaman detail PurchaseOrder terkait atau index.
-        return redirect()->route('purchase_orders.show', $validatedData['purchase_order_id'])->with('success', 'Item pesanan berhasil diperbarui!');
+            // Validasi tanggal kedaluwarsa terhadap tanggal pesanan
+            if ($validatedData['expired_date'] && $purchaseOrder->order_date && $validatedData['expired_date'] < $purchaseOrder->order_date) {
+                throw new Exception("Tanggal kedaluwarsa tidak boleh lebih awal dari tanggal pesanan.");
+            }
+
+            // --- Poin Krusial: Proteksi Data Terjual ---
+            // Cek apakah item ini sudah ada yang terjual (digunakan dalam transaksi)
+            if ($purchaseOrderItem->transactionItems()->exists()) {
+                // Jika kuantitas baru lebih kecil dari kuantitas awal
+                if ($validatedData['quantity'] < $purchaseOrderItem->quantity) {
+                    throw new Exception("Tidak dapat mengurangi kuantitas item yang sudah terjual.");
+                }
+                // Jika ID sparepart diubah
+                if ($validatedData['sparepart_id'] != $purchaseOrderItem->sparepart_id) {
+                    throw new Exception("Tidak dapat mengubah sparepart untuk item yang sudah terjual.");
+                }
+            }
+
+            // Memperbarui entri PurchaseOrderItem di database.
+            $purchaseOrderItem->update($validatedData);
+            DB::commit();
+
+            return redirect()->route('purchase_orders.show', $validatedData['purchase_order_id'])->with('success', 'Item pesanan berhasil diperbarui!');
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error('Error updating purchase order item: ' . $e->getMessage());
+            return redirect()->back()->withErrors(['error' => 'Gagal memperbarui item pesanan: ' . $e->getMessage()])->withInput();
+        }
     }
 
     /**
@@ -114,13 +147,26 @@ class PurchaseOrderItemController extends Controller
      */
     public function destroy(PurchaseOrderItem $purchaseOrderItem)
     {
-        // Simpan purchase_order_id sebelum menghapus item
-        $purchaseOrderId = $purchaseOrderItem->purchase_order_id;
+        DB::beginTransaction();
+        try {
+            // Simpan purchase_order_id sebelum menghapus item
+            $purchaseOrderId = $purchaseOrderItem->purchase_order_id;
 
-        // Menghapus entri PurchaseOrderItem dari database.
-        $purchaseOrderItem->delete();
+            // --- Poin Krusial: Proteksi Data Terjual ---
+            // Cek apakah item ini sudah ada yang terjual (digunakan dalam transaksi)
+            if ($purchaseOrderItem->transactionItems()->exists()) {
+                throw new Exception("Tidak dapat menghapus item pesanan yang sudah terjual.");
+            }
 
-        // Mengarahkan kembali ke halaman detail PurchaseOrder terkait atau index.
-        return redirect()->route('purchase_orders.show', $purchaseOrderId)->with('success', 'Item pesanan berhasil dihapus!');
+            // Menghapus entri PurchaseOrderItem dari database.
+            $purchaseOrderItem->delete();
+            DB::commit();
+
+            return redirect()->route('purchase_orders.show', $purchaseOrderId)->with('success', 'Item pesanan berhasil dihapus!');
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error('Error deleting purchase order item: ' . $e->getMessage());
+            return redirect()->back()->withErrors(['error' => 'Gagal menghapus item pesanan: ' . $e->getMessage()]);
+        }
     }
 }
