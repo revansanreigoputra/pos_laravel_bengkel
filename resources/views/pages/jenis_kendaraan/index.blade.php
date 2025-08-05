@@ -13,7 +13,7 @@
 <div class="card">
     <div class="card-body">
         <div class="table-responsive">
-            <table id="jenis-kendaraan-table" class="table table-striped">
+            <table id="jenis-kendaraan-table" class="table table-striped table-bordered">
                 <thead>
                     <tr>
                         <th class="text-center">No</th>
@@ -25,7 +25,7 @@
                     @foreach ($jenisKendaraans as $index => $jenis)
                         <tr>
                             <td class="text-center">{{ $index + 1 }}</td>
-                            <td class="text-center">{{ $jenis->nama }}</td>
+                            <td class="">{{ $jenis->nama }}</td>
                             <td class="text-center">
                                 @canany(['jenis-kendaraan.update', 'jenis-kendaraan.delete'])
                                     @can('jenis-kendaraan.update')
