@@ -96,7 +96,7 @@
     </div>
 </div>
 
-@push('scripts')
+@push('addon-script')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         let itemIndex = 1;
