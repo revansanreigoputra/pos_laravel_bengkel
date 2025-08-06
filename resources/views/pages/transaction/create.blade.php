@@ -206,17 +206,19 @@
                                                             </optgroup>
                                                             <optgroup label="🔩 Sparepart">
                                                                 @foreach ($spareparts as $sparepart)
-                                                                    <option value="sparepart-{{ $sparepart->id }}"
+                                                                    @if($sparepart->available_stock > 0)
+                                                                        <option value="sparepart-{{ $sparepart->id }}"
                                                                             data-price="{{ $sparepart->final_selling_price }}"
-                                                                            data-available-stock="{{ $sparepart->available_stock }}"> {{-- UBAH INI --}}
-                                                                        {{ $sparepart->name }}
-                                                                        @if($sparepart->isDiscountActive())
-                                                                            (Diskon {{ $sparepart->discount_percentage }}% - Rp {{ number_format($sparepart->final_selling_price, 0, ',', '.') }})
-                                                                        @else
-                                                                            (Rp {{ number_format($sparepart->selling_price, 0, ',', '.') }})
-                                                                        @endif
-                                                                        (Stok: {{ $sparepart->available_stock }}) {{-- UBAH INI --}}
-                                                                    </option>
+                                                                            data-available-stock="{{ $sparepart->available_stock }}">
+                                                                            {{ $sparepart->name }}
+                                                                            @if($sparepart->isDiscountActive())
+                                                                                (Diskon {{ $sparepart->discount_percentage }}% - Rp {{ number_format($sparepart->final_selling_price, 0, ',', '.') }})
+                                                                            @else
+                                                                                (Rp {{ number_format($sparepart->selling_price, 0, ',', '.') }})
+                                                                            @endif
+                                                                            (Stok: {{ $sparepart->available_stock }})
+                                                                        </option>
+                                                                    @endif
                                                                 @endforeach
                                                             </optgroup>
                                                         </select>

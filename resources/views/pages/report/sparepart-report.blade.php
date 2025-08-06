@@ -251,7 +251,6 @@ background-color: #fff;
                                 <th>Kode Part</th>
                                 <th>Nama Sparepart</th>
                                 <th>Kategori</th>
-                                <th>Supplier</th>
                                 <th>Stok Tersedia</th>
                                 <th>Harga Beli Terakhir</th>
                                 <th>Tgl Kadaluarsa Terdekat</th>
@@ -264,18 +263,22 @@ background-color: #fff;
                                 <td>{{ $sparepart->code_part ?? '-' }}</td>
                                 <td>{{ $sparepart->name }}</td>
                                 <td>{{ $sparepart->category->name ?? 'N/A' }}</td>
-                                <td>{{ $sparepart->suppliers->name ?? 'N/A' }}</td>
                                 <td>
                                     <span class="status-badge available">{{ number_format($sparepart->available_stock) }}</span>
                                 </td>
                                 <td>
                                     @php
-                                    $latestPurchasePrice = $sparepart->purchaseOrderItems->where('quantity', '>', 0)->sortByDesc('created_at')->first()->price ?? null;
+                                        $latestPurchase = $sparepart->purchaseOrderItems->first();
                                     @endphp
-                                    @if ($latestPurchasePrice)
-                                    Rp {{ number_format($latestPurchasePrice, 0, ',', '.') }}
+
+                                    @if ($latestPurchase)
+                                        Rp {{ number_format($latestPurchase->purchase_price, 0, ',', '.') }}
+                                        <br>
+                                        <small class="text-muted">
+                                            ({{ \Carbon\Carbon::parse($latestPurchase->created_at)->format('d-m-Y') }})
+                                        </small>
                                     @else
-                                    -
+                                        -
                                     @endif
                                 </td>
                                 <td>
@@ -363,7 +366,6 @@ background-color: #fff;
                                 <th>Kode Part</th>
                                 <th>Nama Sparepart</th>
                                 <th>Kategori</th>
-                                <th>Supplier</th>
                                 <th>Harga Jual</th>
                             </tr>
                         </thead>

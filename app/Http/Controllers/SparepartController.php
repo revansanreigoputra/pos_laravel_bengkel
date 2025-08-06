@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Sparepart;
-use App\Models\Category; // Pastikan ini diimpor jika Anda menggunakannya
-use App\Models\Supplier; // Pastikan ini diimpor jika Anda menggunakannya
+use App\Models\Category;
+use App\Models\Supplier;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon; // Pastikan Carbon diimpor
+use Illuminate\Support\Carbon;
 
 class SparepartController extends Controller
 {
@@ -16,22 +16,26 @@ class SparepartController extends Controller
      */
     public function index(Request $request)
     {
-        // Memuat relasi 'category' dan 'purchaseOrderItems'
-        // dan mengurutkan purchaseOrderItems berdasarkan expired_date
-        $spareparts = Sparepart::with(['category', 'supplier', 'purchaseOrderItems' => function ($query) {
-            $query->where('quantity', '>', 0) // Hanya item dengan stok > 0
-                ->where(function ($q) {
-                    $q->where('expired_date', '>=', Carbon::today()) // Belum kadaluarsa
-                        ->orWhereNull('expired_date'); // Atau tidak ada tanggal kadaluarsa
-                })
-                ->orderBy('expired_date', 'asc'); // Urutkan untuk mendapatkan yang terdekat
-        }])->latest()->paginate(10); // Atau gunakan get() jika tidak ada paginasi
-
-        // Jika Anda memiliki filter atau pencarian, tambahkan di sini
+        // Mulai query untuk model Sparepart.
         $spareparts = Sparepart::query();
-        if ($request->has('search')) {
+
+        // Eager load relasi yang diperlukan.
+        // Pada relasi `purchaseOrderItems`, tambahkan constraint untuk hanya mengambil data terbaru.
+        $spareparts->with([
+            'category', 
+            'supplier', 
+            'purchaseOrderItems' => function ($query) {
+                // Urutkan berdasarkan tanggal pembuatan terbaru dan ambil hanya 1 item teratas
+                $query->latest();
+            }
+        ]);
+
+        // Tambahkan filter pencarian berdasarkan nama sparepart jika ada input pencarian.
+        if ($request->has('search') && !empty($request->search)) {
             $spareparts->where('name', 'like', '%' . $request->search . '%');
         }
+
+        // Lakukan paginasi pada hasil query.
         $spareparts = $spareparts->paginate(10);
 
         return view('pages.spareparts.index', compact('spareparts'));
@@ -69,18 +73,18 @@ class SparepartController extends Controller
         ]);
 
         // Get category name
-        $category =  Category::find($validatedData['category_id']);
+        $category = Category::find($validatedData['category_id']);
         $categoryName = $category ? $category->name : '';
 
         // Generate code_part on the server
         $namePart = strtoupper(substr($validatedData['name'], 0, 3));
         $catPart = strtoupper(substr($categoryName, 0, 3));
-        $random = mt_rand(100, 9999);  
+        $random = mt_rand(100, 9999);
 
         $generatedCodePart = "{$catPart}-{$namePart}-{$random}";
 
         // Ensure uniqueness (add a loop to regenerate if it exists)
-        while ( Sparepart::where('code_part', $generatedCodePart)->exists()) {
+        while (Sparepart::where('code_part', $generatedCodePart)->exists()) {
             $random = mt_rand(100, 9999);
             $generatedCodePart = "{$catPart}-{$namePart}-{$random}";
         }
@@ -88,8 +92,6 @@ class SparepartController extends Controller
         $sparepart = Sparepart::create(array_merge($validatedData, [
             'code_part' => $generatedCodePart,
         ]));
-
- 
 
         return redirect()->route('spareparts.index')->with('success', 'Sparepart berhasil ditambahkan!');
     }

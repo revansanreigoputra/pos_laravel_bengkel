@@ -13,12 +13,7 @@ use Illuminate\Support\Carbon;
 class TransactionService
 {
     /**
-     * Membuat transaksi dan mengurangi stok sparepart dengan logika FIFO/FEFO.
-     *
-     * @param array 
-     * @param array 
-     * @return Transaction
-     * @throws Exception
+     * Membuat transaksi dan mengurangi stok sparepart berdasarkan quantity - sold_quantity.
      */
     public function createTransaction(array $transactionData, array $itemsData): Transaction
     {
@@ -34,18 +29,28 @@ class TransactionService
                     if (!$sparepart) {
                         throw new Exception("Sparepart dengan ID {$item['item_id']} tidak ditemukan.");
                     }
+
                     $requestedQuantity = $item['quantity'];
 
-                    if ($sparepart->available_stock < $requestedQuantity) {
-                        throw new Exception("Stok untuk sparepart '{$sparepart->name}' tidak mencukupi. Stok tersedia: {$sparepart->available_stock}");
-                    }
-
-                    // Ambil batch stok dengan urutan FEFO atau FIFO
-                    $batches = PurchaseOrderItem::where('sparepart_id', $sparepart->id)
-                        ->where('quantity', '>', 0)
+                    // Hitung stok tersedia dari purchase_order_items
+                    $availableStock = PurchaseOrderItem::where('sparepart_id', $sparepart->id)
+                        ->selectRaw('SUM(quantity - sold_quantity) as available_stock')
                         ->where(function ($query) {
                             $query->where('expired_date', '>=', Carbon::today())
-                                ->orWhereNull('expired_date');
+                                  ->orWhereNull('expired_date');
+                        })
+                        ->first()->available_stock ?? 0;
+
+                    if ($availableStock < $requestedQuantity) {
+                        throw new Exception("Stok untuk sparepart '{$sparepart->name}' tidak mencukupi. Stok tersedia: {$availableStock}");
+                    }
+
+                    // Ambil batch stok dengan logika FEFO/FIFO berdasarkan expired_date dan created_at
+                    $batches = PurchaseOrderItem::where('sparepart_id', $sparepart->id)
+                        ->whereRaw('quantity - sold_quantity > 0')
+                        ->where(function ($query) {
+                            $query->where('expired_date', '>=', Carbon::today())
+                                  ->orWhereNull('expired_date');
                         })
                         ->orderByRaw('CASE WHEN expired_date IS NULL THEN 1 ELSE 0 END, expired_date ASC, created_at ASC')
                         ->get();
@@ -56,7 +61,12 @@ class TransactionService
                             break;
                         }
 
-                        $quantityToUse = min($remainingQuantity, $batch->quantity);
+                        $availableQty = $batch->quantity - $batch->sold_quantity;
+                        if ($availableQty <= 0) {
+                            continue;
+                        }
+
+                        $quantityToUse = min($remainingQuantity, $availableQty);
 
                         $transaction->items()->create([
                             'item_type' => 'sparepart',
@@ -66,7 +76,7 @@ class TransactionService
                             'quantity' => $quantityToUse,
                         ]);
 
-                        $batch->decrement('quantity', $quantityToUse);
+                        $batch->increment('sold_quantity', $quantityToUse);
                         $remainingQuantity -= $quantityToUse;
 
                         $totalPrice += $quantityToUse * $sparepart->final_selling_price;
@@ -76,12 +86,14 @@ class TransactionService
                     if (!$service) {
                         throw new Exception("Service dengan ID {$item['item_id']} tidak ditemukan.");
                     }
+
                     $transaction->items()->create([
                         'item_type' => 'service',
                         'item_id' => $service->id,
                         'price' => $service->harga_standar,
                         'quantity' => 1,
                     ]);
+
                     $totalPrice += $service->harga_standar;
                 }
             }
@@ -91,7 +103,6 @@ class TransactionService
             DB::commit();
 
             return $transaction;
-
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
@@ -100,8 +111,6 @@ class TransactionService
 
     /**
      * Mengembalikan stok dari item-item transaksi yang akan dihapus atau di-update.
-     *
-     * @param Transaction $transaction
      */
     public function restoreStockFromTransaction(Transaction $transaction): void
     {
@@ -109,9 +118,28 @@ class TransactionService
             if ($item->item_type === 'sparepart') {
                 $purchaseOrderItem = $item->purchaseOrderItem;
                 if ($purchaseOrderItem) {
-                    $purchaseOrderItem->increment('quantity', $item->quantity);
+                    $purchaseOrderItem->decrement('sold_quantity', $item->quantity);
                 }
             }
         }
     }
+
+    public function updateTransaction(Transaction $transaction, array $transactionData, array $itemsData)
+{
+    // Update transaksi utama
+    $transaction->update($transactionData);
+
+    // Hapus semua item lama
+    $transaction->items()->delete();
+
+    // Tambahkan ulang item baru
+    foreach ($itemsData as $item) {
+        $transaction->items()->create($item);
+    }
+
+    return $transaction->fresh(); // return versi terbaru
+}
+
+
+
 }

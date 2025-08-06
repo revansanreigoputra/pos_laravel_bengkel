@@ -68,14 +68,13 @@
                                     <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#delete-order-{{ $order->id }}">
                                         Hapus
                                     </button>
-                                    {{-- Asumsikan Anda memiliki komponen modal delete-confirm --}}
-                                    {{-- <x-modal.delete-confirm
+                                    <x-modal.delete-confirm
                                         id="delete-order-{{ $order->id }}"
                                         :route="route('purchase_orders.destroy', $order->id)"
                                         item="{{ $order->invoice_number }}"
                                         title="Hapus Pesanan Pembelian?"
                                         description="Data pesanan pembelian yang dihapus tidak bisa dikembalikan."
-                                    /> --}}
+                                    />
                                 </td>
                             </tr>
                         @empty

@@ -32,6 +32,13 @@ class Sparepart extends Model
         'discount_end_date' => 'datetime',
     ];
 
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = ['available_stock', 'final_selling_price'];
+
     public function supplier()
     {
         return $this->belongsTo(Supplier::class);
@@ -46,30 +53,36 @@ class Sparepart extends Model
     {
         return $this->hasMany(PurchaseOrderItem::class);
     }
-    
+
     // Relasi untuk mengecek apakah sparepart sudah pernah terjual
     public function transactionItems()
     {
         return $this->hasMany(TransactionItem::class);
     }
 
-
     /**
-     * Accessor untuk mendapatkan total stok yang tersedia dan belum kadaluarsa.
+     * Accessor untuk mendapatkan total stok yang tersedia.
+     *
+     * @return int
      */
     public function getAvailableStockAttribute(): int
     {
-        // Mengambil total stok dari purchase_order_items yang belum kadaluarsa
-        // dan yang kuantitasnya masih lebih dari 0
-        $validItems = $this->purchaseOrderItems()
-                             ->where('quantity', '>', 0)
-                             ->where(function ($query) {
-                                 $query->where('expired_date', '>=', Carbon::today())
-                                       ->orWhereNull('expired_date');
-                             })
-                             ->sum('quantity');
+        // Pastikan relasi sudah dimuat (eager loaded) untuk menghindari N+1 query problem.
+        if ($this->relationLoaded('purchaseOrderItems')) {
+            // Filter purchase order items yang belum kadaluarsa atau tidak memiliki tanggal kadaluarsa.
+            $validItems = $this->purchaseOrderItems->filter(function ($item) {
+                return $item->expired_date === null || Carbon::parse($item->expired_date)->greaterThanOrEqualTo(Carbon::today());
+            });
 
-        return (int) $validItems;
+            // Jumlahkan total quantity dan total sold_quantity dari item yang valid.
+            $totalQuantity = $validItems->sum('quantity');
+            $totalSold = $validItems->sum('sold_quantity');
+
+            return (int) ($totalQuantity - $totalSold);
+        }
+
+        // Jika relasi tidak dimuat, kembalikan 0.
+        return 0;
     }
 
     /**

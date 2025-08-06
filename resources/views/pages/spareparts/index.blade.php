@@ -33,7 +33,6 @@
                             <th>Kode Part</th>
                             <th>Nama Sparepart</th>
                             <th>Kategori</th>
-                            <th>Jumlah Stok</th>
                             <th>Stok Saat Ini</th>
                             <th>Kadaluarsa Terdekat</th>
                             <th>Harga Beli</th>
@@ -48,8 +47,11 @@
                                 <td>{{ $sparepart->code_part ?? '-' }}</td>
                                 <td>{{ $sparepart->name }}</td>
                                 <td>{{ $sparepart->category->name ?? 'N/A' }}</td>
-                                <td>{{ $sparepart->available_stock }}</td>
-                                <td>{{ $sparepart->stock }}</td>
+                                <td>
+                                    <span class="status-badge {{ $sparepart->available_stock > 0 ? 'available' : 'unavailable' }}">
+                                        {{ number_format($sparepart->available_stock) }}
+                                    </span>
+                                </td>
                                 <td>
                                     @php
                                         // Ambil item pembelian dengan tanggal kadaluarsa terdekat yang belum kadaluarsa
@@ -70,14 +72,19 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <ul>
-                                        @foreach ($sparepart->purchaseOrderItems as $item)
-                                            <li>
-                                                Rp {{ number_format($item->purchase_price, 0, ',', '.') }}
-                                                ({{ \Carbon\Carbon::parse($item->created_at)->format('d-m-Y') }})
-                                            </li>
-                                        @endforeach
-                                    </ul>
+                                    @php
+                                        $latestPurchase = $sparepart->purchaseOrderItems->first();
+                                    @endphp
+
+                                    @if ($latestPurchase)
+                                        Rp {{ number_format($latestPurchase->purchase_price, 0, ',', '.') }}
+                                        <br>
+                                        <small class="text-muted">
+                                            ({{ \Carbon\Carbon::parse($latestPurchase->created_at)->format('d-m-Y') }})
+                                        </small>
+                                    @else
+                                        -
+                                    @endif
                                 </td>
                                 <td>
                                     @if ($sparepart->isDiscountActive())
