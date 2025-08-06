@@ -138,20 +138,24 @@
 
 @push('addon-script')
     <script>
-        $(document).ready(function() {
-            // Inisialisasi DataTables
-            $('#sparepart-table').DataTable({
-                "paging": true, // Aktifkan paginasi
-                "lengthChange": true, // Izinkan perubahan jumlah entri per halaman
-                "searching": true, // Aktifkan fitur pencarian
-                "ordering": true, // Aktifkan pengurutan kolom
-                "info": true, // Tampilkan informasi halaman
-                "autoWidth": false, // Nonaktifkan penyesuaian lebar kolom otomatis
-                "responsive": true, // Aktifkan responsif
-                "language": {
-                    "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Indonesian.json" // Bahasa Indonesia
-                }
-            });
+        // $(document).ready(function() {
+        //     // Inisialisasi DataTables
+        //     $('#sparepart-table').DataTable({
+        //         "paging": true, // Aktifkan paginasi
+        //         "lengthChange": true, // Izinkan perubahan jumlah entri per halaman
+        //         "searching": true, // Aktifkan fitur pencarian
+        //         "ordering": true, // Aktifkan pengurutan kolom
+        //         "info": true, // Tampilkan informasi halaman
+        //         "autoWidth": false, // Nonaktifkan penyesuaian lebar kolom otomatis
+        //         "responsive": true, // Aktifkan responsif
+        //         "language": {
+        //             "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/id.json" // Bahasa Indonesia
+        //         }
+        //     });
+        // });
+
+         $(document).ready(function() {
+            $('#sparepart-table').DataTable();
         });
     </script>
 @endpush
