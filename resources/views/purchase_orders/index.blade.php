@@ -11,7 +11,12 @@
 @section('content')
     <div class="card">
         <div class="card-body">
-             
+            @if (session('success'))
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
 
             {{-- Filter Status Pesanan --}}
             <div class="mb-3 d-flex justify-content-end align-items-center">
@@ -63,7 +68,6 @@
                                     <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#delete-order-{{ $order->id }}">
                                         Hapus
                                     </button>
-                                    {{-- Asumsikan Anda memiliki komponen modal delete-confirm --}}
                                     <x-modal.delete-confirm
                                         id="delete-order-{{ $order->id }}"
                                         :route="route('purchase_orders.destroy', $order->id)"
