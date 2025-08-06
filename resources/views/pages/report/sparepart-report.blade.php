@@ -225,8 +225,8 @@ background-color: #fff;
     <div class="card-body">
         <div class="filter-area">
             <form action="{{ route('report.sparepart-report') }}" method="GET" class="d-flex me-3">
-                <select class="form-select me-3 g-success border select2-init" name="sparepart_id" id="sparepart_filter">
-                    <option value="" class="b">-- Semua Sparepart --</option>
+                <select class="form-select me-3 select2-init" name="sparepart_id" id="sparepart_filter">
+                    <option value="">-- Semua Sparepart --</option>
                     @foreach ($spareparts as $sparepart)
                         <option value="{{ $sparepart->id }}" {{ request('sparepart_id') == $sparepart->id ? 'selected' : '' }}>
                             {{ $sparepart->name }} ({{ $sparepart->code_part }})

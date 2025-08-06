@@ -152,3 +152,10 @@ Route::get('/reports/export-excel', [ReportController::class, 'exportExcel'])->n
 use App\Http\Controllers\InventoryReportController;
 
 Route::get('/inventory/report', [InventoryReportController::class, 'index'])->name('inventory.report');
+
+Route::prefix('logs')->group(function () {
+    Route::get('pembelian', [\App\Http\Controllers\LogController::class, 'logPembelian'])->name('logs.pembelian');
+    Route::get('penjualan', [\App\Http\Controllers\LogController::class, 'logPenjualan'])->name('logs.penjualan');
+    Route::get('stok', [\App\Http\Controllers\LogController::class, 'logPergerakanStok'])->name('logs.stok');
+    Route::get('logs/sparepart', [\App\Http\Controllers\LogController::class, 'logSparepart'])->name('logs.sparepart');
+});
