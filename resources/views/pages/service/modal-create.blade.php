@@ -72,7 +72,7 @@
 
 
         {{-- initiate select2 START --}}
-        @push('scripts')
+        @push('addon-script')
             <script>
                 $(document).ready(function() {
                     $('#jenis_kendaraan_id').select2({
