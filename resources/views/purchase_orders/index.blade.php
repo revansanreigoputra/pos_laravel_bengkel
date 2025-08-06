@@ -40,7 +40,7 @@
                             <th>Total Harga</th>
                             <th>Metode Pembayaran</th>
                             <th>Status</th>
-                            <th>MMMMM</th>
+                            <th>Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
