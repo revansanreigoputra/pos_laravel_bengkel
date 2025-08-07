@@ -202,7 +202,7 @@
                                                 </small>
                                             </td>
                                             <td class="text-center">
-                                                <span class="badge bg-warning text-dark">
+                                                <span class="badge bg-warning text-white">
                                                     {{ $order->items->count() }}
                                                 </span>
                                             </td>
@@ -264,7 +264,7 @@
                                                 </small>
                                             </td>
                                             <td class="text-center">
-                                                <span class="badge bg-success">
+                                                <span class="badge bg-success text-white">
                                                     {{ $transaction->items->count() }}
                                                 </span>
                                             </td>
