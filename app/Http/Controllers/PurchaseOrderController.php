@@ -176,7 +176,7 @@ class PurchaseOrderController extends Controller
         DB::beginTransaction();
         try {
             // Periksa apakah ada item dari PO ini yang sudah terjual
-            $hasSoldItems = $purchaseOrder->items()->whereHas('transactionItems')->exists();
+            $hasSoldItems = $purchaseOrder->items()->whereHas('sparepart.transactionItems')->exists();
 
             if ($hasSoldItems) {
                 throw new Exception("Tidak dapat menghapus pesanan pembelian karena beberapa itemnya sudah terjual.");

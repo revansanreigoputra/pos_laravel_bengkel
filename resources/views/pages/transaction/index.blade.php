@@ -126,15 +126,8 @@
 @push('addon-script')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize DataTables
-        var table = $('#transaction-table').DataTable(); // Simpan instance DataTables ke variabel
-
-        // Event listener untuk filter status
-        $('#statusFilter').on('change', function() {
-            var status = $(this).val(); // Dapatkan nilai yang dipilih dari dropdown
-            // Gunakan `column().search()` untuk memfilter kolom 'Status'
-            // Kolom 'Status' ada di indeks ke-8 (dimulai dari 0)
-            table.column(8).search(status).draw();
+        $(document).ready(function() {
+            $('#transaction-table').DataTable();
         });
 
         // ... (kode JavaScript lainnya yang sudah ada) ...

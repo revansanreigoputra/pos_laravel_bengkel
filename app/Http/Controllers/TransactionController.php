@@ -225,7 +225,7 @@ class TransactionController extends Controller
 
     public function index()
     {
-        $transactions = Transaction::with('customer', 'items.sparepart', 'items.service')->latest()->paginate(10);
+        $transactions = Transaction::with(['customer', 'items.sparepart', 'items.service'])->latest()->get();
         return view('pages.transaction.index', compact('transactions'));
     }
 

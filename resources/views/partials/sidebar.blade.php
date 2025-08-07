@@ -31,8 +31,9 @@
                     </a>
                 </li>
 
-                <li class="nav-item dropdown {{ request()->is('kategori*') || request()->is('sparepart*') || request()->is('service*') || request()->is('supplier*') || request()->is('konsumen*') || request()->is('jenis-kendaraan*') ? 'active' : '' }}">
-                    <a class="nav-link dropdown-toggle" href="#" aria-expanded="false">
+                <li class="nav-item dropdown {{ request()->is('kategori*', 'sparepart*', 'service*', 'supplier*', 'konsumen*', 'jenis-kendaraan*') ? 'active' : '' }}">
+                    <a class="nav-link dropdown-toggle" href="#" 
+                       aria-expanded="{{ request()->is('kategori*', 'sparepart*', 'service*', 'supplier*', 'konsumen*', 'jenis-kendaraan*') ? 'true' : 'false' }}">
                         <span class="nav-link-icon d-md-none d-lg-inline-block">
                             <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-1" width="24" height="24"
                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -46,7 +47,7 @@
                         </span>
                         <span class="nav-link-title">Master Data</span>
                     </a>
-                    <div class="dropdown-menu {{ request()->is('kategori*') || request()->is('sparepart*') || request()->is('service*') || request()->is('supplier*') || request()->is('konsumen*') || request()->is('jenis-kendaraan*') ? 'show' : '' }}">
+                    <div class="dropdown-menu {{ request()->is('kategori*', 'sparepart*', 'service*', 'supplier*', 'konsumen*', 'jenis-kendaraan*') ? 'show' : '' }}">
                         <div class="dropdown-menu-columns">
                             <div class="dropdown-menu-column">
                                 @can('category.view')
@@ -78,8 +79,9 @@
                     </div>
                 </li>
 
-                <li class="nav-item dropdown {{ request()->is('purchase_orders*') || request()->is('transaction*') || request()->is('stock-handle*') ? 'active' : '' }}">
-                    <a class="nav-link dropdown-toggle" href="#" aria-expanded="false">
+                <li class="nav-item dropdown {{ request()->is('purchase_orders*', 'transaction*', 'stock-handle*') ? 'active' : '' }}">
+                    <a class="nav-link dropdown-toggle" href="#" 
+                       aria-expanded="{{ request()->is('purchase_orders*', 'transaction*', 'stock-handle*') ? 'true' : 'false' }}">
                         <span class="nav-link-icon d-md-none d-lg-inline-block">
                             <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-1" width="24" height="24"
                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -91,24 +93,26 @@
                         </span>
                         <span class="nav-link-title">Transaksi</span>
                     </a>
-                    <div class="dropdown-menu {{ request()->is('purchase_orders*') || request()->is('transaction*') || request()->is('stock-handle*') ? 'show' : '' }}">
+                    <div class="dropdown-menu {{ request()->is('purchase_orders*', 'transaction*', 'stock-handle*') ? 'show' : '' }}">
                         <div class="dropdown-menu-columns">
                             <div class="dropdown-menu-column">
                                 @can('purchase_order.view')
-                                    <a class="dropdown-item {{ request()->is('purchase_orders*') ? 'active' : '' }}"
-                                        href="{{ route('purchase_orders.index') }}">Transaksi Pembelian</a>
+                                <a class="dropdown-item {{ request()->is('purchase_orders*') ? 'active' : '' }}"
+                                    href="{{ route('purchase_orders.index') }}">Transaksi Pembelian</a>
                                 @endcan
                                 @can('transaction.view')
-                                    <a class="dropdown-item {{ request()->is('transaction*') ? 'active' : '' }}"
-                                        href="{{ route('transaction.index') }}">Transaksi Penjualan</a>
+                                <a class="dropdown-item {{ request()->is('transaction*') ? 'active' : '' }}"
+                                    href="{{ route('transaction.index') }}">Transaksi Penjualan</a>
                                 @endcan
                             </div>
                         </div>
                     </div>
                 </li>
 
-                <li class="nav-item dropdown {{ request()->is('laporan*') || request()->is('inventory/report') ? 'active' : '' }}">
-                    <a class="nav-link dropdown-toggle" href="#" aria-expanded="false">
+                {{-- laporan --}}
+                <li class="nav-item dropdown {{ request()->is('laporan*', 'stok-sparepart*') ? 'active' : '' }}">
+                    <a class="nav-link dropdown-toggle" href="#" 
+                       aria-expanded="{{ request()->is('laporan*', 'stok-sparepart*') ? 'true' : 'false' }}">
                         <span class="nav-link-icon d-md-none d-lg-inline-block">
                             <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-1" width="24" height="24"
                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -120,35 +124,65 @@
                         </span>
                         <span class="nav-link-title">Laporan</span>
                     </a>
-                    <div class="dropdown-menu {{ request()->is('laporan*') || request()->is('inventory/report') ? 'show' : '' }}">
+                    <div class="dropdown-menu {{ request()->is('laporan*', 'stok-sparepart*') ? 'show' : '' }}">
                         <div class="dropdown-menu-columns">
                             <div class="dropdown-menu-column">
                                 @can('report.transaction')
-                                <a class="dropdown-item {{ request()->is('laporan/transaksi') ? 'active' : '' }}"
+                                <a class="dropdown-item {{ request()->is('laporan*') ? 'active' : '' }}"
                                     href="{{ route('report.transaction') }}">Laporan Penjualan</a>
                                 @endcan
 
                                 @can('report.sparepart-report')
-                                <a class="dropdown-item {{ request()->is('laporan/stok-sparepart') ? 'active' : '' }}"
+                                <a class="dropdown-item {{ request()->is('stok-sparepart*') ? 'active' : '' }}"
                                     href="{{ route('report.sparepart-report') }}">
                                     Laporan Stok Sparepart
                                 </a>
                                 @endcan
-
-
-                                @can('report.purchase')
+                                 @can('report.purchase')
                                 <a class="dropdown-item {{ request()->is('laporan/pembelian') ? 'active' : '' }}"
                                     href="{{ route('report.purchase') }}">Laporan Pembelian Sparepart</a>
                                 @endcan 
-
                                 {{-- Menghapus link duplikat 'Laporan Stok Sparepart' --}}
                             </div>
                         </div>
                     </div>
                 </li>
 
-                <li class="nav-item dropdown {{ request()->is('user*') || request()->is('roles*') ? 'active' : '' }}">
-                    <a class="nav-link dropdown-toggle" href="#" aria-expanded="false">
+                {{-- history --}}
+                <li class="nav-item dropdown {{ request()->is('logs*') ? 'active' : '' }}">
+                    <a class="nav-link dropdown-toggle" href="#" 
+                       aria-expanded="{{ request()->is('logs*') ? 'true' : 'false' }}">
+                        <span class="nav-link-icon d-md-none d-lg-inline-block">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-file-analytics" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                               <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                               <path d="M14 3v4a1 1 0 0 0 1 1h4"></path>
+                               <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z"></path>
+                               <path d="M9 17l0 -5"></path>
+                               <path d="M12 17l0 -1"></path>
+                               <path d="M15 17l0 -3"></path>
+                            </svg>
+                        </span>
+                        <span class="nav-link-title">Riwayat</span>
+                    </a>
+                    <div class="dropdown-menu {{ request()->is('logs*') ? 'show' : '' }}">
+                        <div class="dropdown-menu-columns">
+                            <div class="dropdown-menu-column">
+                                <a class="dropdown-item {{ request()->is('logs/pembelian') ? 'active' : '' }}"
+                                   href="{{ route('logs.pembelian') }}">Riwayat Pembelian</a>
+                                <a class="dropdown-item {{ request()->is('logs/penjualan') ? 'active' : '' }}"
+                                   href="{{ route('logs.penjualan') }}">Riwayat Penjualan</a>
+                                {{-- <a class="dropdown-item {{ request()->is('logs/stok') ? 'active' : '' }}"
+                                   href="{{ route('logs.stok') }}">Log Pergerakan Stok</a>
+                                <a class="dropdown-item {{ request()->is('logs/sparepart') ? 'active' : '' }}"
+                                   href="{{ route('logs.sparepart') }}">Log Sparepart</a> --}}
+                            
+                            </div>
+                        </div>
+                    </div>
+                </li>
+                <li class="nav-item dropdown {{ request()->is('user*', 'roles*') ? 'active' : '' }}">
+                    <a class="nav-link dropdown-toggle" href="#" 
+                       aria-expanded="{{ request()->is('user*', 'roles*') ? 'true' : 'false' }}">
                         <span class="nav-link-icon d-md-none d-lg-inline-block">
                             <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-1" width="24" height="24"
                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -160,7 +194,7 @@
                         </span>
                         <span class="nav-link-title">Manajemen Pengguna</span>
                     </a>
-                    <div class="dropdown-menu {{ request()->is('user*') || request()->is('roles*') ? 'show' : '' }}">
+                    <div class="dropdown-menu {{ request()->is('user*', 'roles*') ? 'show' : '' }}">
                         <div class="dropdown-menu-columns">
                             <div class="dropdown-menu-column">
                                 @can('user.view')
