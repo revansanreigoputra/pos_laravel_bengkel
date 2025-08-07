@@ -77,6 +77,8 @@ class PermissionSeeder extends Seeder
             'report.sparepart-report', // Ditambahkan: Permission untuk Laporan Stok Sparepart
             // --- Permissions untuk Laporan Ringkasan Stok (jika ada) ---
             'report.inventory-summary', // Ditambahkan: Permission untuk Laporan Ringkasan Stok
+            // permissions for report purchase
+            'report.purchase',
             // --- Permissions baru untuk Purchase Orders ---
             'purchase_order.view',
             'purchase_order.create',
@@ -119,6 +121,7 @@ class PermissionSeeder extends Seeder
             'transaction.update',
             'transaction.delete',
             'report.transaction',
+             
             'report.sparepart-report', // Kasir juga mungkin perlu melihat laporan stok sparepart
             'report.inventory-summary', // Kasir juga mungkin perlu melihat laporan ringkasan stok
             // Jika kasir perlu melihat pesanan pembelian (tapi tidak mengelola)

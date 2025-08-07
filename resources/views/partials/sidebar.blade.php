@@ -135,6 +135,12 @@
                                 </a>
                                 @endcan
 
+
+                                @can('report.purchase')
+                                <a class="dropdown-item {{ request()->is('laporan/pembelian') ? 'active' : '' }}"
+                                    href="{{ route('report.purchase') }}">Laporan Pembelian Sparepart</a>
+                                @endcan 
+
                                 {{-- Menghapus link duplikat 'Laporan Stok Sparepart' --}}
                             </div>
                         </div>

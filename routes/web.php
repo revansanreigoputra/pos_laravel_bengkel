@@ -13,7 +13,7 @@ use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\JenisKendaraanController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\PurchaseOrderController;     // Import controller baru
-use App\Http\Controllers\PurchaseOrderItemController; // Import controller baru
+use App\Http\Controllers\PurchaseOrdersItemsController; // Import controller baru
 
 use Illuminate\Support\Facades\Route;
 
@@ -93,7 +93,7 @@ Route::middleware('auth')->group(function () {
         ->middleware('permission:purchase_order.view'); // Terapkan permission ke resource controller
 
     // Purchase Order Items - Untuk mengelola item di dalam pesanan pembelian
-    Route::resource('purchase_order_items', PurchaseOrderItemController::class)
+    Route::resource('purchase_order_items', PurchaseOrdersItemsController::class)
         ->middleware('permission:purchase_order_item.view'); // Terapkan permission ke resource controller
 
     // Jenis Kendaraan
@@ -108,9 +108,9 @@ Route::middleware('auth')->group(function () {
     Route::prefix('laporan')->group(function () {
         Route::middleware('permission:report.transaction')->get('/transaksi', [ReportController::class, 'transactionReport'])->name('report.transaction');
         // Jika Anda menambahkan laporan pembelian di masa mendatang, bisa ditambahkan di sini:
-        // Route::middleware('permission:report.purchase')->get('/pembelian', [ReportController::class, 'purchaseReport'])->name('report.purchase');
+        Route::middleware('permission:report.purchase')->get('/pembelian', [ReportController::class, 'purchaseReport'])->name('report.purchase');
     });
-
+    Route::get('/export-excel', [ReportController::class, 'exportExcel'])->name('order.export.excel');
 });
 
 require __DIR__ . '/auth.php';
@@ -142,7 +142,7 @@ Route::get('/supplier/export-pdf', [SupplierController::class, 'exportPDF'])->na
 Route::get('/customer/export-pdf', [CustomerController::class, 'exportPDF'])->name('customer.export-pdf');
 Route::get('/transactions/{transaction}/invoice/pdf', [App\Http\Controllers\TransactionController::class, 'exportPdf'])->name('transaction.exportPdf');
 Route::get('/report/transactions/export-excel', [ReportController::class, 'exportExcel'])->name('report.transaction.export.excel');
-  
+Route::get('/report/purchase/export-excel', [ReportController::class, 'exportExcel'])->name('report.purchase.export.excel');
 
 // direct blade route
 Route::get('/report/sparepart-report', [ReportController::class, 'stockReport'])->name('report.sparepart-report');

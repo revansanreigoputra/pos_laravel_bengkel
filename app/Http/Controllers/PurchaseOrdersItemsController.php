@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Exception;
 
-class PurchaseOrderItemController extends Controller
+class PurchaseOrdersItemsController extends Controller
 {
     /**
      * Display a listing of the resource.
