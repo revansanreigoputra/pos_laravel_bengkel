@@ -98,12 +98,21 @@
                             <div class="dropdown-menu-column">
                                 @can('purchase_order.view')
                                 <a class="dropdown-item {{ request()->is('purchase_orders*') ? 'active' : '' }}"
-                                    href="{{ route('purchase_orders.index') }}">Transaksi Pembelian</a>
+                                    href="{{ route('purchase_orders.index') }}">
+                                    Transaksi Pembelian
+                                </a>
                                 @endcan
+                                <a href="{{ route('purchase_orders.create') }}" class="dropdown-item {{ request()->is('purchase_orders/create') ? 'active' : '' }} 
+                                    add-link"><span class="add-badge">+</span> Tambah</a>
+                            </div>
+                            <div class="dropdown-menu-column">
                                 @can('transaction.view')
                                 <a class="dropdown-item {{ request()->is('transaction*') ? 'active' : '' }}"
                                     href="{{ route('transaction.index') }}">Transaksi Penjualan</a>
                                 @endcan
+                                <a href="{{ route('transaction.create') }}" class="dropdown-item {{ request()->is('transaction/create') ? 'active' : '' }} 
+                                    add-link"> <span class="add-badge">+</span> Tambah</a>
+
                             </div>
                         </div>
                     </div>

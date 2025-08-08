@@ -30,65 +30,88 @@
     }
 </style>
 <style>
-        /* Ensure consistent margin for both */
-        .dataTables_filter,
-         {
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 0.5rem;
-            /* spacing between label and input */
-            margin-top: 1rem;
-            width: 100%;
-            
+    /* Ensure consistent margin for both */
+    .dataTables_filter,
+    {
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    /* spacing between label and input */
+    margin-top: 1rem;
+    width: 100%;
+
+    }
+
+    /* Labels styling */
+    .dataTables_filter label,
+    .dataTables_length label {
+        display: flex;
+        align-items: center;
+        color: #28a745;
+        font-weight: 600;
+        margin: 0;
+        font-size: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    /* Make search input full width */
+    .dataTables_filter input {
+        width: 100%;
+        max-width: 400px;
+        /* or 100% if you want it full */
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #28a745;
+        border-radius: 8px;
+        background-color: #ffffff;
+        color: #155724;
+        font-size: 1rem;
+    }
+
+    /* Only style the select input, keep default width */
+    .dataTables_length select {
+        border: 1px solid #28a745;
+        background-color: #ffffff;
+        color: #155724;
+        border-radius: 0.375rem;
+        padding: 0.375rem 0.5rem;
+        margin-left: 0.5rem;
+    }
+
+    /* Responsive adjustment */
+    @media (min-width: 768px) {
+        .dataTables_filter {
+            float: right;
+            text-align: right;
         }
 
-        /* Labels styling */
-        .dataTables_filter label,
-        .dataTables_length label {
-            display: flex;
-            align-items: center;
-            color: #28a745;
-            font-weight: 600;
-            margin: 0;
-            font-size: 1rem;
-            margin-bottom: 1rem;
+        .dataTables_length {
+            float: left;
         }
+    }
 
-        /* Make search input full width */
-        .dataTables_filter input {
-            width: 100%;
-            max-width: 400px;
-            /* or 100% if you want it full */
-            padding: 0.5rem 0.75rem;
-            border: 1px solid #28a745;
-            border-radius: 8px;
-            background-color: #ffffff;
-            color: #155724;
-            font-size: 1rem; 
-        }
+    /* style hidden nav(add in sidebar) */
+    .add-link {
+        display: none; 
+        color: green; 
+    }
 
-        /* Only style the select input, keep default width */
-        .dataTables_length select {
-            border: 1px solid #28a745;
-            background-color: #ffffff;
-            color: #155724;
-            border-radius: 0.375rem;
-            padding: 0.375rem 0.5rem;
-            margin-left: 0.5rem;
-        }
+    .dropdown-menu-column:hover .add-link {
+        display: block;
+    }
 
-        /* Responsive adjustment */
-        @media (min-width: 768px) {
-            .dataTables_filter {
-                float: right;
-                text-align: right;
-            }
+    .add-link.active .add-badge {
+        background-color: #c6f2d6;
+        border-radius: 2rem;
+        padding: 0.1rem 0.4rem;
+        font-size: 0.875rem;
+        font-weight: bold;
+        color: #229822;
+    }
 
-            .dataTables_length {
-                float: left;
-            }
-        }
-    </style>
- 
+    .add-link.active {
+        display: block;
+        color: #000;
+    }
+</style>
