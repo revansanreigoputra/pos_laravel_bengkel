@@ -117,6 +117,7 @@ class ReportController extends Controller
         $start = $request->start_date;
         $end = $request->end_date;
         $status = $request->status;
+        $paymentMethod = $request->payment_method;
 
         $query = PurchaseOrder::query()->with('supplier');
 
@@ -131,9 +132,13 @@ class ReportController extends Controller
             $query->where('status', $status);
         }
 
+        if ($paymentMethod) {
+            $query->where('payment_method', $paymentMethod);
+        }
+
         $purchaseOrders = $query->latest()->get();
 
-        return view('pages.report.purchase', compact('purchaseOrders', 'start', 'end', 'status'));
+        return view('pages.report.purchase', compact('purchaseOrders', 'start', 'end', 'status', 'paymentMethod'));
     }
 
     /**
@@ -174,5 +179,42 @@ class ReportController extends Controller
         );
     }
 
+    public function exportPurchaseReport(Request $request)
+    {
+        $start = $request->start_date;
+        $end = $request->end_date;
+        $status = $request->status;
+        $paymentMethod = $request->payment_method;
 
+        $query = PurchaseOrder::query();
+
+        if ($start && $end) {
+            $query->whereBetween('order_date', [
+                Carbon::parse($start)->startOfDay(),
+                Carbon::parse($end)->endOfDay()
+            ]);
+        }
+
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        if ($paymentMethod) {
+            $query->where('payment_method', $paymentMethod);
+        }
+
+        $purchaseOrders = $query->get();
+
+        return Excel::download(
+            new PurchaseOrdersExport(
+                $purchaseOrders,
+                'Laporan Pembelian',
+                $start,
+                $end,
+                $status,
+                $paymentMethod
+            ),
+            'purchase_orders.xlsx'
+        );
+    }
 }

@@ -136,17 +136,17 @@
                     <div class="dropdown-menu {{ request()->is('laporan/penjualan') || request()->is('stok-sparepart') || request()->is('laporan/pembelian') ? 'show' : '' }}">
                         <div class="dropdown-menu-columns">
                             <div class="dropdown-menu-column">
-                                @can('report.transaction')
-                                <a class="dropdown-item {{ request()->is('laporan/penjualan') ? 'active' : '' }}"
-                                href="{{ route('report.transaction') }}">
-                                    Laporan Penjualan
-                                </a>
-                                @endcan
-                                
                                 @can('report.purchase')
                                 <a class="dropdown-item {{ request()->is('laporan/pembelian') ? 'active' : '' }}"
                                 href="{{ route('report.purchase') }}">
                                     Laporan Pembelian
+                                </a>
+                                @endcan
+
+                                @can('report.transaction')
+                                <a class="dropdown-item {{ request()->is('laporan/penjualan') ? 'active' : '' }}"
+                                href="{{ route('report.transaction') }}">
+                                    Laporan Penjualan
                                 </a>
                                 @endcan
 

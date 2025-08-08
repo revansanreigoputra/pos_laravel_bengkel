@@ -3,7 +3,6 @@
 @section('title', 'Laporan Pembelian Sparepart')
 
 @section('styles')
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
     {{-- <style>
         .table ul {
             padding-left: 15px;
@@ -90,12 +89,13 @@
                     </svg>
                     Cetak Laporan
                 </button>
-                <a href="{{ route('report.purchase.export.excel', [
+                <a href="{{ route('report.purchase.export', [
                         'start_date' => request('start_date'),
                         'end_date' => request('end_date'),
-                        'status' => request('status')
+                        'status' => request('status'),
+                        'payment_method' => request('payment_method')
                     ]) }}"
-                    class="btn btn-outline-success"> {{-- Removed ms-2 as flexbox handles spacing --}}
+                    class="btn btn-success"> {{-- Removed ms-2 as flexbox handles spacing --}}
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
                         stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
                         stroke-linejoin="round">
@@ -123,7 +123,7 @@
                         <input type="date" class="form-control" id="end_date" name="end_date"
                             value="{{ request('end_date') }}">
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label for="status" class="form-label">Status</label>
                         <select name="status" id="status" class="form-select">
                             <option value="">-- Semua Status --</option>
@@ -132,7 +132,17 @@
                             <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
                         </select>
                     </div>
-                    <div class="col-md-3 d-flex justify-content-end align-items-end">
+                    <div class="col-md-2">
+                        <label for="payment_method" class="form-label">Metode Pembayaran</label>
+                        <select name="payment_method" id="payment_method" class="form-select">
+                            <option value="">-- Semua Metode --</option>
+                            <option value="tunai" {{ request('payment_method') == 'tunai' ? 'selected' : '' }}>Tunai</option>
+                            <option value="transfer bank" {{ request('payment_method') == 'transfer bank' ? 'selected' : '' }}>Transfer Bank</option>
+                            <option value="kartu debit" {{ request('payment_method') == 'kartu debit' ? 'selected' : '' }}>Kartu Debit</option>
+                            <option value="e-wallet" {{ request('payment_method') == 'e-wallet' ? 'selected' : '' }}>E-Wallet</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex justify-content-end align-items-end">
                         <button type="submit" class="btn btn-primary me-2">Filter</button>
                         <a href="{{ route('report.purchase') }}" class="btn btn-secondary">Reset</a>
                     </div>

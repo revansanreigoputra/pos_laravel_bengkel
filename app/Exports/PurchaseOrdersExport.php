@@ -22,42 +22,28 @@ use Carbon\Carbon;
 class PurchaseOrdersExport implements 
     FromCollection, 
     WithHeadings, 
-    WithMapping, 
-    WithTitle, 
-    WithStyles, 
-    ShouldAutoSize, 
     WithEvents
 {
+    protected $purchaseOrders;
+    protected $exportTitle;
     protected $startDate;
     protected $endDate;
     protected $status;
-    protected $exportTitle;
+    protected $paymentMethod;
 
-    public function __construct($startDate = null, $endDate = null, $status = null, $exportTitle = 'Laporan Pembelian')
+    public function __construct($purchaseOrders, $exportTitle = '', $startDate = null, $endDate = null, $status = null, $paymentMethod = null)
     {
+        $this->purchaseOrders = $purchaseOrders;
+        $this->exportTitle = $exportTitle;
         $this->startDate = $startDate;
         $this->endDate = $endDate;
         $this->status = $status;
-        $this->exportTitle = $exportTitle;
+        $this->paymentMethod = $paymentMethod;
     }
 
     public function collection()
     {
-        $query = PurchaseOrder::query()->with(['supplier', 'items.sparepart']);
-
-        if ($this->startDate) {
-            $query->whereDate('order_date', '>=', Carbon::parse($this->startDate)->startOfDay());
-        }
-
-        if ($this->endDate) {
-            $query->whereDate('order_date', '<=', Carbon::parse($this->endDate)->endOfDay());
-        }
-
-        if ($this->status) {
-            $query->where('status', $this->status);
-        }
-
-        return $query->orderBy('order_date', 'desc')->get();
+        return $this->purchaseOrders ?? collect();
     }
 
     public function headings(): array
