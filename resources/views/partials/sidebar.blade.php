@@ -186,10 +186,9 @@
                                 <a class="dropdown-item {{ request()->is('logs/penjualan') ? 'active' : '' }}"
                                    href="{{ route('logs.penjualan') }}">Riwayat Penjualan</a>
                                 {{-- <a class="dropdown-item {{ request()->is('logs/stok') ? 'active' : '' }}"
-                                   href="{{ route('logs.stok') }}">Log Pergerakan Stok</a>
+                                   href="{{ route('logs.stok') }}">Riwayat Stok</a> --}}
                                 <a class="dropdown-item {{ request()->is('logs/sparepart') ? 'active' : '' }}"
-                                   href="{{ route('logs.sparepart') }}">Log Sparepart</a> --}}
-                            
+                                   href="{{ route('logs.sparepart') }}">Riwayat Stok</a>
                             </div>
                         </div>
                     </div>

@@ -34,31 +34,94 @@ class LogController extends Controller
     {
         $startDate = $request->input('start_date') ? Carbon::parse($request->start_date)->startOfDay() : Carbon::now()->startOfMonth();
         $endDate = $request->input('end_date') ? Carbon::parse($request->end_date)->endOfDay() : Carbon::now()->endOfMonth();
+        $jenis = $request->input('jenis');
 
-        $spareparts = Sparepart::all()->map(function ($sparepart) use ($startDate, $endDate) {
-            $stok_awal = PurchaseOrderItem::where('sparepart_id', $sparepart->id)
-                ->whereHas('purchaseOrder', fn($q) => $q->where('order_date', '<', $startDate))
-                ->sum('quantity');
+        // Barang Masuk (Purchase)
+        $barangMasuk = \App\Models\PurchaseOrderItem::with(['purchaseOrder.supplier', 'sparepart'])
+            ->whereHas('purchaseOrder', fn($q) => $q->whereBetween('order_date', [$startDate, $endDate]))
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'no_invoice' => $item->purchaseOrder->invoice_number ?? '-',
+                    'supplier' => $item->purchaseOrder->supplier->name ?? '-',
+                    'tanggal_masuk' => $item->purchaseOrder->order_date ? $item->purchaseOrder->order_date->format('Y-m-d') : '-',
+                    'jenis' => 'Barang Masuk',
+                    'sparepart' => $item->sparepart->name ?? '-',
+                    'quantity' => $item->quantity,
+                ];
+            });
 
-            $barang_masuk = PurchaseOrderItem::where('sparepart_id', $sparepart->id)
-                ->whereHas('purchaseOrder', fn($q) => $q->whereBetween('order_date', [$startDate, $endDate]))
-                ->sum('quantity');
+        // Barang Keluar (Transaction)
+        $barangKeluar = \App\Models\TransactionItem::with(['transaction.customer', 'sparepart'])
+            ->where('item_type', 'sparepart')
+            ->whereHas('transaction', fn($q) => $q->whereBetween('transaction_date', [$startDate, $endDate]))
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'no_invoice' => $item->transaction->invoice_number ?? '-',
+                    'customer' => $item->transaction->customer->name ?? '-',
+                    'tanggal_keluar' => $item->transaction->transaction_date ? $item->transaction->transaction_date->format('Y-m-d') : '-',
+                    'jenis' => 'Barang Keluar',
+                    'sparepart' => $item->sparepart->name ?? '-',
+                    'quantity' => $item->quantity,
+                ];
+            });
 
-            $barang_keluar = TransactionItem::where('item_type', 'sparepart')
-                ->where('item_id', $sparepart->id)
-                ->whereHas('transaction', fn($q) => $q->whereBetween('transaction_date', [$startDate, $endDate]))
-                ->sum('quantity');
+        // Filter sesuai pilihan
+        if ($jenis == 'masuk') {
+            $data = $barangMasuk->values();
+        } elseif ($jenis == 'keluar') {
+            $data = $barangKeluar->values();
+        } else {
+            $data = $barangMasuk->concat($barangKeluar)->values();
+        }
 
-            return (object) [
-                'name' => $sparepart->name,
-                'code_part' => $sparepart->code_part,
-                'stok_awal' => $stok_awal,
-                'barang_masuk' => $barang_masuk,
-                'barang_keluar' => $barang_keluar,
-                'stok_akhir' => $stok_awal + $barang_masuk - $barang_keluar,
-            ];
-        });
+        return view('logs.sparepart', compact('data'));
+    }
 
-        return view('logs.sparepart', compact('spareparts', 'startDate', 'endDate'));
+    public function logSparepartDetail(Request $request)
+    {
+        $startDate = $request->input('start_date') ? Carbon::parse($request->start_date)->startOfDay() : Carbon::now()->startOfMonth();
+        $endDate = $request->input('end_date') ? Carbon::parse($request->end_date)->endOfDay() : Carbon::now()->endOfMonth();
+
+        // Barang Masuk (Purchase)
+        $barangMasuk = \App\Models\PurchaseOrderItem::with(['purchaseOrder.supplier', 'sparepart'])
+            ->whereHas('purchaseOrder', fn($q) => $q->whereBetween('order_date', [$startDate, $endDate]))
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'no_invoice' => $item->purchaseOrder->invoice_number ?? '-',
+                    'supplier' => $item->purchaseOrder->supplier->name ?? '-',
+                    'customer' => null,
+                    'jenis' => 'Barang Masuk',
+                    'sparepart' => $item->sparepart->name ?? '-',
+                    'quantity' => $item->quantity,
+                ];
+            });
+
+        // Barang Keluar (Transaction)
+        $barangKeluar = \App\Models\TransactionItem::with(['transaction.customer', 'sparepart'])
+            ->where('item_type', 'sparepart')
+            ->whereHas('transaction', fn($q) => $q->whereBetween('transaction_date', [$startDate, $endDate]))
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'no_invoice' => $item->transaction->invoice_number ?? '-',
+                    'supplier' => null,
+                    'customer' => $item->transaction->customer->name ?? '-',
+                    'jenis' => 'Barang Keluar',
+                    'sparepart' => $item->sparepart->name ?? '-',
+                    'quantity' => $item->quantity,
+                ];
+            });
+
+        // Gabungkan dan urutkan
+        $data = $barangMasuk->concat($barangKeluar)->values();
+
+        return view('logs.sparepart_detail', [
+            'data' => $data,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+        ]);
     }
 }

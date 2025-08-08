@@ -164,6 +164,7 @@ Route::prefix('logs')->group(function () {
     Route::get('penjualan', [\App\Http\Controllers\LogController::class, 'logPenjualan'])->name('logs.penjualan');
     Route::get('stok', [\App\Http\Controllers\LogController::class, 'logPergerakanStok'])->name('logs.stok');
     Route::get('logs/sparepart', [\App\Http\Controllers\LogController::class, 'logSparepart'])->name('logs.sparepart');
+    Route::get('/logs/sparepart-detail', [LogController::class, 'logSparepartDetail'])->name('logs.sparepart.detail');
 });
 
 // Route::get('/purchase-orders/spareparts/{id}/latest-price', [PurchaseOrderController::class, 'getLatestPrice'])->name('purchase_orders.latest_price');
