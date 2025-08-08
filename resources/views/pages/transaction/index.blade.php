@@ -132,6 +132,17 @@
             });
         });
 
+        document.getElementById('statusFilter').addEventListener('change', function() {
+    const status = this.value;
+    const table = $('#transaction-table').DataTable();
+    
+    if (status) {
+        table.column(8).search(status).draw(); // Kolom ke-8 adalah kolom status
+    } else {
+        table.column(8).search('').draw();
+    }
+});
+
         // ... (kode JavaScript lainnya yang sudah ada) ...
 
         let itemCounter = 0; // Global counter to ensure unique names/IDs across all dynamic forms
