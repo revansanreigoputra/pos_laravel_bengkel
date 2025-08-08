@@ -165,5 +165,7 @@ Route::prefix('logs')->group(function () {
     Route::get('stok', [\App\Http\Controllers\LogController::class, 'logPergerakanStok'])->name('logs.stok');
     Route::get('logs/sparepart', [\App\Http\Controllers\LogController::class, 'logSparepart'])->name('logs.sparepart');
 });
-// auto-fill get customer data
+
+// Route::get('/purchase-orders/spareparts/{id}/latest-price', [PurchaseOrderController::class, 'getLatestPrice'])->name('purchase_orders.latest_price');
+// Route::get('/api/spareparts/{id}/latest-price', [PurchaseOrderController::class, 'getLatestPrice'])->name('spareparts.latest-price');
 Route::get('/get-customer/{name}', [CustomerController::class, 'getCustomer']);

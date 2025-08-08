@@ -298,4 +298,13 @@ class TransactionController extends Controller
         $pdf = PDF::loadView('pages.transaction.invoice_pdf', $data);
         return $pdf->download('invoice-' . $transaction->invoice_number . '.pdf');
     }
+    public function getLatestTransactions(Request $request)
+    {
+        $perPage = $request->input('per_page', 10);
+        $transactions = Transaction::with(['customer', 'items.sparepart', 'items.service'])
+            ->latest()
+            ->paginate($perPage);
+
+        return response()->json($transactions);
+    }
 }
