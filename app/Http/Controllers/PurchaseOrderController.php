@@ -37,7 +37,26 @@ class PurchaseOrderController extends Controller
     public function create()
     {
         $suppliers = Supplier::all();
-        $spareparts = Sparepart::all();
+        
+        // Ambil spareparts dengan harga beli terbaru dari pembelian sebelumnya
+        $spareparts = Sparepart::select('spareparts.*')
+            ->selectSub(function($query) {
+                $query->select('purchase_order_items.purchase_price')
+                    ->from('purchase_order_items')
+                    ->join('purchase_orders', 'purchase_order_items.purchase_order_id', '=', 'purchase_orders.id')
+                    ->whereColumn('purchase_order_items.sparepart_id', 'spareparts.id')
+                    ->where('purchase_orders.status', '!=', 'canceled')
+                    ->orderBy('purchase_orders.order_date', 'desc')
+                    ->orderBy('purchase_orders.id', 'desc')
+                    ->limit(1);
+            }, 'latest_purchase_price')
+            ->get()
+            ->map(function ($sparepart) {
+                // Gunakan harga terbaru jika ada, jika tidak gunakan harga default
+                $sparepart->purchase_price = $sparepart->latest_purchase_price ?? $sparepart->purchase_price ?? 0;
+                return $sparepart;
+            });
+        
         return view('purchase_orders.create', compact('suppliers', 'spareparts'));
     }
 
@@ -55,11 +74,13 @@ class PurchaseOrderController extends Controller
                 'notes' => 'nullable|string',
                 'status' => 'required|string|in:pending,received,canceled',
                 'total_price' => 'required|numeric|min:0',
+                'global_discount' => 'nullable|numeric|min:0',
                 'items' => 'required|array|min:1',
                 'items.*.sparepart_id' => 'required|exists:spareparts,id',
                 'items.*.quantity' => 'required|integer|min:1',
                 'items.*.purchase_price' => 'required|numeric|min:0',
                 'items.*.expired_date' => 'nullable|date|after_or_equal:order_date',
+                'items.*.notes' => 'nullable|string',
             ]);
 
             // Gunakan service untuk membuat purchase order
@@ -91,7 +112,26 @@ class PurchaseOrderController extends Controller
     public function edit(PurchaseOrder $purchaseOrder)
     {
         $suppliers = Supplier::all();
-        $spareparts = Sparepart::all();
+        
+        // Ambil spareparts dengan harga beli terbaru dari pembelian sebelumnya
+        $spareparts = Sparepart::select('spareparts.*')
+            ->selectSub(function($query) {
+                $query->select('purchase_order_items.purchase_price')
+                    ->from('purchase_order_items')
+                    ->join('purchase_orders', 'purchase_order_items.purchase_order_id', '=', 'purchase_orders.id')
+                    ->whereColumn('purchase_order_items.sparepart_id', 'spareparts.id')
+                    ->where('purchase_orders.status', '!=', 'canceled')
+                    ->orderBy('purchase_orders.order_date', 'desc')
+                    ->orderBy('purchase_orders.id', 'desc')
+                    ->limit(1);
+            }, 'latest_purchase_price')
+            ->get()
+            ->map(function ($sparepart) {
+                // Gunakan harga terbaru jika ada, jika tidak gunakan harga default
+                $sparepart->purchase_price = $sparepart->latest_purchase_price ?? $sparepart->purchase_price ?? 0;
+                return $sparepart;
+            });
+        
         $purchaseOrder->load('items');
         return view('purchase_orders.edit', compact('purchaseOrder', 'suppliers', 'spareparts'));
     }
@@ -100,77 +140,78 @@ class PurchaseOrderController extends Controller
      * Update the specified resource in storage.
      */
     public function update(Request $request, PurchaseOrder $purchaseOrder)
-{
-    // Validasi
-    $validatedData = $request->validate([
-        'invoice_number' => [
-            'required',
-            'string',
-            Rule::unique('purchase_orders')->ignore($purchaseOrder->id),
-            'max:255',
-        ],
-        'supplier_id' => 'required|exists:suppliers,id',
-        'order_date' => 'nullable|date',
-        'payment_method' => 'nullable|string|max:255',
-        'notes' => 'nullable|string',
-        'status' => 'required|string|in:pending,received,canceled',
-        'total_price' => 'required|numeric|min:0',
-        'items' => 'required|array|min:1',
-        'items.*.id' => 'nullable|exists:purchase_order_items,id',
-        'items.*.sparepart_id' => 'required|exists:spareparts,id',
-        'items.*.quantity' => 'required|integer|min:1',
-        'items.*.purchase_price' => 'required|numeric|min:0',
-        'items.*.expired_date' => 'nullable|date',
-    ]);
+    {
+        // Validasi
+        $validatedData = $request->validate([
+            'invoice_number' => [
+                'required',
+                'string',
+                Rule::unique('purchase_orders')->ignore($purchaseOrder->id),
+                'max:255',
+            ],
+            'supplier_id' => 'required|exists:suppliers,id',
+            'order_date' => 'nullable|date',
+            'payment_method' => 'nullable|string|max:255',
+            'notes' => 'nullable|string',
+            'status' => 'required|string|in:pending,received,canceled',
+            'total_price' => 'required|numeric|min:0',
+            'global_discount' => 'nullable|numeric|min:0',
+            'items' => 'required|array|min:1',
+            'items.*.id' => 'nullable|exists:purchase_order_items,id',
+            'items.*.sparepart_id' => 'required|exists:spareparts,id',
+            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.purchase_price' => 'required|numeric|min:0',
+            'items.*.expired_date' => 'nullable|date',
+            'items.*.notes' => 'nullable|string',
+        ]);
 
-    // Validasi tanggal kedaluwarsa
-    foreach ($validatedData['items'] as $item) {
-        if ($item['expired_date'] && $item['expired_date'] < $validatedData['order_date']) {
-             throw new \Exception('Tanggal kedaluwarsa tidak boleh lebih awal dari tanggal pesanan.');
-        }
-    }
-    
-    DB::beginTransaction();
-
-    try {
-        // Cek jika status berubah menjadi 'canceled', lakukan penyesuaian stok
-        if ($purchaseOrder->status !== 'canceled' && $validatedData['status'] === 'canceled') {
-            $this->purchaseOrderService->revertPurchaseOrderItems($purchaseOrder);
-        }
-
-        // Update data Purchase Order utama
-        $purchaseOrder->update(collect($validatedData)->except('items')->toArray());
-
-        // Proses item-item yang ada di request
-        $existingItemIds = [];
-        foreach ($validatedData['items'] as $itemData) {
-            if (isset($itemData['id'])) {
-                // Update existing item
-                $item = $purchaseOrder->items()->find($itemData['id']);
-                if ($item) {
-                    $item->update($itemData);
-                    $existingItemIds[] = $item->id;
-                }
-            } else {
-                // Create new item
-                $newItem = $purchaseOrder->items()->create($itemData);
-                $existingItemIds[] = $newItem->id;
+        // Validasi tanggal kedaluwarsa
+        foreach ($validatedData['items'] as $item) {
+            if ($item['expired_date'] && $item['expired_date'] < $validatedData['order_date']) {
+                 throw new \Exception('Tanggal kedaluwarsa tidak boleh lebih awal dari tanggal pesanan.');
             }
         }
+        
+        DB::beginTransaction();
 
-        // Hapus item yang tidak ada di request
-        $purchaseOrder->items()->whereNotIn('id', $existingItemIds)->delete();
+        try {
+            // Cek jika status berubah menjadi 'canceled', lakukan penyesuaian stok
+            if ($purchaseOrder->status !== 'canceled' && $validatedData['status'] === 'canceled') {
+                $this->purchaseOrderService->revertPurchaseOrderItems($purchaseOrder);
+            }
 
-        DB::commit();
+            // Update data Purchase Order utama
+            $purchaseOrder->update(collect($validatedData)->except('items')->toArray());
 
-        return redirect()->route('purchase_orders.show', $purchaseOrder->id)->with('success', 'Pesanan pembelian berhasil diperbarui!');
-    } catch (Exception $e) {
-        DB::rollBack();
-        Log::error('Error updating purchase order: ' . $e->getMessage());
-        return redirect()->back()->withErrors("Gagal memperbarui pesanan pembelian: " . $e->getMessage())->withInput();
+            // Proses item-item yang ada di request
+            $existingItemIds = [];
+            foreach ($validatedData['items'] as $itemData) {
+                if (isset($itemData['id']) && !empty($itemData['id'])) {
+                    // Update existing item
+                    $item = $purchaseOrder->items()->find($itemData['id']);
+                    if ($item) {
+                        $item->update($itemData);
+                        $existingItemIds[] = $item->id;
+                    }
+                } else {
+                    // Create new item
+                    $newItem = $purchaseOrder->items()->create($itemData);
+                    $existingItemIds[] = $newItem->id;
+                }
+            }
+
+            // Hapus item yang tidak ada di request
+            $purchaseOrder->items()->whereNotIn('id', $existingItemIds)->delete();
+
+            DB::commit();
+
+            return redirect()->route('purchase_orders.show', $purchaseOrder->id)->with('success', 'Pesanan pembelian berhasil diperbarui!');
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error('Error updating purchase order: ' . $e->getMessage());
+            return redirect()->back()->withErrors("Gagal memperbarui pesanan pembelian: " . $e->getMessage())->withInput();
+        }
     }
-}
-
 
     /**
      * Remove the specified resource from storage.
@@ -194,6 +235,39 @@ class PurchaseOrderController extends Controller
             DB::rollBack();
             Log::error('Error deleting purchase order: ' . $e->getMessage());
             return redirect()->back()->withErrors(['error' => 'Terjadi kesalahan saat menghapus pesanan pembelian: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * API endpoint untuk mendapatkan harga terbaru sparepart
+     */
+    public function getLatestPrice($sparepartId)
+    {
+        try {
+            // Ambil harga dari purchase order terbaru
+            $latestPrice = DB::table('purchase_order_items')
+                ->join('purchase_orders', 'purchase_order_items.purchase_order_id', '=', 'purchase_orders.id')
+                ->where('purchase_order_items.sparepart_id', $sparepartId)
+                ->where('purchase_orders.status', '!=', 'canceled')
+                ->orderBy('purchase_orders.order_date', 'desc')
+                ->orderBy('purchase_orders.id', 'desc')
+                ->first();
+            
+            if ($latestPrice) {
+                return response()->json([
+                    'latest_price' => $latestPrice->purchase_price,
+                    'order_date' => $latestPrice->order_date
+                ]);
+            }
+            
+            // Jika tidak ada, coba ambil dari master sparepart
+            $sparepart = Sparepart::find($sparepartId);
+            return response()->json([
+                'latest_price' => $sparepart->purchase_price ?? 0,
+                'order_date' => null
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['latest_price' => 0, 'order_date' => null]);
         }
     }
 }
