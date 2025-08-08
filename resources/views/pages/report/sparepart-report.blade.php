@@ -247,8 +247,8 @@ background-color: #fff;
         <div class="tab-content" id="pills-tabContent">
             {{-- Available Stock Tab --}}
             <div class="tab-pane fade show active" id="pills-available" role="tabpanel" aria-labelledby="pills-available-tab">
-                <div class="table-responsive">
-                    <table class="table">
+                <div class="table-responsive" >
+                    <table class="table"  id="sparepart_report_table">
                         <thead>
                             <tr>
                                 <th>No</th>
@@ -317,8 +317,8 @@ background-color: #fff;
 
             {{-- Expired Stock Tab --}}
             <div class="tab-pane fade" id="pills-expired" role="tabpanel" aria-labelledby="pills-expired-tab">
-                <div class="table-responsive">
-                    <table class="table">
+                <div class="table-responsive" >
+                    <table class="table"  id="sparepart_report_table">
                         <thead>
                             <tr>
                                 <th>No</th>
@@ -363,8 +363,8 @@ background-color: #fff;
 
             {{-- Empty Stock Tab --}}
             <div class="tab-pane fade" id="pills-empty" role="tabpanel" aria-labelledby="pills-empty-tab">
-                <div class="table-responsive">
-                    <table class="table">
+                <div class="table-responsive " >
+                    <table class="table" id="sparepart_report_table">
                         <thead>
                             <tr>
                                 <th>No</th>
@@ -400,6 +400,12 @@ background-color: #fff;
 
 @push('addon-script')
 <script>
+    $(document).ready(function(){
+        $('#sparepart_report_table').DataTable({
+            order: [[5, 'desc']]
+        });
+    })
+
     $(document).ready(function() {
         $('#sparepart_filter').select2({
             theme: "bootstrap-5",

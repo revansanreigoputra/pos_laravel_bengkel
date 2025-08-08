@@ -173,6 +173,7 @@
                 "columnDefs": [
                     { "orderable": false, "targets": [9] } // Kolom "Items" tidak bisa diurutkan
                 ]
+                order: [[5, 'desc']]
             });
         });
     </script>

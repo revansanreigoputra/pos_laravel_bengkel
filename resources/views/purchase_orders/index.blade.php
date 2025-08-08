@@ -108,7 +108,8 @@
                     infoEmpty: "Menampilkan 0 - 0 dari 0 data",
                     infoFiltered: "(disaring dari _MAX_ total data)"
                 },
-                pageLength: 10
+                pageLength: 10,
+                order: [[2, 'desc']]
             });
 
             // Event listener untuk filter status

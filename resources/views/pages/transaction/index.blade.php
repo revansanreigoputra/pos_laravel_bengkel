@@ -127,7 +127,9 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         $(document).ready(function() {
-            $('#transaction-table').DataTable();
+            $('#transaction-table').DataTable({
+                 order: [[5, 'desc']] 
+            });
         });
 
         // ... (kode JavaScript lainnya yang sudah ada) ...
