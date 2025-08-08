@@ -14,6 +14,7 @@ use App\Http\Controllers\JenisKendaraanController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\PurchaseOrderController;     // Import controller baru
 use App\Http\Controllers\PurchaseOrdersItemsController; // Import controller baru
+use App\Http\Controllers\LogController;
 
 use Illuminate\Support\Facades\Route;
 
@@ -142,7 +143,12 @@ Route::get('/supplier/export-pdf', [SupplierController::class, 'exportPDF'])->na
 Route::get('/customer/export-pdf', [CustomerController::class, 'exportPDF'])->name('customer.export-pdf');
 Route::get('/transactions/{transaction}/invoice/pdf', [App\Http\Controllers\TransactionController::class, 'exportPdf'])->name('transaction.exportPdf');
 Route::get('/report/transactions/export-excel', [ReportController::class, 'exportExcel'])->name('report.transaction.export.excel');
-Route::get('/report/purchase/export-excel', [ReportController::class, 'exportExcel'])->name('report.purchase.export.excel');
+Route::get('/report/purchase/export-excel', [ReportController::class, 'exportPurchaseExcel'])->name('report.purchase.export.excel');
+
+Route::get('/report/pergerakan-stok', [LogController::class, 'logPergerakanStok'])->name('report.pergerakan-stok');
+
+Route::get('/export-sparepart-log', [LogController::class, 'exportSparepartLog'])->name('logs.export-sparepart-log');
+
 
 // direct blade route
 Route::get('/report/sparepart-report', [ReportController::class, 'stockReport'])->name('report.sparepart-report');

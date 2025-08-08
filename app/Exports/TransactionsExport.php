@@ -3,57 +3,58 @@
 namespace App\Exports;
 
 use App\Models\Transaction;
-use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\WithTitle;
-use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use Maatwebsite\Excel\Concerns\WithEvents;
-use Maatwebsite\Excel\Events\AfterSheet; 
-
+use Maatwebsite\Excel\Concerns\{
+    FromCollection,
+    WithHeadings,
+    WithMapping,
+    WithTitle,
+    WithStyles,
+    ShouldAutoSize,
+    WithEvents
+};
+use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
-use PhpOffice\PhpSpreadsheet\Style\Border;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
-use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\{
+    NumberFormat,
+    Border,
+    Fill,
+    Alignment,
+    Font
+};
 use Carbon\Carbon;
 
-class TransactionsExport implements FromCollection, WithHeadings, WithMapping, WithTitle, WithStyles, ShouldAutoSize, WithEvents // Implementasikan WithEvents
+class TransactionsExport implements FromCollection, WithHeadings, WithMapping, WithTitle, WithStyles, ShouldAutoSize, WithEvents
 {
     protected $startDate;
     protected $endDate;
-    protected $exportTitle;
+    protected $status;
 
-    public function __construct($startDate = null, $endDate = null, $exportTitle = 'Laporan Transaksi')
+    public function __construct($startDate = null, $endDate = null, $status = null)
     {
         $this->startDate = $startDate;
         $this->endDate = $endDate;
-        $this->exportTitle = $exportTitle;
+        $this->status = $status;
     }
 
-    /**
-     * @return \Illuminate\Support\Collection
-     */
     public function collection()
     {
-        $query = Transaction::query()->with('items.service', 'items.sparepart');
+        $query = Transaction::with('items.service', 'items.sparepart');
 
         if ($this->startDate) {
             $query->whereDate('transaction_date', '>=', $this->startDate);
         }
+
         if ($this->endDate) {
             $query->whereDate('transaction_date', '<=', $this->endDate);
         }
 
-        $query->where('status', 'completed');
+        if ($this->status) {
+            $query->where('status', $this->status);
+        }
 
         return $query->orderBy('transaction_date', 'desc')->get();
     }
 
-    /**
-     * @return array
-     */
     public function headings(): array
     {
         return [
@@ -70,9 +71,6 @@ class TransactionsExport implements FromCollection, WithHeadings, WithMapping, W
         ];
     }
 
-    /**
-     * @var Transaction $transaction
-     */
     public function map($transaction): array
     {
         $items = $transaction->items->map(function ($item) {
@@ -92,7 +90,7 @@ class TransactionsExport implements FromCollection, WithHeadings, WithMapping, W
             $transaction->customer_name,
             $transaction->vehicle_number,
             $transaction->vehicle_model ?? '-',
-            Carbon::parse($transaction->transaction_date)->format('d-m-Y H:i'),
+            Carbon::parse($transaction->transaction_date)->format('d-m-Y'),
             ucfirst($transaction->payment_method),
             $transaction->discount_amount,
             $transaction->total_price,
@@ -101,108 +99,169 @@ class TransactionsExport implements FromCollection, WithHeadings, WithMapping, W
         ];
     }
 
-    /**
-     * @return string
-     */
     public function title(): string
     {
-        return 'Transaksi Selesai'; // Nama sheet Excel
+        return 'Transaksi ' . ucfirst($this->status ?? 'Semua');
     }
 
-    /**
-     * Menerapkan gaya pada worksheet.
-     * Catatan: Karena kita menambahkan baris judul di atas, header akan berada di baris 2.
-     * @param Worksheet $sheet
-     */
     public function styles(Worksheet $sheet)
     {
-        // --- Styling Header (Baris 2, karena baris 1 adalah judul) ---
-        $sheet->getStyle(1)->applyFromArray([ // Mengubah dari 1 menjadi 2
+        // Set default font for the entire sheet
+        $sheet->getParent()->getDefaultStyle()->applyFromArray([
+            'font' => [
+                'name' => 'Calibri',
+                'size' => 11,
+            ]
+        ]);
+
+        // Header row styling
+        $sheet->getStyle('A1:J1')->applyFromArray([
             'font' => [
                 'bold' => true,
-                'color' => ['argb' => 'FFFFFFFF'], // Teks putih
-                'size' => 12,
+                'color' => ['argb' => 'FFFFFFFF'],
+                'size' => 11,
             ],
             'fill' => [
                 'fillType' => Fill::FILL_SOLID,
-                'color' => ['argb' => 'FF4F70F5'], // Latar belakang biru
+                'color' => ['argb' => 'FF4F70F5'], // Blue header
             ],
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
                 'vertical' => Alignment::VERTICAL_CENTER,
+                'wrapText' => true,
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => Border::BORDER_THIN,
+                    'color' => ['argb' => 'FF000000'],
+                ],
             ],
         ]);
 
-        // --- Border pada semua sel yang berisi data (dimulai dari baris 1 untuk judul) ---
+        // Set row height for header
+        $sheet->getRowDimension(2)->setRowHeight(25);
+
+        // Data rows styling
         $highestRow = $sheet->getHighestRow();
-        $highestColumn = $sheet->getHighestColumn();
-        $sheet->getStyle('A1:' . $highestColumn . $highestRow) // Range dimulai dari A1
-              ->getBorders()
-              ->getAllBorders()
-              ->setBorderStyle(Border::BORDER_THIN)
-              ->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color(\PhpOffice\PhpSpreadsheet\Style\Color::COLOR_BLACK));
+        $dataRange = 'A3:J' . $highestRow;
 
-        // --- Format kolom harga (Diskon dan Total Harga) sebagai mata uang ---
-        // Kolom G (Diskon) dan H (Total Harga)
-        // Perhatikan bahwa format ini akan berlaku untuk semua baris di kolom tersebut.
-        $sheet->getStyle('G:H')->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1);
+        $sheet->getStyle($dataRange)->applyFromArray([
+            'alignment' => [
+                'vertical' => Alignment::VERTICAL_TOP,
+                'wrapText' => true,
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => Border::BORDER_THIN,
+                    'color' => ['argb' => 'FFD3D3D3'], // Light gray borders
+                ],
+            ],
+        ]);
 
-        // --- Auto Filter pada header (Baris 2) ---
-        $sheet->setAutoFilter($sheet->calculateWorksheetDimension()); // Ini akan otomatis mendeteksi header yang valid
+        // Alternate row coloring
+        for ($i = 3; $i <= $highestRow; $i++) {
+            if ($i % 2 == 0) {
+                $sheet->getStyle('A' . $i . ':J' . $i)->applyFromArray([
+                    'fill' => [
+                        'fillType' => Fill::FILL_SOLID,
+                        'color' => ['argb' => 'FFF5F5F5'], // Very light gray
+                    ],
+                ]);
+            }
+        }
 
-        // --- Mengatur wrap text dan rata atas untuk kolom 'Items' (Kolom J) ---
-        $sheet->getStyle('J')->getAlignment()->setWrapText(true)->setVertical(Alignment::VERTICAL_TOP);
+        // Number formatting for currency columns
+        $sheet->getStyle('G3:H' . $highestRow)->getNumberFormat()
+              ->setFormatCode('#,##0.00');
+
+        // Items column styling
+        $sheet->getStyle('J3:J' . $highestRow)->getAlignment()
+              ->setWrapText(true)
+              ->setVertical(Alignment::VERTICAL_TOP);
+
+        // Auto-filter for header
+        $sheet->setAutoFilter("A1:J2");
+
+        // Set column widths (auto-size plus some manual adjustments)
+        $sheet->getColumnDimension('A')->setWidth(15); // Invoice
+        $sheet->getColumnDimension('B')->setWidth(20); // Pelanggan
+        $sheet->getColumnDimension('C')->setWidth(15); // No. Kendaraan
+        $sheet->getColumnDimension('D')->setWidth(20); // Model Kendaraan
+        $sheet->getColumnDimension('E')->setWidth(15); // Tanggal
+        $sheet->getColumnDimension('F')->setWidth(15); // Pembayaran
+        $sheet->getColumnDimension('G')->setWidth(12); // Diskon
+        $sheet->getColumnDimension('H')->setWidth(15); // Total
+        $sheet->getColumnDimension('I')->setWidth(12); // Status
+        $sheet->getColumnDimension('J')->setWidth(40); // Items
     }
 
-    /**
-     * Register events.
-     * Ini adalah bagian di mana kita menambahkan judul ke Excel.
-     * @return array
-     */
     public function registerEvents(): array
     {
         return [
             AfterSheet::class => function(AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
-                $highestColumn = $sheet->getHighestColumn(); // Dapatkan kolom terakhir yang digunakan
-
-                // --- Sisipkan baris baru di paling atas (baris 1) ---
-                $sheet->insertNewRowBefore(1, 1);
-
-                // --- Tulis judul laporan ke baris 1 ---
-                $reportTitle = 'Laporan Transaksi Selesai'; // Default title for the sheet
+                
+                // Insert title row
+                $sheet->insertNewRowBefore(1, 2);
+                
+                // Set report title
+                $title = 'LAPORAN TRANSAKSI';
+                if ($this->status) {
+                    $title .= ' ' . strtoupper($this->status);
+                }
+                
+                $subtitle = '';
                 if ($this->startDate && $this->endDate) {
-                    $reportTitle .= ' Periode ' . Carbon::parse($this->startDate)->format('d M Y') . ' s/d ' . Carbon::parse($this->endDate)->format('d M Y');
+                    $subtitle = 'Periode: ' . Carbon::parse($this->startDate)->format('d M Y') . ' - ' . Carbon::parse($this->endDate)->format('d M Y');
                 } elseif ($this->startDate) {
-                    $reportTitle .= ' Mulai ' . Carbon::parse($this->startDate)->format('d M Y');
+                    $subtitle = 'Mulai: ' . Carbon::parse($this->startDate)->format('d M Y');
                 } elseif ($this->endDate) {
-                    $reportTitle .= ' Sampai ' . Carbon::parse($this->endDate)->format('d M Y');
+                    $subtitle = 'Sampai: ' . Carbon::parse($this->endDate)->format('d M Y');
                 }
 
-                $sheet->setCellValue('A1', $reportTitle);
+                $sheet->setCellValue('A1', $title);
+                $sheet->mergeCells('A1:J1');
+                
+                if (!empty($subtitle)) {
+                    $sheet->setCellValue('A2', $subtitle);
+                    $sheet->mergeCells('A2:J2');
+                }
 
-                // --- Gabungkan sel untuk judul (dari A1 sampai kolom terakhir) ---
-                $sheet->mergeCells('A1:' . $highestColumn . '1');
-
-                // --- Styling judul ---
+                // Style title
                 $sheet->getStyle('A1')->applyFromArray([
                     'font' => [
                         'bold' => true,
                         'size' => 16,
-                        'color' => ['argb' => 'FF000000'], // Teks hitam
+                        'color' => ['argb' => 'FF000000'],
                     ],
                     'alignment' => [
                         'horizontal' => Alignment::HORIZONTAL_CENTER,
                         'vertical' => Alignment::VERTICAL_CENTER,
                     ],
-                    'fill' => [
-                        'fillType' => Fill::FILL_SOLID,
-                        'color' => ['argb' => 'FFEEEEEE'], // Latar belakang abu-abu terang
-                    ],
                 ]);
 
-                // Mengatur tinggi baris untuk judul
+                // Style subtitle
+                if (!empty($subtitle)) {
+                    $sheet->getStyle('A2')->applyFromArray([
+                        'font' => [
+                            'size' => 12,
+                            'color' => ['argb' => 'FF555555'],
+                        ],
+                        'alignment' => [
+                            'horizontal' => Alignment::HORIZONTAL_CENTER,
+                            'vertical' => Alignment::VERTICAL_CENTER,
+                        ],
+                    ]);
+                }
+
+                // Set row heights for title/subtitle
                 $sheet->getRowDimension(1)->setRowHeight(30);
+                if (!empty($subtitle)) {
+                    $sheet->getRowDimension(2)->setRowHeight(20);
+                }
+
+                // Freeze header row
+                $sheet->freezePane('A3');
             },
         ];
     }

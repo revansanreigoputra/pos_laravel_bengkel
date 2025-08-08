@@ -93,6 +93,7 @@ class PermissionSeeder extends Seeder
             'purchase_order_item.edit',
             'purchase_order_item.update',
             'purchase_order_item.delete',
+            'report.stock',
         ];
 
         foreach ($permissions as $permission) {

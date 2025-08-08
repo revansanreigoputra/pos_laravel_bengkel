@@ -20,12 +20,12 @@ class SparepartController extends Controller
         $spareparts = Sparepart::query();
 
         // Eager load relasi yang diperlukan.
-        // Pada relasi `purchaseOrderItems`, tambahkan constraint untuk hanya mengambil data terbaru.
         $spareparts->with([
-            'category', 
-            'supplier', 
+            'category',
+            'supplier',
+            // Load purchaseOrderItems untuk mendapatkan stok dan tanggal kedaluwarsa
             'purchaseOrderItems' => function ($query) {
-                // Urutkan berdasarkan tanggal pembuatan terbaru dan ambil hanya 1 item teratas
+                // Urutkan berdasarkan tanggal pembuatan terbaru untuk harga beli terbaru
                 $query->latest();
             }
         ]);
@@ -35,11 +35,23 @@ class SparepartController extends Controller
             $spareparts->where('name', 'like', '%' . $request->search . '%');
         }
 
+        // Terapkan filter utama:
+        // 1. Ambil sparepart yang memiliki purchaseOrderItems.
+        // 2. Di dalam purchaseOrderItems, cek item mana yang stoknya belum habis atau tanggalnya belum kedaluwarsa.
+        $spareparts->whereHas('purchaseOrderItems', function ($query) {
+            // Kita ingin menampilkan sparepart jika ada SETIDAKNYA SATU batch yang masih valid.
+            $query->whereRaw('quantity - sold_quantity > 0') // Stok tersisa
+                  ->orWhere('expired_date', '>', Carbon::now()); // Tanggal kedaluwarsa belum lewat
+        })
+        // Tambahkan kondisi untuk sparepart yang belum memiliki item pembelian (stok 0) agar tetap tampil.
+        ->orWhereDoesntHave('purchaseOrderItems');
+
         // Lakukan paginasi pada hasil query.
         $spareparts = $spareparts->paginate(10);
 
         return view('pages.spareparts.index', compact('spareparts'));
     }
+
 
     /**
      * Show the form for creating a new resource.

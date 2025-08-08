@@ -1,85 +1,87 @@
 <?php
 
 namespace App\Http\Controllers;
-use App\Exports\PurchaseOrdersExport; 
+
 use App\Models\Transaction;
 use App\Models\PurchaseOrder;
-use Maatwebsite\Excel\Facades\Excel;
-use App\Models\PurchaseOrderItem; // Import model PurchaseOrderItem
+use App\Models\PurchaseOrderItem;
+use App\Models\Sparepart;
 use Illuminate\Http\Request;
-use Carbon\Carbon; 
-use App\Models\Sparepart; // Import model Sparepart
-use App\Exports\TransactionsExport; 
+use Carbon\Carbon;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\TransactionsExport;
+use App\Exports\PurchaseOrdersExport;
 
 class ReportController extends Controller
 {
     /**
-     * Display the transaction report page.
-     * Menampilkan halaman laporan transaksi (penjualan).
+     * Halaman laporan pembelian
      */
-    public function transactionReport(Request $request)
+    public function index(Request $request)
     {
-        $startDate = $request->input('start_date');
-        $endDate = $request->input('end_date');
+        $query = PurchaseOrder::query();
 
-        $query = Transaction::query()->where('status', 'completed')->with('customer');
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $start = Carbon::parse($request->start_date)->startOfDay();
+            $end = Carbon::parse($request->end_date)->endOfDay();
 
-        if ($startDate) {
-            $query->whereDate('transaction_date', '>=', $startDate);
-        }
-        if ($endDate) {
-            $query->whereDate('transaction_date', '<=', $endDate);
+            $query->whereBetween('order_date', [$start, $end]);
         }
 
-        $transactions = $query->with(['items.service', 'items.sparepart'])
-            ->orderBy('transaction_date', 'desc')
-            ->get();
-
-        $cardQuery = Transaction::query();
-        if ($startDate) {
-            $cardQuery->whereDate('transaction_date', '>=', $startDate);
-        }
-        if ($endDate) {
-            $cardQuery->whereDate('transaction_date', '<=', $endDate);
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
         }
 
-        $pendingTransactionsCount = (clone $cardQuery)->where('status', 'pending')->count();
-        $completedTransactionsCount = (clone $cardQuery)->where('status', 'completed')->count();
-        $cancelledTransactionsCount = (clone $cardQuery)->where('status', 'cancelled')->count();
-        $totalRevenue = (clone $cardQuery)->where('status', 'completed')->sum('total_price');
+        $purchaseOrders = $query->with('supplier')
+                               ->orderBy('order_date', 'desc')
+                               ->get();
 
-        return view('pages.report.transaction', compact(
-            'transactions',
-            'pendingTransactionsCount',
-            'completedTransactionsCount',
-            'cancelledTransactionsCount',
-            'totalRevenue'
-        ));
+        return view('report.purchase.index', compact('purchaseOrders'));
     }
 
     /**
-     * Display the stock report page.
-     * Menampilkan halaman laporan stok sparepart.
-     * Ini adalah metode baru yang diperlukan.
+     * Halaman Laporan Penjualan (Transaksi)
+     */
+    public function transactionReport(Request $request)
+    {
+        $start = $request->start_date;
+        $end = $request->end_date;
+        $status = $request->status;
+
+        $query = Transaction::query()
+            ->with(['customer', 'items.sparepart', 'items.service']);
+
+        if ($start && $end) {
+            $query->whereBetween('transaction_date', [
+                Carbon::parse($start)->startOfDay(),
+                Carbon::parse($end)->endOfDay()
+            ]);
+        }
+
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        $transactions = $query->latest()->get();
+
+        return view('pages.report.transaction', compact('transactions', 'start', 'end', 'status'));
+    }
+
+    /**
+     * Halaman laporan stok sparepart
      */
     public function stockReport()
     {
-        // Mendapatkan semua sparepart dengan semua item pembelian terkait.
-        // Tidak ada filter berdasarkan kuantitas atau tanggal kadaluarsa di sini,
-        // sehingga semua item pembelian akan dimuat.
         $spareparts = Sparepart::with(['purchaseOrderItems' => function ($query) {
             $query->orderBy('expired_date', 'asc')
                 ->orderBy('created_at', 'asc');
-        }])->paginate(10); // ← tambahkan paginate di sini
-
+        }])->paginate(10);
 
         return view('pages.report.sparepart-report', compact('spareparts'));
     }
 
     /**
-     * Display the expired stock report page.
-     * Menampilkan halaman laporan stok yang kadaluarsa.
-     * Ini adalah metode baru yang sangat penting untuk sistem FIFO/FEFO.
+     * Halaman laporan stok expired
      */
     public function expiredStockReport()
     {
@@ -93,12 +95,67 @@ class ReportController extends Controller
     }
 
     /**
-     * Export transactions to Excel.
+     * Export laporan transaksi ke Excel
      */
+    public function exportTransactionReport(Request $request)
+    {
+        $start = $request->start_date;
+        $end = $request->end_date;
+        $status = $request->status;
+
+        return Excel::download(
+            new TransactionsExport($start, $end, $status),
+            'laporan_transaksi.xlsx'
+        );
+    }
+
+    /**
+     * Halaman Laporan Pembelian (Purchase Order)
+     */
+    public function purchaseReport(Request $request)
+    {
+        $start = $request->start_date;
+        $end = $request->end_date;
+        $status = $request->status;
+
+        $query = PurchaseOrder::query()->with('supplier');
+
+        if ($start && $end) {
+            $query->whereBetween('order_date', [
+                Carbon::parse($start)->startOfDay(),
+                Carbon::parse($end)->endOfDay()
+            ]);
+        }
+
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        $purchaseOrders = $query->latest()->get();
+
+        return view('pages.report.purchase', compact('purchaseOrders', 'start', 'end', 'status'));
+    }
+
+    /**
+     * Export laporan pembelian ke Excel
+     */
+    public function exportPurchaseExcel(Request $request)
+    {
+        $start = $request->start_date;
+        $end = $request->end_date;
+        $status = $request->status;
+
+        return Excel::download(
+            new PurchaseOrdersExport($start, $end, $status),
+            'laporan_pembelian.xlsx'
+        );
+    }
+
     public function exportExcel(Request $request)
     {
         $startDate = $request->query('start_date');
         $endDate = $request->query('end_date');
+        $status = $request->query('status');
         $exportTitle = $request->query('export_title', 'Laporan_Transaksi');
 
         $filename = $exportTitle;
@@ -111,68 +168,11 @@ class ReportController extends Controller
         }
         $filename .= '.xlsx';
 
-        return Excel::download(new TransactionsExport($startDate, $endDate, $exportTitle), $filename);
+        return Excel::download(
+            new TransactionsExport($startDate, $endDate, $status),
+            $filename
+        );
     }
 
-    public function purchaseReport(Request $request)
-    {
-        $startDate = $request->input('start_date');
-        $endDate = $request->input('end_date');
 
-        $query = PurchaseOrder::query();
-
-        if ($startDate) {
-            $query->whereDate('order_date', '>=', $startDate);
-        }
-        if ($endDate) {
-            $query->whereDate('order_date', '<=', $endDate);
-        }
-
-        $purchaseOrders = $query->with('supplier')
-            ->orderBy('order_date', 'desc')
-            ->get();
-
-        // Separate logic for summary cards
-        $cardQuery = PurchaseOrder::query();
-        if ($startDate) {
-            $cardQuery->whereDate('order_date', '>=', $startDate);
-        }
-        if ($endDate) {
-            $cardQuery->whereDate('order_date', '<=', $endDate);
-        }
-
-        $pendingPurchaseCount = (clone $cardQuery)->where('status', 'pending')->count();
-        $receivedPurchaseCount = (clone $cardQuery)->where('status', 'received')->count();
-        $canceledPurchaseCount = (clone $cardQuery)->where('status', 'canceled')->count();
-        $totalPurchaseCost = (clone $cardQuery)->where('status', 'received')->sum('total_price');
-
-        return view('pages.report.purchase', compact(
-            'purchaseOrders',
-            'pendingPurchaseCount',
-            'receivedPurchaseCount',
-            'canceledPurchaseCount',
-            'totalPurchaseCost'
-        ));
-    }
-
-    // // report excel purchase
-    // public function exportPurchaseExcel(Request $request)
-    // {
-    //     $startDate = $request->query('start_date');
-    //     $endDate = $request->query('end_date');
-    //     $exportTitle = $request->query('export_title', 'Laporan_Pembelian');
-
-    //     $filename = $exportTitle;
-    //     if ($startDate && $endDate) {
-    //         $filename .= '_dari_' . Carbon::parse($startDate)->format('Ymd') . '_sampai_' . Carbon::parse($endDate)->format('Ymd');
-    //     } elseif ($startDate) {
-    //         $filename .= '_dari_' . Carbon::parse($startDate)->format('Ymd');
-    //     } elseif ($endDate) {
-    //         $filename .= '_sampai_' . Carbon::parse($endDate)->format('Ymd');
-    //     }
-    //     $filename .= '.xlsx';
-
-    //     // Use a new export class for purchase orders
-    //     return Excel::download(new PurchaseOrdersExport($startDate, $endDate, $exportTitle), $filename);
-    // }
 }

@@ -1,3 +1,7 @@
+@php
+    use Illuminate\Support\Carbon;
+@endphp
+
 @extends('layouts.master')
 
 @section('title', 'Laporan Sparepart')
@@ -283,17 +287,18 @@ background-color: #fff;
                                 </td>
                                 <td>
                                     @php
-                                    $nearestExpiredDate = $sparepart->purchaseOrderItems
-                                    ->where('quantity', '>', 0)
-                                    ->whereNotNull('expired_date')
-                                    ->where('expired_date', '>=', \Carbon\Carbon::today())
-                                    ->sortBy('expired_date')
-                                    ->first()->expired_date ?? null;
+                                        // Ambil item pembelian dengan tanggal kedaluwarsa terdekat yang stoknya > 0 DAN belum kedaluwarsa.
+                                        $nearestValidExpiredItem = $sparepart->purchaseOrderItems
+                                            ->filter(function ($item) {
+                                                return $item->expired_date && Carbon::parse($item->expired_date)->isFuture() && ($item->quantity - $item->sold_quantity) > 0;
+                                            })
+                                            ->sortBy('expired_date')
+                                            ->first();
                                     @endphp
-                                    @if ($nearestExpiredDate)
-                                    {{ \Carbon\Carbon::parse($nearestExpiredDate)->format('d M Y') }}
+                                    @if ($nearestValidExpiredItem)
+                                        {{ \Carbon\Carbon::parse($nearestValidExpiredItem->expired_date)->format('d M Y') }}
                                     @else
-                                    -
+                                        -
                                     @endif
                                 </td>
                             </tr>

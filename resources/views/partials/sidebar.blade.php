@@ -110,9 +110,9 @@
                 </li>
 
                 {{-- laporan --}}
-                <li class="nav-item dropdown {{ request()->is('laporan*', 'stok-sparepart*') ? 'active' : '' }}">
+                <li class="nav-item dropdown {{ request()->is('laporan/penjualan') || request()->is('stok-sparepart') || request()->is('laporan/pembelian') ? 'active' : '' }}">
                     <a class="nav-link dropdown-toggle" href="#" 
-                       aria-expanded="{{ request()->is('laporan*', 'stok-sparepart*') ? 'true' : 'false' }}">
+                    aria-expanded="{{ request()->is('laporan/penjualan') || request()->is('stok-sparepart') || request()->is('laporan/pembelian') ? 'true' : 'false' }}">
                         <span class="nav-link-icon d-md-none d-lg-inline-block">
                             <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-1" width="24" height="24"
                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -124,29 +124,34 @@
                         </span>
                         <span class="nav-link-title">Laporan</span>
                     </a>
-                    <div class="dropdown-menu {{ request()->is('laporan*', 'stok-sparepart*') ? 'show' : '' }}">
+                    <div class="dropdown-menu {{ request()->is('laporan/penjualan') || request()->is('stok-sparepart') || request()->is('laporan/pembelian') ? 'show' : '' }}">
                         <div class="dropdown-menu-columns">
                             <div class="dropdown-menu-column">
                                 @can('report.transaction')
-                                <a class="dropdown-item {{ request()->is('laporan*') ? 'active' : '' }}"
-                                    href="{{ route('report.transaction') }}">Laporan Penjualan</a>
+                                <a class="dropdown-item {{ request()->is('laporan/penjualan') ? 'active' : '' }}"
+                                href="{{ route('report.transaction') }}">
+                                    Laporan Penjualan
+                                </a>
+                                @endcan
+                                
+                                @can('report.purchase')
+                                <a class="dropdown-item {{ request()->is('laporan/pembelian') ? 'active' : '' }}"
+                                href="{{ route('report.purchase') }}">
+                                    Laporan Pembelian
+                                </a>
                                 @endcan
 
                                 @can('report.sparepart-report')
-                                <a class="dropdown-item {{ request()->is('stok-sparepart*') ? 'active' : '' }}"
-                                    href="{{ route('report.sparepart-report') }}">
+                                <a class="dropdown-item {{ request()->is('stok-sparepart') ? 'active' : '' }}"
+                                href="{{ route('report.sparepart-report') }}">
                                     Laporan Stok Sparepart
                                 </a>
                                 @endcan
-                                 @can('report.purchase')
-                                <a class="dropdown-item {{ request()->is('laporan/pembelian') ? 'active' : '' }}"
-                                    href="{{ route('report.purchase') }}">Laporan Pembelian Sparepart</a>
-                                @endcan 
-                                {{-- Menghapus link duplikat 'Laporan Stok Sparepart' --}}
                             </div>
                         </div>
                     </div>
                 </li>
+
 
                 {{-- history --}}
                 <li class="nav-item dropdown {{ request()->is('logs*') ? 'active' : '' }}">

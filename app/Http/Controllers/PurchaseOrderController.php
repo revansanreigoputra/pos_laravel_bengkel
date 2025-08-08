@@ -100,72 +100,76 @@ class PurchaseOrderController extends Controller
      * Update the specified resource in storage.
      */
     public function update(Request $request, PurchaseOrder $purchaseOrder)
-    {
-        // Validasi
-        $validatedData = $request->validate([
-            'invoice_number' => [
-                'required',
-                'string',
-                Rule::unique('purchase_orders')->ignore($purchaseOrder->id),
-                'max:255',
-            ],
-            'supplier_id' => 'required|exists:suppliers,id',
-            'order_date' => 'nullable|date',
-            'payment_method' => 'nullable|string|max:255',
-            'notes' => 'nullable|string',
-            'status' => 'required|string|in:pending,received,canceled',
-            'total_price' => 'required|numeric|min:0',
-            'items' => 'required|array|min:1',
-            'items.*.id' => 'nullable|exists:purchase_order_items,id',
-            'items.*.sparepart_id' => 'required|exists:spareparts,id',
-            'items.*.quantity' => 'required|integer|min:1',
-            'items.*.purchase_price' => 'required|numeric|min:0',
-            'items.*.expired_date' => 'nullable|date',
-        ]);
+{
+    // Validasi
+    $validatedData = $request->validate([
+        'invoice_number' => [
+            'required',
+            'string',
+            Rule::unique('purchase_orders')->ignore($purchaseOrder->id),
+            'max:255',
+        ],
+        'supplier_id' => 'required|exists:suppliers,id',
+        'order_date' => 'nullable|date',
+        'payment_method' => 'nullable|string|max:255',
+        'notes' => 'nullable|string',
+        'status' => 'required|string|in:pending,received,canceled',
+        'total_price' => 'required|numeric|min:0',
+        'items' => 'required|array|min:1',
+        'items.*.id' => 'nullable|exists:purchase_order_items,id',
+        'items.*.sparepart_id' => 'required|exists:spareparts,id',
+        'items.*.quantity' => 'required|integer|min:1',
+        'items.*.purchase_price' => 'required|numeric|min:0',
+        'items.*.expired_date' => 'nullable|date',
+    ]);
 
-        // Tambahkan validasi tanggal kedaluwarsa
-        foreach ($validatedData['items'] as $item) {
-            if ($item['expired_date'] && $item['expired_date'] < $validatedData['order_date']) {
-                 throw new \Exception('Tanggal kedaluwarsa tidak boleh lebih awal dari tanggal pesanan.');
-            }
-        }
-        
-        DB::beginTransaction();
-
-        try {
-            // Cek jika status berubah menjadi 'canceled', lakukan penyesuaian stok
-            if ($purchaseOrder->status !== 'canceled' && $validatedData['status'] === 'canceled') {
-                $this->purchaseOrderService->revertPurchaseOrderItems($purchaseOrder);
-            }
-
-            // Update data Purchase Order utama
-            $purchaseOrder->update(collect($validatedData)->except('items')->toArray());
-
-            $itemsToKeep = collect($validatedData['items'])->pluck('id')->filter()->all();
-            
-            // Hapus item lama yang tidak ada di request
-            $purchaseOrder->items()->whereNotIn('id', $itemsToKeep)->delete();
-
-            // Tambahkan item baru atau perbarui item yang ada
-            foreach ($validatedData['items'] as $itemData) {
-                if (isset($itemData['id'])) {
-                    // Perbarui item yang sudah ada
-                    $purchaseOrder->items()->find($itemData['id'])->update($itemData);
-                } else {
-                    // Tambahkan item baru
-                    $purchaseOrder->items()->create($itemData);
-                }
-            }
-
-            DB::commit();
-
-            return redirect()->route('purchase_orders.show', $purchaseOrder->id)->with('success', 'Pesanan pembelian berhasil diperbarui!');
-        } catch (Exception $e) {
-            DB::rollBack();
-            Log::error('Error updating purchase order: ' . $e->getMessage());
-            return redirect()->back()->withErrors("Gagal memperbarui pesanan pembelian: " . $e->getMessage())->withInput();
+    // Validasi tanggal kedaluwarsa
+    foreach ($validatedData['items'] as $item) {
+        if ($item['expired_date'] && $item['expired_date'] < $validatedData['order_date']) {
+             throw new \Exception('Tanggal kedaluwarsa tidak boleh lebih awal dari tanggal pesanan.');
         }
     }
+    
+    DB::beginTransaction();
+
+    try {
+        // Cek jika status berubah menjadi 'canceled', lakukan penyesuaian stok
+        if ($purchaseOrder->status !== 'canceled' && $validatedData['status'] === 'canceled') {
+            $this->purchaseOrderService->revertPurchaseOrderItems($purchaseOrder);
+        }
+
+        // Update data Purchase Order utama
+        $purchaseOrder->update(collect($validatedData)->except('items')->toArray());
+
+        // Proses item-item yang ada di request
+        $existingItemIds = [];
+        foreach ($validatedData['items'] as $itemData) {
+            if (isset($itemData['id'])) {
+                // Update existing item
+                $item = $purchaseOrder->items()->find($itemData['id']);
+                if ($item) {
+                    $item->update($itemData);
+                    $existingItemIds[] = $item->id;
+                }
+            } else {
+                // Create new item
+                $newItem = $purchaseOrder->items()->create($itemData);
+                $existingItemIds[] = $newItem->id;
+            }
+        }
+
+        // Hapus item yang tidak ada di request
+        $purchaseOrder->items()->whereNotIn('id', $existingItemIds)->delete();
+
+        DB::commit();
+
+        return redirect()->route('purchase_orders.show', $purchaseOrder->id)->with('success', 'Pesanan pembelian berhasil diperbarui!');
+    } catch (Exception $e) {
+        DB::rollBack();
+        Log::error('Error updating purchase order: ' . $e->getMessage());
+        return redirect()->back()->withErrors("Gagal memperbarui pesanan pembelian: " . $e->getMessage())->withInput();
+    }
+}
 
 
     /**

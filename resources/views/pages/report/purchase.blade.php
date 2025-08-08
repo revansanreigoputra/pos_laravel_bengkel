@@ -90,7 +90,11 @@
                     </svg>
                     Cetak Laporan
                 </button>
-                <a href="{{ route('report.purchase.export.excel', array_merge(request()->query(), ['export_title' => 'Laporan_Pembelian_Selesai'])) }}"
+                <a href="{{ route('report.purchase.export.excel', [
+                        'start_date' => request('start_date'),
+                        'end_date' => request('end_date'),
+                        'status' => request('status')
+                    ]) }}"
                     class="btn btn-outline-success"> {{-- Removed ms-2 as flexbox handles spacing --}}
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
                         stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
@@ -109,17 +113,26 @@
             {{-- Filter Tanggal --}}
             <form action="{{ route('report.purchase') }}" method="GET" class="mb-4 filter-form">
                 <div class="row g-3 align-items-end">
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label for="start_date" class="form-label">Dari Tanggal</label>
                         <input type="date" class="form-control" id="start_date" name="start_date"
                             value="{{ request('start_date') }}">
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label for="end_date" class="form-label">Sampai Tanggal</label>
                         <input type="date" class="form-control" id="end_date" name="end_date"
                             value="{{ request('end_date') }}">
                     </div>
-                    <div class="col-md-2 d-flex justify-content-end">
+                    <div class="col-md-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select name="status" id="status" class="form-select">
+                            <option value="">-- Semua Status --</option>
+                            <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                            <option value="received" {{ request('status') == 'received' ? 'selected' : '' }}>Received</option>
+                            <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex justify-content-end align-items-end">
                         <button type="submit" class="btn btn-primary me-2">Filter</button>
                         <a href="{{ route('report.purchase') }}" class="btn btn-secondary">Reset</a>
                     </div>
@@ -142,8 +155,16 @@
                         @forelse ($purchaseOrders as $order)
                             <tr>
                                 <td>{{ $order->invoice_number }}</td>
-                                <td>{{ $order->customer_name }}</td>
-                                <td>{{ $order->order_date->format('d-m-Y H:i') }}</td>
+                                <td>
+                                    @if($order->supplier)
+                                        {{ $order->supplier->name }}
+                                    @elseif($order->suppliers)
+                                        {{ $order->suppliers->name }}
+                                    @else
+                                        <span class="text-muted">Supplier tidak ditemukan</span>
+                                    @endif
+                                </td>
+                                <td>{{ $order->order_date->format('d-m-Y') }}</td>
                                 <td>Rp {{ number_format($order->total_price, 0, ',', '.') }}</td>
                                 <td>{{ ucfirst($order->payment_method) }}</td>
                                 <td>
@@ -185,20 +206,7 @@
 @push('addon-script')
     <script>
         $(document).ready(function() {
-            $('#purchaseReportTable').DataTable({
-                "paging": true,
-                "lengthChange": true,
-                "searching": true,
-                "ordering": true,
-                "info": true,
-                "autoWidth": false,
-                "responsive": true,
-                "columnDefs": [{
-                        "orderable": false,
-                        "targets": [6]
-                    } // Kolom "Items" tidak bisa diurutkan
-                ]
-            });
+            $('#purchaseReportTable').DataTable();
         });
     </script>
 @endpush

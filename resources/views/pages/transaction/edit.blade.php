@@ -1,4 +1,4 @@
-@extends('layouts.master') {{-- Menggunakan layout master sesuai permintaan Anda --}}
+@extends('layouts.master')
 
 @section('title', 'Edit Transaksi')
 
@@ -14,7 +14,6 @@
                         </h4>
                     </div>
                     <div class="card-body">
-                        {{-- Menampilkan pesan sukses atau error dari session --}}
                         @if (session('success'))
                             <div class="alert alert-success alert-dismissible fade show" role="alert">
                                 {{ session('success') }}
@@ -29,12 +28,10 @@
                             </div>
                         @endif
 
-                        {{-- Form action points to update method --}}
                         <form action="{{ route('transaction.update', $transaction->id) }}" method="POST" id="editTransactionForm" enctype="multipart/form-data">
                             @csrf
-                            @method('PUT') {{-- Use PUT method for update --}}
+                            @method('PUT')
 
-                            {{-- Section 1: Informasi Invoice --}}
                             <div class="section-card mb-4">
                                 <div class="section-header d-flex align-items-center">
                                     <i class="fas fa-file-invoice text-primary me-2"></i>
@@ -74,7 +71,6 @@
                                 </div>
                             </div>
 
-                            {{-- Section 2: Informasi Pelanggan --}}
                             <div class="section-card mb-4">
                                 <div class="section-header d-flex align-items-center">
                                     <i class="fas fa-user text-success me-2"></i>
@@ -174,7 +170,6 @@
                                 </div>
                             </div>
 
-                            {{-- Section 3: Item Transaksi --}}
                             <div class="section-card mb-4">
                                 <div class="section-header d-flex align-items-center">
                                     <i class="fas fa-shopping-cart text-warning me-2"></i>
@@ -186,10 +181,10 @@
                                 </div>
                                 <div class="section-body p-3 border rounded bg-light">
                                     <div id="items-container">
-                                        {{-- Loop through existing transaction items to populate rows --}}
                                         @if(isset($transaction) && $transaction->items->isNotEmpty())
                                             @foreach($transaction->items as $idx => $item)
                                                 <div class="item-row mb-3 p-3 border rounded bg-white" data-item-index="{{ $idx }}">
+                                                    <input type="hidden" name="items[{{ $idx }}][id]" value="{{ $item->id }}">
                                                     <div class="row align-items-end">
                                                         <div class="col-md-4">
                                                             <label for="item-{{ $idx }}" class="form-label fw-semibold">
@@ -211,7 +206,7 @@
                                                                     @foreach ($spareparts as $sparepart)
                                                                         <option value="sparepart-{{ $sparepart->id }}"
                                                                                 data-price="{{ $sparepart->final_selling_price }}"
-                                                                                data-stock="{{ $sparepart->available_stock }}"> {{-- Use available_stock --}}
+                                                                                data-stock="{{ $sparepart->available_stock }}">
                                                                             {{ $sparepart->name }}
                                                                             @if($sparepart->isDiscountActive())
                                                                                 (Diskon {{ $sparepart->discount_percentage }}% - Rp {{ number_format($sparepart->final_selling_price, 0, ',', '.') }})
@@ -272,8 +267,8 @@
                                                 </div>
                                             @endforeach
                                         @else
-                                            {{-- Initial empty row for new transactions or if no items exist on edit --}}
                                             <div class="item-row mb-3 p-3 border rounded bg-white" data-item-index="0">
+                                                <input type="hidden" name="items[0][id]" value="">
                                                 <div class="row align-items-end">
                                                     <div class="col-md-4">
                                                         <label for="item-0" class="form-label fw-semibold">
@@ -294,7 +289,7 @@
                                                                 @foreach ($spareparts as $sparepart)
                                                                     <option value="sparepart-{{ $sparepart->id }}"
                                                                             data-price="{{ $sparepart->final_selling_price }}"
-                                                                            data-stock="{{ $sparepart->available_stock }}"> {{-- Use available_stock --}}
+                                                                            data-stock="{{ $sparepart->available_stock }}">
                                                                         {{ $sparepart->name }}
                                                                         @if($sparepart->isDiscountActive())
                                                                             (Diskon {{ $sparepart->discount_percentage }}% - Rp {{ number_format($sparepart->final_selling_price, 0, ',', '.') }})
@@ -463,7 +458,6 @@
                                 </div>
                             </div>
 
-                            {{-- Form Actions --}}
                             <div class="form-actions">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <a href="{{ route('transaction.index') }}" class="btn btn-secondary btn">
@@ -486,12 +480,11 @@
 
 @push('addon-script')
 <script>
-    let itemIndex = {{ $transaction->items->count() > 0 ? $transaction->items->count() : 0 }}; // Initialize with count of existing items
+    let itemIndex = {{ $transaction->items->count() > 0 ? $transaction->items->count() : 0 }};
 
-    // Fungsi untuk menginisialisasi Select2 pada elemen baru
     function initializeSelect2(element) {
         if (element.data('select2')) {
-            element.select2('destroy'); // Destroy existing instance if any
+            element.select2('destroy');
         }
         element.select2({
             theme: "bootstrap-5",
@@ -501,7 +494,6 @@
         });
     }
 
-    // Fungsi untuk menghitung ulang subtotal item dan memeriksa stok
     function calculateItemSubtotalAndStock(itemRow) {
         const price = parseFloat(itemRow.find('.price-input').val()) || 0;
         const qtyInput = itemRow.find('.qty-input');
@@ -531,7 +523,6 @@
         calculateOverallTotal();
     }
 
-    // Fungsi untuk menghitung ulang total keseluruhan
     function calculateOverallTotal() {
         let overallSubTotal = 0;
         $('.item-row').each(function() {
@@ -542,14 +533,13 @@
 
         const globalDiscount = parseFloat($('#global_discount').val()) || 0;
         let finalTotal = overallSubTotal - globalDiscount;
-        if (finalTotal < 0) finalTotal = 0; // Pastikan total tidak negatif
+        if (finalTotal < 0) finalTotal = 0;
 
         $('#overall_sub_total_display').val('Rp ' + overallSubTotal.toLocaleString('id-ID'));
         $('#final_total_display').val('Rp ' + finalTotal.toLocaleString('id-ID'));
-        $('#final_total_hidden').val(finalTotal); // Simpan nilai numerik di hidden input
+        $('#final_total_hidden').val(finalTotal);
     }
 
-    // Fungsi untuk menambahkan item baru
     function addItemRow() {
         // Get the template row from the initial empty row (if it exists) or clone the first existing item row
         let templateRow = $('#items-container').find('.item-row[data-item-index="0"]').first();
@@ -559,13 +549,13 @@
             templateRow = $('.item-row').first();
         }
 
-        const newRow = templateRow.clone(true); // Clone with event handler
-
+        const newRow = templateRow.clone(true);
+        
         // Increment itemIndex for the new row
         itemIndex++;
         newRow.attr('data-item-index', itemIndex);
 
-        // Update name dan id atribut untuk input di baris baru
+        // Update name dan id attributes
         newRow.find('[name^="items[0]"]').each(function() {
             const oldName = $(this).attr('name');
             const newName = oldName.replace(/items\[\d+\]/, `items[${itemIndex}]`);
@@ -577,7 +567,7 @@
             }
         });
 
-        // Update for dan id atribut untuk label di baris baru
+        // Update for attributes for labels
         newRow.find('label[for^="item-"], label[for^="price-"], label[for^="qty-"], label[for^="item_subtotal_display-"]').each(function() {
             const oldFor = $(this).attr('for');
             if (oldFor) {
@@ -586,8 +576,9 @@
             }
         });
 
-        // Reset nilai input
+        // Reset values for new row
         newRow.find('input').val('');
+        newRow.find('input[name$="[id]"]').val(''); // Clear the ID for new items
         newRow.find('.qty-input').val(1);
         newRow.find('.price-input').val(0);
         newRow.find('.item-subtotal-display').val('Rp 0');
@@ -596,7 +587,7 @@
 
         // Reset select dropdown and re-initialize Select2
         const itemSelect = newRow.find('.item-select');
-        itemSelect.val(''); // Reset selected value
+        itemSelect.val('');
         if (itemSelect.data('select2')) {
             itemSelect.select2('destroy');
         }
@@ -607,11 +598,11 @@
         newRow.find('.item-id-input').val('');
 
         $('#items-container').append(newRow);
-        calculateOverallTotal(); // Hitung ulang total setelah menambah item
+        calculateOverallTotal();
     }
 
     $(document).ready(function() {
-        // Initialize Select2 for all existing item rows and the initial empty row
+        // Initialize Select2 for all existing item rows
         $('.item-select').each(function() {
             initializeSelect2($(this));
         });
@@ -619,23 +610,22 @@
         // Event listener for "Tambah Item" button
         $('#add-item').on('click', addItemRow);
 
-        // Event listener for "Hapus" item button (delegated event)
+        // Event listener for "Hapus" item button
         $('#items-container').on('click', '.remove-item', function() {
-            if ($('.item-row').length > 1) { // Ensure at least one item remains
+            if ($('.item-row').length > 1) {
                 $(this).closest('.item-row').remove();
-                calculateOverallTotal(); // Recalculate total after removing item
+                calculateOverallTotal();
             } else {
-                // Consider using a custom modal for better UX instead of alert()
                 alert('Tidak bisa menghapus semua item. Minimal harus ada satu item.');
             }
         });
 
-        // Event listener for price or quantity changes (delegated event)
+        // Event listener for price or quantity changes
         $('#items-container').on('input', '.price-input, .qty-input', function() {
             calculateItemSubtotalAndStock($(this).closest('.item-row'));
         });
 
-        // Event listener for quantity plus/minus buttons (delegated event)
+        // Event listener for quantity plus/minus buttons
         $('#items-container').on('click', '.btn-qty-minus', function() {
             const qtyInput = $(this).siblings('.qty-input');
             let currentVal = parseInt(qtyInput.val());
@@ -652,7 +642,7 @@
             calculateItemSubtotalAndStock($(this).closest('.item-row'));
         });
 
-        // Event listener for item selection change in Select2 (delegated event)
+        // Event listener for item selection change in Select2
         $('#items-container').on('change', '.item-select', function() {
             const selectedOption = $(this).find('option:selected');
             const itemRow = $(this).closest('.item-row');
@@ -661,7 +651,6 @@
             const itemIdInput = itemRow.find('.item-id-input');
             const qtyInput = itemRow.find('.qty-input');
 
-            // Parse the value (e.g., "service-1" or "sparepart-5")
             const fullId = selectedOption.val();
             if (fullId) {
                 const parts = fullId.split('-');
@@ -671,18 +660,15 @@
                 itemTypeInput.val(type);
                 itemIdInput.val(id);
 
-                // Get price from data-price attribute
                 const price = selectedOption.data('price');
                 if (price !== undefined) {
                     priceInput.val(price);
                 } else {
-                    priceInput.val(0); // Reset if no price data
+                    priceInput.val(0);
                 }
 
-                // Reset quantity to 1 when item changes
                 qtyInput.val(1);
             } else {
-                // If no item selected (e.g., placeholder selected)
                 priceInput.val(0);
                 itemTypeInput.val('');
                 itemIdInput.val('');
@@ -695,7 +681,7 @@
         // Event listener for global discount change
         $('#global_discount').on('input', calculateOverallTotal);
 
-        // Initial calculation and stock check for existing items when the page loads
+        // Initial calculation and stock check for existing items
         $('.item-row').each(function() {
             calculateItemSubtotalAndStock($(this));
         });
@@ -705,7 +691,6 @@
 @endpush
 
 <style>
-    /* Custom styles for section cards */
     .section-card {
         border: 1px solid #e0e0e0;
         border-radius: 0.5rem;
@@ -726,6 +711,6 @@
         padding: 1.25rem;
     }
     .summary-box .form-group {
-        margin-bottom: 1rem; /* Adjust spacing in summary box */
+        margin-bottom: 1rem;
     }
 </style>

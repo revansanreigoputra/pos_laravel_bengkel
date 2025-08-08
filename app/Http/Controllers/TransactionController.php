@@ -140,56 +140,96 @@ class TransactionController extends Controller
      * Perbarui transaksi yang ada.
      */
     public function update(Request $request, $id)
-{
-    Log::info('Incoming request for updating transaction: ', [
-        'transaction_id' => $id,
-        'request_data' => $request->all(),
-    ]);
+    {
+        DB::beginTransaction();
+        try {
+            $validatedData = $request->validate([
+                'invoice_number' => 'required|string|unique:transactions,invoice_number,' . $id,
+                'transaction_date' => 'required|date',
+                'customer_name' => 'required|string',
+                'customer_phone' => 'required|string',
+                'customer_email' => 'nullable|email',
+                'customer_address' => 'nullable|string',
+                'vehicle_number' => 'nullable|string',
+                'vehicle_model' => 'nullable|string',
+                'payment_method' => 'required|string',
+                'status' => 'required|string|in:pending,completed,canceled',
+                'global_discount' => 'nullable|numeric|min:0',
+                'total_price' => 'required|numeric|min:0',
+                'items' => 'required|array|min:1',
+                'items.*.item_full_id' => 'required|string',
+                'items.*.item_type' => 'required|string',
+                'items.*.item_id' => 'required|integer',
+                'items.*.quantity' => 'required|integer|min:1',
+                'items.*.price' => 'required|numeric|min:0',
+                'items.*.id' => 'nullable|exists:transaction_items,id' // Tambahkan validasi untuk ID item yang sudah ada
+            ]);
 
-    try {
-        $validatedData = $request->validate([
-            'invoice_number' => 'required|string|unique:transactions,invoice_number,' . $id,
-            'transaction_date' => 'required|date',
-            'customer_name' => 'required|string',
-            'customer_phone' => 'required|string',
-            'payment_method' => 'required|string',
-            'items' => 'required|array|min:1',
-        ]);
+            $transaction = Transaction::findOrFail($id);
+            
+            // Update data customer
+            $customer = Customer::updateOrCreate(
+                ['phone' => $validatedData['customer_phone']],
+                [
+                    'name' => $validatedData['customer_name'],
+                    'email' => $validatedData['customer_email'],
+                    'address' => $validatedData['customer_address']
+                ]
+            );
 
-        $transaction = Transaction::findOrFail($id);
-        Log::info('Transaction before update: ', $transaction->toArray());
+            // Update data transaksi utama
+            $transaction->update([
+                'invoice_number' => $validatedData['invoice_number'],
+                'transaction_date' => $validatedData['transaction_date'],
+                'customer_id' => $customer->id,
+                'vehicle_number' => $validatedData['vehicle_number'],
+                'vehicle_model' => $validatedData['vehicle_model'],
+                'payment_method' => $validatedData['payment_method'],
+                'status' => $validatedData['status'],
+                'discount_amount' => $validatedData['global_discount'] ?? 0,
+                'total_price' => $validatedData['total_price']
+            ]);
 
-        $transactionData = [
-            'invoice_number' => $validatedData['invoice_number'],
-            'transaction_date' => $validatedData['transaction_date'],
-            'customer_name' => $validatedData['customer_name'],
-            'customer_phone' => $validatedData['customer_phone'],
-            'payment_method' => $validatedData['payment_method'],
-        ];
+            // Proses item-item transaksi
+            $existingItemIds = [];
+            
+            foreach ($validatedData['items'] as $itemData) {
+                if (isset($itemData['id'])) {
+                    // Update item yang sudah ada
+                    $item = $transaction->items()->find($itemData['id']);
+                    if ($item) {
+                        $item->update([
+                            'item_type' => $itemData['item_type'],
+                            'item_id' => $itemData['item_id'],
+                            'quantity' => $itemData['quantity'],
+                            'price' => $itemData['price']
+                        ]);
+                        $existingItemIds[] = $item->id;
+                    }
+                } else {
+                    // Tambahkan item baru
+                    $newItem = $transaction->items()->create([
+                        'item_type' => $itemData['item_type'],
+                        'item_id' => $itemData['item_id'],
+                        'quantity' => $itemData['quantity'],
+                        'price' => $itemData['price']
+                    ]);
+                    $existingItemIds[] = $newItem->id;
+                }
+            }
 
-        $itemsData = collect($validatedData['items'])->map(function ($item) {
-            [$type, $id] = explode('-', $item['item_full_id']);
-            return [
-                'item_type' => $type,
-                'item_id' => $id,
-                'quantity' => $item['quantity'],
-                'price' => $item['price'],
-            ];
-        })->toArray();
+            // Hapus item yang tidak ada dalam request
+            $transaction->items()->whereNotIn('id', $existingItemIds)->delete();
 
-        Log::info('Updating transaction with data: ', $transactionData);
-        Log::info('Items data: ', $itemsData);
+            DB::commit();
 
-        $updatedTransaction = $this->transactionService->updateTransaction($transaction, $transactionData, $itemsData);
-
-        Log::info('Transaction updated: ', $updatedTransaction->toArray());
-
-        return redirect()->route('transaction.index')->with('success', 'Transaksi berhasil diperbarui.');
-    } catch (\Exception $e) {
-        Log::error('Failed to update transaction: ' . $e->getMessage());
-        return redirect()->back()->with('error', 'Gagal memperbarui transaksi.');
+            return redirect()->route('transaction.index')->with('success', 'Transaksi berhasil diperbarui.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to update transaction: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal memperbarui transaksi: ' . $e->getMessage());
+        }
     }
-}
 
 
 

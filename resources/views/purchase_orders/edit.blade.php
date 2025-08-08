@@ -15,7 +15,7 @@
                 <div class="card-body">
                     <form action="{{ route('purchase_orders.update', $purchaseOrder->id) }}" method="POST">
                         @csrf
-                        @method('PUT') {{-- Gunakan metode PUT untuk update --}}
+                        @method('PUT')
 
                         {{-- Section 1: Informasi Pesanan --}}
                         <div class="section-card mb-4">
@@ -115,6 +115,7 @@
                                                         @error("items.{$index}.sparepart_id")
                                                             <div class="invalid-feedback">{{ $message }}</div>
                                                         @enderror
+                                                        <!-- Input hidden untuk ID item -->
                                                         <input type="hidden" name="items[{{ $index }}][id]" value="{{ $item->id ?? '' }}">
                                                     </div>
                                                 </div>
@@ -213,6 +214,8 @@
                                                                 </option>
                                                             @endforeach
                                                         </select>
+                                                        <!-- Input hidden untuk ID item (kosong untuk item baru) -->
+                                                        <input type="hidden" name="items[0][id]" value="">
                                                     </div>
                                                 </div>
                                                 <div class="col-md-2">
@@ -230,11 +233,11 @@
                                                         </label>
                                                         <div class="input-group">
                                                             <button class="btn btn-outline-secondary btn-qty-minus" type="button" data-action="minus">
-                                                                <i class="fas fa-minus text-dark">_</i>
+                                                                <i class="fas fa-minus text-dark"></i>
                                                             </button>
                                                             <input type="number" class="form-control qty-input" name="items[0][quantity]" id="quantity-0" value="1" min="1" required>
                                                             <button class="btn btn-outline-secondary btn-qty-plus" type="button" data-action="plus">
-                                                                <i class="fas fa-plus text-dark">+</i>
+                                                                <i class="fas fa-plus text-dark"></i>
                                                             </button>
                                                         </div>
                                                     </div>
@@ -366,9 +369,8 @@
 
 @push('addon-script')
 <script>
-    let itemIndex = {{ count(old('items', $purchaseOrder->items)) > 0 ? count(old('items', $purchaseOrder->items)) -1 : 0 }}; // Inisialisasi itemIndex berdasarkan jumlah item yang ada
+    let itemIndex = {{ count(old('items', $purchaseOrder->items)) > 0 ? count(old('items', $purchaseOrder->items)) -1 : 0 }};
 
-    // Fungsi untuk menginisialisasi Select2 pada elemen baru
     function initializeSelect2(element) {
         $(element).select2({
             theme: "bootstrap-5",
@@ -378,7 +380,6 @@
         });
     }
 
-    // Fungsi untuk menghitung ulang subtotal item
     function calculateItemSubtotal(itemRow) {
         const price = parseFloat(itemRow.find('.purchase-price-input').val()) || 0;
         const qty = parseInt(itemRow.find('.qty-input').val()) || 0;
@@ -387,7 +388,6 @@
         calculateOverallTotal();
     }
 
-    // Fungsi untuk menghitung ulang total keseluruhan
     function calculateOverallTotal() {
         let overallSubTotal = 0;
         $('.item-row').each(function() {
@@ -405,19 +405,14 @@
         $('#final_total_hidden').val(finalTotal);
     }
 
-    // Fungsi untuk menambahkan item baru
     function addItemRow() {
         itemIndex++;
-        // Gunakan template dari item pertama jika ada, atau buat template kosong
         const originalRow = $('#items-container').find('.item-row').first();
         let newRow;
 
         if (originalRow.length > 0) {
             newRow = originalRow.clone(true);
         } else {
-            // Jika tidak ada item sama sekali (misal, saat pertama kali edit PO tanpa item)
-            // Anda perlu membuat template HTML kosong di sini atau mengarahkannya ke template tersembunyi
-            // Untuk saat ini, saya akan membuat versi sederhana.
             newRow = $(`
                 <div class="item-row mb-3 p-3 border rounded bg-white" data-item-index="${itemIndex}">
                     <div class="row align-items-end">
@@ -434,6 +429,8 @@
                                         </option>
                                     @endforeach
                                 </select>
+                                <!-- Input hidden untuk ID item (kosong untuk item baru) -->
+                                <input type="hidden" name="items[${itemIndex}][id]" value="">
                             </div>
                         </div>
                         <div class="col-md-2">
@@ -496,8 +493,9 @@
             `);
         }
 
-        // Update name dan id atribut untuk input di baris baru
-        newRow.find('[name^="items["]').each(function() { // Cari semua input yang namanya dimulai dengan 'items['
+        // Update attributes for new row
+        newRow.attr('data-item-index', itemIndex);
+        newRow.find('[name^="items["]').each(function() {
             const oldName = $(this).attr('name');
             const newName = oldName.replace(/items\[\d+\]/, `items[${itemIndex}]`);
             $(this).attr('name', newName);
@@ -508,7 +506,6 @@
             }
         });
 
-        // Update for dan id atribut untuk label di baris baru
         newRow.find('label[for^="sparepart-"], label[for^="purchase_price-"], label[for^="quantity-"], label[for^="expired_date-"], label[for^="item_notes-"], label[for^="item_subtotal_display-"]').each(function() {
             const oldFor = $(this).attr('for');
             if (oldFor) {
@@ -517,39 +514,35 @@
             }
         });
 
-        // Reset nilai input untuk baris baru
+        // Reset values and ensure ID field is empty for new items
         newRow.find('input[type="text"], input[type="number"], input[type="date"], textarea').val('');
         newRow.find('.qty-input').val(1);
         newRow.find('.purchase-price-input').val(0);
         newRow.find('.item-subtotal-display').val('Rp 0');
-        newRow.find('select').val(''); // Reset select dropdown
+        newRow.find('select').val('');
+        newRow.find('input[name^="items["][type="hidden"]').val(''); // Clear ID for new items
 
-        // Re-initialize Select2 for the cloned select element
+        // Re-initialize Select2
         newRow.find('.sparepart-select').removeClass('select2-hidden-accessible').next('.select2-container').remove();
         initializeSelect2(newRow.find('.sparepart-select'));
 
         $('#items-container').append(newRow);
-        calculateOverallTotal(); // Hitung ulang total setelah menambah item
+        calculateOverallTotal();
     }
 
     $(document).ready(function() {
-        // Inisialisasi Select2 untuk dropdown supplier
         initializeSelect2($('#supplier_id'));
 
-        // Inisialisasi Select2 untuk semua item yang sudah ada saat halaman dimuat
         $('.sparepart-select').each(function() {
             initializeSelect2($(this));
         });
 
-        // Hitung subtotal untuk setiap item yang sudah ada saat halaman dimuat
         $('.item-row').each(function() {
             calculateItemSubtotal($(this));
         });
 
-        // Event listener untuk tombol "Tambah Item"
         $('#add-item').on('click', addItemRow);
 
-        // Event listener untuk tombol "Hapus" item (delegasi event)
         $('#items-container').on('click', '.remove-item', function() {
             if ($('.item-row').length > 1) {
                 $(this).closest('.item-row').remove();
@@ -559,12 +552,10 @@
             }
         });
 
-        // Event listener untuk perubahan harga beli atau kuantitas (delegasi event)
         $('#items-container').on('input', '.purchase-price-input, .qty-input', function() {
             calculateItemSubtotal($(this).closest('.item-row'));
         });
 
-        // Event listener untuk tombol plus/minus kuantitas (delegasi event)
         $('#items-container').on('click', '.btn-qty-minus', function() {
             const qtyInput = $(this).siblings('.qty-input');
             let currentVal = parseInt(qtyInput.val());
@@ -581,7 +572,6 @@
             calculateItemSubtotal($(this).closest('.item-row'));
         });
 
-        // Event listener untuk perubahan Select2 item sparepart
         $('#items-container').on('change', '.sparepart-select', function() {
             const selectedOption = $(this).find('option:selected');
             const itemRow = $(this).closest('.item-row');
@@ -596,17 +586,14 @@
             calculateItemSubtotal(itemRow);
         });
 
-        // Event listener untuk perubahan diskon global
         $('#global_discount').on('input', calculateOverallTotal);
 
-        // Hitung total awal saat halaman dimuat
         calculateOverallTotal();
     });
 </script>
 @endpush
 
 <style>
-    /* Custom styles for section cards */
     .section-card {
         border: 1px solid #e0e0e0;
         border-radius: 0.5rem;

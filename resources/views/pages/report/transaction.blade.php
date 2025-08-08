@@ -1,6 +1,6 @@
 @extends('layouts.master')
 
-@section('title', 'Laporan Transaksi Selesai')
+@section('title', 'Laporan Penjualan')
 
 @section('styles')
     <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
@@ -36,7 +36,7 @@
 @section('content')
 <div class="card">
     <div class="card-header">
-        <h3 class="card-title">Laporan Transaksi Selesai</h3>
+        <h3 class="card-title">Laporan Penjualan</h3>
         <div class="card-actions d-flex flex-column flex-md-row"> {{-- Added d-flex, flex-column, and flex-md-row --}}
             <button class="btn btn-outline-primary mb-2 mb-md-0 me-md-2" onclick="window.print()"> {{-- Added mb-2 and me-md-2 --}}
                 <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M17 17h2a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-14a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h2"></path><path d="M17 9v-4a2 2 0 0 0 -2 -2h-6a2 2 0 0 0 -2 2v4"></path><path d="M7 13m0 2a2 2 0 0 1 2 -2h6a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2h-6a2 2 0 0 1 -2 -2z"></path></svg>
@@ -52,77 +52,94 @@
         {{-- Filter Tanggal --}}
         <form action="{{ route('report.transaction') }}" method="GET" class="mb-4 filter-form">
             <div class="row g-3 align-items-end">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label for="start_date" class="form-label">Dari Tanggal</label>
                     <input type="date" class="form-control" id="start_date" name="start_date" value="{{ request('start_date') }}">
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label for="end_date" class="form-label">Sampai Tanggal</label>
                     <input type="date" class="form-control" id="end_date" name="end_date" value="{{ request('end_date') }}">
                 </div>
-                <div class="col-md-2 d-flex justify-content-end">
+                <div class="col-md-3">
+                    <label for="status" class="form-label">Status</label>
+                    <select name="status" id="status" class="form-select">
+                        <option value="">-- Semua Status --</option>
+                        <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Selesai</option>
+                        <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                        <option value="canceled" {{ request('status') == 'canceled' ? 'selected' : '' }}>Dibatalkan</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex justify-content-end align-items-end">
                     <button type="submit" class="btn btn-primary me-2">Filter</button>
                     <a href="{{ route('report.transaction') }}" class="btn btn-secondary">Reset</a>
                 </div>
             </div>
         </form>
 
-        <div class="table-responsive">
-            <table class="table table-striped table-bordered" id="transactionReportTable">
-                <thead>
-                    <tr>
-                        <th>Invoice</th>
-                        <th>Pelanggan</th>
-                        <th>No. Kendaraan</th>
-                        <th>Model Kendaraan</th>
-                        <th>Tanggal Transaksi</th>
-                        <th>Metode Pembayaran</th>
-                        <th>Diskon</th>
-                        <th>Total Harga</th>
-                        <th>Status</th>
-                        <th>Items</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($transactions as $transaction)
-                    <tr>
-                        <td>{{ $transaction->invoice_number }}</td>
-                        {{-- <td>{{ $transaction->customer_name }}</td> --}}
-                        <td>{{ $transaction->customer->name ?? 'N/A' }}</td>
-                        <td>{{ $transaction->vehicle_number }}</td>
-                        <td>{{ $transaction->vehicle_model ?? '-' }}</td>
-                        <td>{{ $transaction->transaction_date->format('d-m-Y H:i') }}</td>
-                        <td>{{ ucfirst($transaction->payment_method) }}</td>
-                        <td>Rp {{ number_format($transaction->discount_amount, 0, ',', '.') }}</td>
-                        <td>Rp {{ number_format($transaction->total_price, 0, ',', '.') }}</td>
-                        <td>
-                            <span class="badge {{ $transaction->status == 'completed' ? 'bg-success' : ($transaction->status == 'pending' ? 'bg-warning' : 'bg-danger') }} text-white">
-                                {{ ucfirst($transaction->status) }}
-                            </span>
-                        </td>
-                        <td>
-                            <ul>
-                                @foreach ($transaction->items as $item)
-                                    <li>
-                                        @if($item->item_type == 'service' && $item->service)
-                                            {{ $item->service->name }} (Servis) - {{ $item->quantity }} x Rp {{ number_format($item->price, 0, ',', '.') }}
-                                        @elseif($item->item_type == 'sparepart' && $item->sparepart)
-                                            {{ $item->sparepart->name }} (Sparepart) - {{ $item->quantity }} x Rp {{ number_format($item->price, 0, ',', '.') }}
-                                        @else
-                                            {{ ucfirst($item->item_type) }} - {{ $item->quantity }} x Rp {{ number_format($item->price, 0, ',', '.') }}
-                                        @endif
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="10" class="text-center">Tidak ada data transaksi yang selesai.</td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
+        <div class="card">
+            <h3 class="card-header">
+                Total Transaksi {{ $status ? ucfirst($status) : 'Keseluruhan' }}: {{ $transactions->count() }} transaksi
+            @if(request('start_date') && request('end_date'))
+                (Dari {{ request('start_date') }} sampai {{ request('end_date') }})
+            @endif
+            </h3>
+            <div class="table-responsive">
+                <table class="table table-striped table-bordered" id="transactionReportTable">
+                    <thead>
+                        <tr>
+                            <th>Invoice</th>
+                            <th>Pelanggan</th>
+                            <th>No. Kendaraan</th>
+                            <th>Model Kendaraan</th>
+                            <th>Tanggal Transaksi</th>
+                            <th>Metode Pembayaran</th>
+                            <th>Diskon</th>
+                            <th>Total Harga</th>
+                            <th>Status</th>
+                            <th>Items</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($transactions as $transaction)
+                        <tr>
+                            <td>{{ $transaction->invoice_number }}</td>
+                            {{-- <td>{{ $transaction->customer_name }}</td> --}}
+                            <td>{{ $transaction->customer->name ?? 'N/A' }}</td>
+                            <td>{{ $transaction->vehicle_number }}</td>
+                            <td>{{ $transaction->vehicle_model ?? '-' }}</td>
+                            <td>{{ $transaction->transaction_date->format('d-m-Y') }}</td>
+                            <td>{{ ucfirst($transaction->payment_method) }}</td>
+                            <td>Rp {{ number_format($transaction->discount_amount, 0, ',', '.') }}</td>
+                            <td>Rp {{ number_format($transaction->total_price, 0, ',', '.') }}</td>
+                            <td>
+                                <span class="badge {{ $transaction->status == 'completed' ? 'bg-success' : ($transaction->status == 'pending' ? 'bg-warning' : 'bg-danger') }} text-white p-2">
+                                    {{ ucfirst($transaction->status) }}
+                                </span>
+                            </td>
+                            <td>
+                                <ul>
+                                    @foreach ($transaction->items as $item)
+                                        <li>
+                                            @if($item->item_type == 'service' && $item->service)
+                                                {{ $item->service->name }} (Servis) - {{ $item->quantity }} x Rp {{ number_format($item->price, 0, ',', '.') }}
+                                            @elseif($item->item_type == 'sparepart' && $item->sparepart)
+                                                {{ $item->sparepart->name }} (Sparepart) - {{ $item->quantity }} x Rp {{ number_format($item->price, 0, ',', '.') }}
+                                            @else
+                                                {{ ucfirst($item->item_type) }} - {{ $item->quantity }} x Rp {{ number_format($item->price, 0, ',', '.') }}
+                                            @endif
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="10" class="text-center">Tidak ada data transaksi yang selesai.</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>

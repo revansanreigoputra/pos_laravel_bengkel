@@ -19,7 +19,7 @@ class Transaction extends Model
         'vehicle_model',
         'payment_method',
         'proof_of_transfer_url',
-        'status'
+        'status',
     ];
 
     protected $casts = [

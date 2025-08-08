@@ -1,3 +1,7 @@
+@php
+    use Illuminate\Support\Carbon;
+@endphp
+
 @extends('layouts.master')
 
 @section('title', 'Data Sparepart')
@@ -54,19 +58,16 @@
                                 </td>
                                 <td>
                                     @php
-                                        // Ambil item pembelian dengan tanggal kadaluarsa terdekat yang belum kadaluarsa
-                                        // Filter juga untuk quantity > 0 agar hanya stok yang masih ada
-                                        $nearestExpiredItem = $sparepart->purchaseOrderItems
+                                        // Ambil item pembelian dengan tanggal kedaluwarsa terdekat yang stoknya > 0 DAN belum kedaluwarsa.
+                                        $nearestValidExpiredItem = $sparepart->purchaseOrderItems
                                             ->filter(function ($item) {
-                                                return $item->quantity > 0 &&
-                                                    $item->expired_date &&
-                                                    $item->expired_date->isFuture();
+                                                return $item->expired_date && Carbon::parse($item->expired_date)->isFuture() && ($item->quantity - $item->sold_quantity) > 0;
                                             })
                                             ->sortBy('expired_date')
                                             ->first();
                                     @endphp
-                                    @if ($nearestExpiredItem)
-                                        {{ $nearestExpiredItem->expired_date->format('d M Y') }}
+                                    @if ($nearestValidExpiredItem)
+                                        {{ \Carbon\Carbon::parse($nearestValidExpiredItem->expired_date)->format('d M Y') }}
                                     @else
                                         -
                                     @endif
@@ -107,9 +108,9 @@
                                                 data-bs-target="#delete-sparepart-{{ $sparepart->id }}">
                                                 Hapus
                                             </button>
-                                            <x-modal.delete-confirm id="delete-sparepart-{{ $sparepart->id }}" :route="route('spareparts.destroy', $sparepart->id)"
-                                                item="{{ $sparepart->name }}" title="Hapus Sparepart?"
-                                                description="Data sparepart yang dihapus tidak bisa dikembalikan." />
+                                            <x-modal.delete-confirm id="delete-sparepart-{{ $sparepart->id }}"
+                                                :route="route('spareparts.destroy', $sparepart->id)" item="{{ $sparepart->name }}"
+                                                title="Hapus Sparepart?" description="Data sparepart yang dihapus tidak bisa dikembalikan." />
                                         @endcan
                                     @else
                                         <span class="text-muted">Tidak ada aksi</span>
