@@ -29,111 +29,111 @@ class TransactionController extends Controller
      * Menyimpan transaksi baru ke database.
      */
     public function store(Request $request)
-{
-    Log::info('Incoming request for new transaction: ', $request->all());
+    {
+        Log::info('Incoming request for new transaction: ', $request->all());
 
-    try {
-        // 1. Validasi Data
-        $validatedData = $request->validate([
-            'customer_name' => 'required|string|max:255',
-            'customer_phone' => 'required|string|max:20',
-            'customer_email' => 'nullable|email|max:255',
-            'customer_address' => 'nullable|string|max:255',
-            'vehicle_number' => 'nullable|string|max:255',
-            'vehicle_model' => 'nullable|string|max:255',
-            'payment_method' => 'required|string|max:50',
-            'invoice_number' => 'required|string|max:255|unique:transactions,invoice_number',
-            'transaction_date' => 'required|date',
-            'items' => 'required|array|min:1',
-            'items.*.item_full_id' => 'required|string',
-            'items.*.quantity' => 'required|integer|min:1',
-            'status' => 'required|string|in:pending,completed,cancelled',
-        ]);
-
-        Log::info('Validation passed', $validatedData);
-
-        // 2. Pendaftaran Pelanggan Otomatis
-        $customer = Customer::firstOrCreate(
-            ['phone' => $validatedData['customer_phone']],
-            [
-                'name' => $validatedData['customer_name'],
-                'email' => $validatedData['customer_email'],
-                'address' => $validatedData['customer_address']
-            ]
-        );
-
-        Log::info('Customer resolved or created', ['customer_id' => $customer->id]);
-
-        // Persiapkan data transaksi
-        $transactionData = [
-            'customer_id' => $customer->id,
-            'vehicle_number' => $validatedData['vehicle_number'] ?? null,
-            'vehicle_model' => $validatedData['vehicle_model'] ?? null,
-            'invoice_number' => $validatedData['invoice_number'],
-            'payment_method' => $validatedData['payment_method'],
-            'transaction_date' => $validatedData['transaction_date'],
-            'status' => $validatedData['status'],
-            'total_price' => 0,
-        ];
-
-        $itemsData = [];
-
-        foreach ($validatedData['items'] as $index => $item) {
-            list($itemType, $itemId) = explode('-', $item['item_full_id']);
-
-            Log::info("Processing item", [
-                'index' => $index,
-                'item_type' => $itemType,
-                'item_id' => $itemId,
-                'quantity' => $item['quantity']
+        try {
+            // 1. Validasi Data
+            $validatedData = $request->validate([
+                'customer_name' => 'required|string|max:255',
+                'customer_phone' => 'required|string|max:20',
+                'customer_email' => 'nullable|email|max:255',
+                'customer_address' => 'nullable|string|max:255',
+                'vehicle_number' => 'nullable|string|max:255',
+                'vehicle_model' => 'nullable|string|max:255',
+                'payment_method' => 'required|string|max:50',
+                'invoice_number' => 'required|string|max:255|unique:transactions,invoice_number',
+                'transaction_date' => 'required|date',
+                'items' => 'required|array|min:1',
+                'items.*.item_full_id' => 'required|string',
+                'items.*.quantity' => 'required|integer|min:1',
+                'status' => 'required|string|in:pending,completed,cancelled',
             ]);
 
-            if ($itemType === 'sparepart') {
-                $sparepart = Sparepart::with('purchaseOrderItems')->find($itemId);
+            Log::info('Validation passed', $validatedData);
 
-                if (!$sparepart) {
-                    throw ValidationException::withMessages([
-                        "items.$index.item_full_id" => "Sparepart dengan ID $itemId tidak ditemukan."
-                    ]);
-                }
+            // 2. Pendaftaran Pelanggan Otomatis
+            $customer = Customer::firstOrCreate(
+                ['phone' => $validatedData['customer_phone']],
+                [
+                    'name' => $validatedData['customer_name'],
+                    'email' => $validatedData['customer_email'],
+                    'address' => $validatedData['customer_address']
+                ]
+            );
+            
+            Log::info('Customer resolved or created', ['customer_id' => $customer->id]);
 
-                if ($sparepart->available_stock < $item['quantity']) {
-                    throw ValidationException::withMessages([
-                        "items.$index.quantity" =>
+            // Persiapkan data transaksi
+            $transactionData = [
+                'customer_id' => $customer->id,
+                'vehicle_number' => $validatedData['vehicle_number'] ?? null,
+                'vehicle_model' => $validatedData['vehicle_model'] ?? null,
+                'invoice_number' => $validatedData['invoice_number'],
+                'payment_method' => $validatedData['payment_method'],
+                'transaction_date' => $validatedData['transaction_date'],
+                'status' => $validatedData['status'],
+                'total_price' => 0,
+            ];
+
+            $itemsData = [];
+
+            foreach ($validatedData['items'] as $index => $item) {
+                list($itemType, $itemId) = explode('-', $item['item_full_id']);
+
+                Log::info("Processing item", [
+                    'index' => $index,
+                    'item_type' => $itemType,
+                    'item_id' => $itemId,
+                    'quantity' => $item['quantity']
+                ]);
+
+                if ($itemType === 'sparepart') {
+                    $sparepart = Sparepart::with('purchaseOrderItems')->find($itemId);
+
+                    if (!$sparepart) {
+                        throw ValidationException::withMessages([
+                            "items.$index.item_full_id" => "Sparepart dengan ID $itemId tidak ditemukan."
+                        ]);
+                    }
+
+                    if ($sparepart->available_stock < $item['quantity']) {
+                        throw ValidationException::withMessages([
+                            "items.$index.quantity" =>
                             "Stok sparepart '{$sparepart->name}' tidak cukup. Tersedia: {$sparepart->available_stock}."
-                    ]);
+                        ]);
+                    }
                 }
+
+                $itemsData[] = [
+                    'item_type' => $itemType,
+                    'item_id' => $itemId,
+                    'quantity' => $item['quantity'],
+                ];
             }
 
-            $itemsData[] = [
-                'item_type' => $itemType,
-                'item_id' => $itemId,
-                'quantity' => $item['quantity'],
-            ];
+            Log::info('All items processed, creating transaction', [
+                'transaction_data' => $transactionData,
+                'items_data' => $itemsData
+            ]);
+
+            // Panggil service untuk membuat transaksi
+            $transaction = $this->transactionService->createTransaction($transactionData, $itemsData);
+
+            Log::info('Transaction successfully created', ['transaction_id' => $transaction->id]);
+
+            return redirect()->route('transaction.index')->with('success', 'Transaksi berhasil dibuat!');
+        } catch (ValidationException $e) {
+            Log::warning('Validation failed', ['errors' => $e->errors()]);
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        } catch (Exception $e) {
+            Log::error('Unexpected error while storing transaction', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return redirect()->back()->with('error', 'Gagal menyimpan transaksi: ' . $e->getMessage())->withInput();
         }
-
-        Log::info('All items processed, creating transaction', [
-            'transaction_data' => $transactionData,
-            'items_data' => $itemsData
-        ]);
-
-        // Panggil service untuk membuat transaksi
-        $transaction = $this->transactionService->createTransaction($transactionData, $itemsData);
-
-        Log::info('Transaction successfully created', ['transaction_id' => $transaction->id]);
-
-        return redirect()->route('transaction.index')->with('success', 'Transaksi berhasil dibuat!');
-    } catch (ValidationException $e) {
-        Log::warning('Validation failed', ['errors' => $e->errors()]);
-        return redirect()->back()->withErrors($e->errors())->withInput();
-    } catch (Exception $e) {
-        Log::error('Unexpected error while storing transaction', [
-            'message' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
-        ]);
-        return redirect()->back()->with('error', 'Gagal menyimpan transaksi: ' . $e->getMessage())->withInput();
     }
-}
 
 
     /**
@@ -166,7 +166,7 @@ class TransactionController extends Controller
             ]);
 
             $transaction = Transaction::findOrFail($id);
-            
+
             // Update data customer
             $customer = Customer::updateOrCreate(
                 ['phone' => $validatedData['customer_phone']],
@@ -192,7 +192,7 @@ class TransactionController extends Controller
 
             // Proses item-item transaksi
             $existingItemIds = [];
-            
+
             foreach ($validatedData['items'] as $itemData) {
                 if (isset($itemData['id'])) {
                     // Update item yang sudah ada
@@ -260,7 +260,8 @@ class TransactionController extends Controller
         // Eager load purchaseOrderItems untuk available_stock
         $spareparts = Sparepart::with('purchaseOrderItems')->get();
         $services = Service::all();
-        return view('pages.transaction.create', compact('spareparts', 'services'));
+        $customer2 = Customer::all(['name', 'phone', 'email', 'address']);
+        return view('pages.transaction.create', compact('spareparts', 'services', 'customer2'));
     }
 
     public function index()

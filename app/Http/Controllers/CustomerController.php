@@ -97,10 +97,14 @@ final class CustomerController extends Controller
     }
 
     public function exportPDF()
-{
-    $customers = Customer::all();
-    $pdf = Pdf::loadView('pages.customer.export-pdf', compact('customers'));
-    return $pdf->download('data-konsumen.pdf');
-}
-
+    {
+        $customers = Customer::all();
+        $pdf = Pdf::loadView('pages.customer.export-pdf', compact('customers'));
+        return $pdf->download('data-konsumen.pdf');
+    }
+     public function getCustomer($name)
+    {
+        $customer = Customer::where('name', $name)->first();
+        return response()->json($customer);
+    }
 }
