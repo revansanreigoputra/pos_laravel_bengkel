@@ -247,7 +247,7 @@
                 </ul>
             </div>
             <div class=" d-flex justify-between">
-                <button class="  btn btn-outline-primary mb-2 mb-md-0 me-md-2" onclick="window.print()">
+                <a id="export-pdf-btn" class="  btn btn-outline-primary mb-2 mb-md-0 me-md-2">
                     {{-- Added mb-2 and me-md-2 --}}
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
                         stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
@@ -258,7 +258,7 @@
                         <path d="M7 13m0 2a2 2 0 0 1 2 -2h6a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2h-6a2 2 0 0 1 -2 -2z"></path>
                     </svg>
                     Cetak Laporan
-                </button>
+                </a>
                 <a href="{{ route('reports.export-excel', ['report_type' => 'stock', 'sparepart_id' => request('sparepart_id'), 'export_title' => 'Laporan_Stok_Sparepart']) }}"
                     class="btn btn-outline-success  ">
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
@@ -273,7 +273,7 @@
                     Export Excel
                 </a>
             </div>
-        </div> 
+        </div>
         <div class="card-body">
             {{-- date filter --}}
             <form action="{{ route('report.sparepart-report') }}" method="GET" class="mb-4 filter-form">
@@ -292,7 +292,7 @@
                         <button type="submit" class="btn btn-primary me-2">Cari</button>
                         <a href="{{ route('report.sparepart-report') }}" class="btn btn-secondary">Reset</a>
                     </div>
-                     
+
                     <input type="hidden" name="tab" id="active_tab_input" value="{{ $activeTab }}">
                 </div>
             </form>
@@ -303,7 +303,7 @@
                 <div class="tab-pane fade show {{ $activeTab == 'available' ? 'active' : '' }}" id="pills-available"
                     role="tabpanel" aria-labelledby="pills-available-tab">
                     <div class="table-responsive">
-                        <table class="table" id="sparepart_report_table">
+                        <table class="table" id="available_table">
                             <thead>
                                 <tr>
                                     <th>No</th>
@@ -379,7 +379,7 @@
                 <div class="tab-pane fade show {{ $activeTab == 'expired' ? 'active' : '' }}" id="pills-expired"
                     role="tabpanel" aria-labelledby="pills-expired-tab">
                     <div class="table-responsive">
-                        <table class="table" id="sparepart_report_table">
+                        <table class="table" id="expired_table">
                             <thead>
                                 <tr>
                                     <th>No</th>
@@ -428,7 +428,7 @@
                 <div class="tab-pane fade show {{ $activeTab == 'empty' ? 'active' : '' }}" id="pills-empty"
                     role="tabpanel" aria-labelledby="pills-empty-tab">
                     <div class="table-responsive ">
-                        <table class="table" id="sparepart_report_table">
+                        <table class="table" id="empty_table">
                             <thead>
                                 <tr>
                                     <th>No</th>
@@ -465,59 +465,41 @@
 
 @push('addon-script')
     <script>
-        $(document).ready(function() {
-            $('#sparepart_report_table').DataTable({
-                order: [
-                    [5, 'desc']
-                ]
-            });
-        })
-        // tab start
-        $(document).ready(function() {
-            //   an event listener to the tab buttons to update the hidden input
-            $('button[data-bs-toggle="pill"]').on('shown.bs.tab', function(e) {
-                const targetTab = $(e.target).attr('data-bs-target');
-                const tabId = targetTab.replace('#pills-', '');
-                $('#active_tab_input').val(tabId); // Update the hidden input value
-
-                //  search history
-                const urlParams = new URLSearchParams(window.location.search);
-                urlParams.set('tab', tabId);
-                const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
-                history.pushState(null, '', newUrl);
-            });
-
-            // Set the initial active tab from the URL on page load
+        $(function() {
             const urlParams = new URLSearchParams(window.location.search);
-            const activeTab = urlParams.get('tab');
-            if (activeTab) {
-                $(`#pills-${activeTab}-tab`).tab('show');
-            }
-        });
-        // tab end
-        // filter dropdown search
-        // $(document).ready(function() {
-        //     $('#sparepart_filter').select2({
-        //         theme: "bootstrap-5",
-        //         width: $(this).data('width') ? $(this).data('width') : $(this).hasClass('w-100') ? '100%' :
-        //             'style',
-        //         placeholder: "-- Semua Sparepart --",
-        //         allowClear: true,
-        //     });
-        // unused tab
-        // const urlParams = new URLSearchParams(window.location.search);
-        // const activeTab = urlParams.get('tab');
-        // if (activeTab) {
-        //     $(`#pills-${activeTab}-tab`).tab('show');
-        // }
+            const activeTab = urlParams.get('tab') || 'available';
+            $('#pills-' + activeTab + '-tab').tab('show');
+            $('#active_tab_input').val(activeTab);
 
-        // $('button[data-bs-toggle="pill"]').on('shown.bs.tab', function(e) {
-        //     const targetTab = $(e.target).attr('data-bs-target');
-        //     const tabId = targetTab.replace('#pills-', '');
-        //     const urlParams = new URLSearchParams(window.location.search);
-        //     urlParams.set('tab', tabId);
-        //     const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
-        //     history.pushState(null, '', newUrl);
-        // });
+            function updateExportPdfLink() {
+                const tab = $('#active_tab_input').val();
+                const start = $('#start_date').val();
+                const end = $('#end_date').val();
+
+                let url = `{{ route('report.exportPDF-sparepart') }}?tab=${tab}`;
+
+                // Tambahkan parameter tanggal hanya jika terisi
+                if (start) {
+                    url += `&start_date=${start}`;
+                }
+                if (end) {
+                    url += `&end_date=${end}`;
+                }
+
+                $('#export-pdf-btn').attr('href', url);
+            }
+            // Run once on page load
+            updateExportPdfLink();
+
+            // On tab change
+            $('button[data-bs-toggle="pill"]').on('shown.bs.tab', function(e) {
+                const tabId = $(e.target).attr('data-bs-target').replace('#pills-', '');
+                $('#active_tab_input').val(tabId);
+                updateExportPdfLink();
+            });
+
+            // On date change
+            $('.filter-form input[type="date"]').on('change', updateExportPdfLink);
+        });
     </script>
 @endpush

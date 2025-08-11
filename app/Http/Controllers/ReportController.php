@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\Transaction;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\Sparepart;
 use Illuminate\Http\Request;
-use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\TransactionsExport;
 use App\Exports\PurchaseOrdersExport;
@@ -126,30 +127,50 @@ class ReportController extends Controller
 
         return view('pages.report.sparepart-report', compact('spareparts', 'activeTab', 'startDate', 'endDate'));
     }
-    // public function stockReport(Request $request)
-    // {
+    /**
+     * Laporan stok sparepart: export PDF report based on the selected tab and filters.
+     */
+    public function exportPdfSparepartStock(Request $request)
+    {
+        $tab = $request->get('tab', 'available');
+        $startDate = $request->get('start_date');
+        $endDate = $request->get('end_date');
+        $reportTitle = 'Laporan Stok Sparepart';
 
-    //     $spareparts = Sparepart::with(['purchaseOrderItems' => function ($query) {
-    //         $query->orderBy('expired_date', 'asc')
-    //             ->orderBy('created_at', 'asc');
-    //     }])->paginate(10);
+        $spareparts = Sparepart::with(['category', 'supplier', 'purchaseOrderItems'])
+            ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
+                $query->whereBetween('created_at', [$startDate, $endDate]);
+            })
+            ->get();
 
-    //     return view('pages.report.sparepart-report', compact('spareparts'));
-    // }
+        if ($tab === 'available') {
+            $spareparts = $spareparts->filter(fn($s) => $s->available_stock > 0);
+            $reportTitle = 'Laporan Stok Sparepart Tersedia';
+        } elseif ($tab === 'expired') {
+            $spareparts = $spareparts->filter(function ($s) {
+                return $s->purchaseOrderItems->whereNotNull('expired_date')
+                    ->where('expired_date', '<', now())
+                    ->where('quantity', '>', 0)
+                    ->isNotEmpty();
+            });
+            $reportTitle = 'Laporan Stok Sparepart Kadaluarsa';
+        } elseif ($tab === 'empty') {
+            $spareparts = $spareparts->filter(fn($s) => $s->available_stock <= 0);
+            $reportTitle = 'Laporan Stok Sparepart Kosong';
+        }
 
-    // /**
-    //  * Halaman laporan stok expired
-    //  */
-    // public function expiredStockReport()
-    // {
-    //     $expiredItems = PurchaseOrderItem::where('quantity', '>', 0)
-    //         ->whereNotNull('expired_date')
-    //         ->where('expired_date', '<', Carbon::today())
-    //         ->with('sparepart', 'purchaseOrder')
-    //         ->get();
+        $pdf = Pdf::loadView('pages.report.exportPDF-sparepart', [
+            'spareparts' => $spareparts,
+            'tab' => $tab,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'reportTitle' => $reportTitle,
+        ]);
 
-    //     return view('pages.report.expired_stock', compact('expiredItems'));
-    // }
+        $timestamp = Carbon::now()->format('Y-m-d_H-i-s'); 
+        $fileName = "{$timestamp}_Laporan sparepart {$tab}.pdf";
+        return $pdf->download($fileName);
+    }
 
     /**
      * Export laporan transaksi ke Excel

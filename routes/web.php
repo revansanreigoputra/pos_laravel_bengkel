@@ -144,7 +144,7 @@ Route::get('/customer/export-pdf', [CustomerController::class, 'exportPDF'])->na
 Route::get('/transactions/{transaction}/invoice/pdf', [App\Http\Controllers\TransactionController::class, 'exportPdf'])->name('transaction.exportPdf');
 Route::get('/report/transactions/export-excel', [ReportController::class, 'exportExcel'])->name('report.transaction.export.excel');
 Route::get('/report/purchase/export-excel', [ReportController::class, 'exportPurchaseExcel'])->name('report.purchase.export');
-
+Route::get('/report/exportPDF-sparepart', [ReportController::class, 'exportPdfSparepartStock'])->name('report.exportPDF-sparepart');
 Route::get('/report/pergerakan-stok', [LogController::class, 'logPergerakanStok'])->name('report.pergerakan-stok');
 
 Route::get('/export-sparepart-log', [LogController::class, 'exportSparepartLog'])->name('logs.export-sparepart-log');
