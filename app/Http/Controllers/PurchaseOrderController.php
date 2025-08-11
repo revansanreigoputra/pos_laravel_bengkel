@@ -29,7 +29,7 @@ class PurchaseOrderController extends Controller
     {
         $query = PurchaseOrder::with(['supplier', 'items'])->latest('order_date');
 
-        $purchaseOrders = $query->get(); // get() akan selalu menghasilkan collection, meski kosong
+        $purchaseOrders = $query->paginate(10);
 
         return view('purchase_orders.index', compact('purchaseOrders'));
     }

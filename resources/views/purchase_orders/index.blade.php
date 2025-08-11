@@ -94,29 +94,8 @@
 
 @push('addon-script')
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            var table = $('#purchaseOrderTable').DataTable({
-                language: {
-                    search: "Cari:",
-                    lengthMenu: "Tampilkan _MENU_ data",
-                    info: "Menampilkan _START_ - _END_ dari _TOTAL_ data",
-                    paginate: {
-                        next: "Selanjutnya",
-                        previous: "Sebelumnya"
-                    },
-                    zeroRecords: "Data tidak ditemukan",
-                    infoEmpty: "Menampilkan 0 - 0 dari 0 data",
-                    infoFiltered: "(disaring dari _MAX_ total data)"
-                },
-                pageLength: 10,
-                order: [[2, 'desc']]
-            });
-
-            // Event listener untuk filter status
-            $('#statusFilter').on('change', function() {
-                var status = $(this).val();
-                table.column(5).search(status).draw(); // Kolom 'Status' ada di indeks ke-5 (dimulai dari 0)
-            });
+        $(document).ready(function() {
+            $('#purchaseOrderTable').DataTable();
         });
     </script>
 @endpush
