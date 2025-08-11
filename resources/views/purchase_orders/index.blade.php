@@ -86,9 +86,6 @@
                 </table>
             </div>
         </div>
-        <div class="card-footer">
-            {{ $purchaseOrders->links() }}
-        </div>
     </div>
 @endsection
 
