@@ -103,7 +103,7 @@
                                 </a>
                                 @endcan
                                 <a href="{{ route('purchase_orders.create') }}" class="dropdown-item {{ request()->is('purchase_orders/create') ? 'active' : '' }} 
-                                    add-link"><span class="add-badge">+</span> Tambah</a>
+                                    add-link"><span class="add-badge">+</span>Tambah Pembelian</a>
                             </div>
                             <div class="dropdown-menu-column">
                                 @can('transaction.view')
@@ -111,7 +111,7 @@
                                     href="{{ route('transaction.index') }}">Transaksi Penjualan</a>
                                 @endcan
                                 <a href="{{ route('transaction.create') }}" class="dropdown-item {{ request()->is('transaction/create') ? 'active' : '' }} 
-                                    add-link"> <span class="add-badge">+</span> Tambah</a>
+                                    add-link"> <span class="add-badge">+</span>Tambah Penjualan</a>
 
                             </div>
                         </div>
