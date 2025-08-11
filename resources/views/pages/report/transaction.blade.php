@@ -96,7 +96,7 @@
                             <th>Diskon</th>
                             <th>Total Harga</th>
                             <th>Status</th>
-                            <th>Items</th>
+                            {{-- <th>Items</th> --}}
                         </tr>
                     </thead>
                     <tbody>
@@ -116,7 +116,7 @@
                                     {{ ucfirst($transaction->status) }}
                                 </span>
                             </td>
-                            <td>
+                            {{-- <td>
                                 <ul>
                                     @foreach ($transaction->items as $item)
                                         <li>
@@ -130,7 +130,7 @@
                                         </li>
                                     @endforeach
                                 </ul>
-                            </td>
+                            </td> --}}
                         </tr>
                         @empty
                         <tr>

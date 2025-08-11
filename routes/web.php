@@ -143,7 +143,7 @@ Route::get('/supplier/export-pdf', [SupplierController::class, 'exportPDF'])->na
 Route::get('/customer/export-pdf', [CustomerController::class, 'exportPDF'])->name('customer.export-pdf');
 Route::get('/transactions/{transaction}/invoice/pdf', [App\Http\Controllers\TransactionController::class, 'exportPdf'])->name('transaction.exportPdf');
 Route::get('/report/transactions/export-excel', [ReportController::class, 'exportExcel'])->name('report.transaction.export.excel');
-Route::get('/report/purchase/export-excel', [ReportController::class, 'exportPurchaseExcel'])->name('report.purchase.export.excel');
+Route::get('/report/purchase/export-excel', [ReportController::class, 'exportPurchaseExcel'])->name('report.purchase.export');
 
 Route::get('/report/pergerakan-stok', [LogController::class, 'logPergerakanStok'])->name('report.pergerakan-stok');
 

@@ -149,10 +149,37 @@ class ReportController extends Controller
         $start = $request->start_date;
         $end = $request->end_date;
         $status = $request->status;
+        $paymentMethod = $request->payment_method;
 
-        return Excel::download(
-            new PurchaseOrdersExport($start, $end, $status),
-            'laporan_pembelian.xlsx'
+        $query = \App\Models\PurchaseOrder::query()->with(['items.sparepart', 'supplier']);
+
+        if ($start && $end) {
+            $query->whereBetween('order_date', [
+                \Carbon\Carbon::parse($start)->startOfDay(),
+                \Carbon\Carbon::parse($end)->endOfDay()
+            ]);
+        }
+
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        if ($paymentMethod) {
+            $query->where('payment_method', $paymentMethod);
+        }
+
+        $purchaseOrders = $query->get();
+
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\PurchaseOrdersExport(
+                $purchaseOrders,
+                'Laporan Pembelian',
+                $start,
+                $end,
+                $status,
+                $paymentMethod
+            ),
+            'purchase_orders.xlsx'
         );
     }
 
