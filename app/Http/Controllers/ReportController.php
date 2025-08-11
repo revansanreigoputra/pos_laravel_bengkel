@@ -33,8 +33,8 @@ class ReportController extends Controller
         }
 
         $purchaseOrders = $query->with('supplier')
-                               ->orderBy('order_date', 'desc')
-                               ->get();
+            ->orderBy('order_date', 'desc')
+            ->get();
 
         return view('report.purchase.index', compact('purchaseOrders'));
     }
@@ -67,32 +67,89 @@ class ReportController extends Controller
         return view('pages.report.transaction', compact('transactions', 'start', 'end', 'status'));
     }
 
+
     /**
      * Halaman laporan stok sparepart
      */
-    public function stockReport()
+    public function stockReport(Request $request)
     {
-        $spareparts = Sparepart::with(['purchaseOrderItems' => function ($query) {
-            $query->orderBy('expired_date', 'asc')
+        // Get the current tab from the request, default to 'available'
+        $activeTab = $request->get('tab', 'available');
+
+        // Get the date range from the request
+        $startDate = $request->get('start_date');
+        $endDate = $request->get('end_date');
+
+        // Start a query on the Sparepart model
+        $query = Sparepart::query();
+
+        // Eager load the purchaseOrderItems relationship
+        $query->with(['purchaseOrderItems' => function ($itemQuery) use ($startDate, $endDate) {
+            $itemQuery->orderBy('expired_date', 'asc')
                 ->orderBy('created_at', 'asc');
-        }])->paginate(10);
 
-        return view('pages.report.sparepart-report', compact('spareparts'));
+            // Apply date filter to purchase order items if dates are provided
+            if ($startDate && $endDate) {
+                $itemQuery->whereDate('created_at', '>=', $startDate)
+                    ->whereDate('created_at', '<=', $endDate);
+            }
+        }]);
+
+        // Apply filters based on the active tab
+        if ($activeTab === 'available') {
+            // Filter for available stock
+            $spareparts = $query->whereHas('purchaseOrderItems', function ($itemQuery) {
+                $itemQuery->whereRaw('quantity - sold_quantity > 0')
+                    ->where(function ($q) {
+                        $q->whereNull('expired_date')
+                            ->orWhere('expired_date', '>', Carbon::today());
+                    });
+            })->orWhereDoesntHave('purchaseOrderItems')->paginate(10); // Also include spareparts with no items
+        } elseif ($activeTab === 'expired') {
+            // Filter for expired stock
+            $spareparts = $query->whereHas('purchaseOrderItems', function ($itemQuery) {
+                $itemQuery->whereRaw('quantity - sold_quantity > 0')
+                    ->whereNotNull('expired_date')
+                    ->where('expired_date', '<', Carbon::today());
+            })->paginate(10);
+        } elseif ($activeTab === 'empty') {
+            // Filter for empty stock
+            $spareparts = $query->whereDoesntHave('purchaseOrderItems')
+                ->orWhereHas('purchaseOrderItems', function ($itemQuery) {
+                    $itemQuery->whereRaw('quantity - sold_quantity <= 0');
+                })
+                ->paginate(10);
+        } else {
+            // Default to 'available' if the tab is not recognized
+            $spareparts = $query->paginate(10);
+        }
+
+        return view('pages.report.sparepart-report', compact('spareparts', 'activeTab', 'startDate', 'endDate'));
     }
+    // public function stockReport(Request $request)
+    // {
 
-    /**
-     * Halaman laporan stok expired
-     */
-    public function expiredStockReport()
-    {
-        $expiredItems = PurchaseOrderItem::where('quantity', '>', 0)
-            ->whereNotNull('expired_date')
-            ->where('expired_date', '<', Carbon::today())
-            ->with('sparepart', 'purchaseOrder')
-            ->get();
+    //     $spareparts = Sparepart::with(['purchaseOrderItems' => function ($query) {
+    //         $query->orderBy('expired_date', 'asc')
+    //             ->orderBy('created_at', 'asc');
+    //     }])->paginate(10);
 
-        return view('pages.report.expired_stock', compact('expiredItems'));
-    }
+    //     return view('pages.report.sparepart-report', compact('spareparts'));
+    // }
+
+    // /**
+    //  * Halaman laporan stok expired
+    //  */
+    // public function expiredStockReport()
+    // {
+    //     $expiredItems = PurchaseOrderItem::where('quantity', '>', 0)
+    //         ->whereNotNull('expired_date')
+    //         ->where('expired_date', '<', Carbon::today())
+    //         ->with('sparepart', 'purchaseOrder')
+    //         ->get();
+
+    //     return view('pages.report.expired_stock', compact('expiredItems'));
+    // }
 
     /**
      * Export laporan transaksi ke Excel
