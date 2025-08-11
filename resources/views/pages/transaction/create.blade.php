@@ -14,7 +14,6 @@
                         </h4>
                     </div>
                     <div class="card-body">
-                        {{-- Menampilkan pesan sukses atau error dari session --}}
                         @if (session('success'))
                             <div class="alert alert-success alert-dismissible fade show" role="alert">
                                 {{ session('success') }}
@@ -198,7 +197,7 @@
                                 <div class="section-header">
                                     <i class="fas fa-shopping-cart text-warning me-2"></i>
                                     <h5 class="mb-0">Detail Item Transaksi</h5>
-                                    <button type="button" class="btn btn-success btn-sm ms-auto" id="add-item">
+                                    <button type="button" class="btn btn-success btn ms-auto px-5" id="add-item">
                                         <i class="fas fa-plus me-1"></i>
                                         Tambah Item
                                     </button>
@@ -206,7 +205,7 @@
                                 <div class="section-body">
                                     <div class="table-responsive">
                                         <div id="items-container">
-                                            {{-- Item Row Template (akan di-clone atau dibuat baru oleh JS) --}}
+                                            {{-- Item Row Template --}}
                                             <div class="item-row mb-3 p-3 border rounded bg-light" data-item-index="0">
                                                 <div class="row align-items-end">
                                                     <div class="col-md-4">
@@ -448,7 +447,6 @@
         </div>
     </div>
 
-    {{-- Custom Styles --}}
     <style>
         .section-card {
             border: 1px solid #e3e6f0;
@@ -577,9 +575,35 @@
     </script>
 
     <script>
-        let itemIndex = 0; // Mulai dari 0 untuk item pertama
+        let itemIndex = 0;
 
-        // Fungsi untuk menginisialisasi Select2 pada elemen baru
+        // Fungsi untuk mendapatkan daftar item yang sudah dipilih
+        function getSelectedItems() {
+            let selectedItems = [];
+            $('.item-select').each(function() {
+                if ($(this).val()) {
+                    selectedItems.push($(this).val());
+                }
+            });
+            return selectedItems;
+        }
+
+        // Fungsi untuk mengupdate opsi yang dinonaktifkan di semua select
+        function updateDisabledOptions() {
+            const selectedItems = getSelectedItems();
+            
+            $('.item-select').each(function() {
+                const currentValue = $(this).val();
+                $(this).find('option').each(function() {
+                    const optionValue = $(this).val();
+                    if (optionValue && optionValue !== currentValue) {
+                        $(this).prop('disabled', selectedItems.includes(optionValue));
+                    }
+                });
+            });
+        }
+
+        // Fungsi untuk menginisialisasi Select2
         function initializeSelect2(element) {
             $(element).select2({
                 theme: "bootstrap-5",
@@ -590,7 +614,7 @@
             });
         }
 
-        // Fungsi untuk menghitung ulang subtotal item
+        // Fungsi untuk menghitung subtotal item
         function calculateItemSubtotal(itemRow) {
             const price = parseFloat(itemRow.find('.price-input').val()) || 0;
             const qty = parseInt(itemRow.find('.qty-input').val()) || 0;
@@ -599,7 +623,7 @@
             calculateOverallTotal();
         }
 
-        // Fungsi untuk menghitung ulang total keseluruhan
+        // Fungsi untuk menghitung total keseluruhan
         function calculateOverallTotal() {
             let overallSubTotal = 0;
             $('.item-row').each(function() {
@@ -650,10 +674,13 @@
             newRow.find('.qty-input').val(1);
             newRow.find('.price-input').val(0);
             newRow.find('.item-subtotal-display').val('Rp 0');
-            newRow.find('.stock-warning').hide(); // Sembunyikan peringatan stok
+            newRow.find('.stock-warning').hide();
 
             newRow.find('.item-select').removeClass('select2-hidden-accessible').next('.select2-container').remove();
             initializeSelect2(newRow.find('.item-select'));
+            
+            // Update opsi yang dinonaktifkan
+            updateDisabledOptions();
 
             $('#items-container').append(newRow);
             calculateOverallTotal();
@@ -666,22 +693,23 @@
             // Event listener untuk tombol "Tambah Item"
             $('#add-item').on('click', addItemRow);
 
-            // Event listener untuk tombol "Hapus" item (delegasi event)
+            // Event listener untuk tombol "Hapus" item
             $('#items-container').on('click', '.remove-item', function() {
                 if ($('.item-row').length > 1) {
                     $(this).closest('.item-row').remove();
+                    // Update opsi yang dinonaktifkan setelah menghapus
+                    updateDisabledOptions();
                     calculateOverallTotal();
                 } else {
                     alert('Tidak bisa menghapus semua item. Minimal harus ada satu item.');
                 }
             });
 
-            // Event listener untuk perubahan harga atau kuantitas (delegasi event)
+            // Event listener untuk perubahan harga atau kuantitas
             $('#items-container').on('input', '.price-input, .qty-input', function() {
                 const itemRow = $(this).closest('.item-row');
                 const selectedOption = itemRow.find('.item-select option:selected');
-                const itemType = selectedOption.parent().attr(
-                    'label'); // '🔧 Layanan Service' or '🔩 Sparepart'
+                const itemType = selectedOption.parent().attr('label');
                 const currentQty = parseInt($(this).val()) || 0;
                 const availableStock = parseInt(selectedOption.data('available-stock')) || 0;
                 const stockWarning = itemRow.find('.stock-warning');
@@ -689,11 +717,10 @@
                 if (itemType === '🔩 Sparepart' && currentQty > availableStock) {
                     stockWarning.text(`Stok tidak cukup! Tersedia: ${availableStock}`).show();
                     $(this).addClass('is-invalid');
-                    $('#submitTransactionBtn').prop('disabled', true); // Nonaktifkan tombol submit
+                    $('#submitTransactionBtn').prop('disabled', true);
                 } else {
                     stockWarning.hide();
                     $(this).removeClass('is-invalid');
-                    // Cek semua item, jika tidak ada peringatan, aktifkan tombol submit
                     if ($('.stock-warning:visible').length === 0) {
                         $('#submitTransactionBtn').prop('disabled', false);
                     }
@@ -702,19 +729,19 @@
                 calculateItemSubtotal(itemRow);
             });
 
-            // Event listener untuk tombol plus/minus kuantitas (delegasi event)
+            // Event listener untuk tombol plus/minus kuantitas
             $('#items-container').on('click', '.btn-qty-minus', function() {
                 const qtyInput = $(this).siblings('.qty-input');
                 let currentVal = parseInt(qtyInput.val());
                 if (currentVal > 1) {
-                    qtyInput.val(currentVal - 1).trigger('input'); // Trigger input event for validation
+                    qtyInput.val(currentVal - 1).trigger('input');
                 }
             });
 
             $('#items-container').on('click', '.btn-qty-plus', function() {
                 const qtyInput = $(this).siblings('.qty-input');
                 let currentVal = parseInt(qtyInput.val());
-                qtyInput.val(currentVal + 1).trigger('input'); // Trigger input event for validation
+                qtyInput.val(currentVal + 1).trigger('input');
             });
 
             // Event listener untuk perubahan Select2 item
@@ -728,6 +755,18 @@
                 const stockWarning = itemRow.find('.stock-warning');
 
                 const fullId = selectedOption.val();
+                const selectedItems = getSelectedItems();
+                
+                // Cek apakah item sudah dipilih di row lain
+                if (fullId) {
+                    const duplicateItems = selectedItems.filter(item => item === fullId);
+                    if (duplicateItems.length > 1) {
+                        alert('Item ini sudah dipilih sebelumnya. Silakan pilih item lain.');
+                        $(this).val('').trigger('change');
+                        return;
+                    }
+                }
+
                 if (fullId) {
                     const [type, id] = fullId.split('-');
                     itemTypeInput.val(type);
@@ -744,16 +783,16 @@
                     priceInput.val(0);
                 }
 
-                // Reset quantity to 1 and re-validate stock
                 qtyInput.val(1).trigger('input');
-
-                // Sembunyikan peringatan stok saat item baru dipilih
                 stockWarning.hide();
                 qtyInput.removeClass('is-invalid');
-                // Cek semua item, jika tidak ada peringatan, aktifkan tombol submit
+                
                 if ($('.stock-warning:visible').length === 0) {
                     $('#submitTransactionBtn').prop('disabled', false);
                 }
+
+                // Update opsi yang dinonaktifkan
+                updateDisabledOptions();
 
                 calculateItemSubtotal(itemRow);
             });

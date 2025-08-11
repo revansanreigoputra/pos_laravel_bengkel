@@ -121,6 +121,39 @@
             </div>
         </div>
     </div>
+
+    {{-- Modal Cetak Invoice --}}
+    @if(session('print_invoice'))
+        @php
+            $trx = $transactions->firstWhere('id', session('print_invoice'));
+            $customerName = $trx ? ($trx->customer->name ?? '-') : '-';
+        @endphp
+        <div class="modal fade" id="printInvoiceModal" tabindex="-1" aria-labelledby="printInvoiceModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="printInvoiceModalLabel">Cetak Invoice</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        Transaksi a.n {{ $customerName }} berhasil disimpan.<br>
+                        Apakah Anda ingin mencetak invoice sekarang?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Nanti Saja</button>
+                        <a href="{{ route('transaction.exportPdf', session('print_invoice')) }}" target="_blank" class="btn btn-primary">Cetak Sekarang</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @push('addon-script')
+        <script>
+            $(document).ready(function() {
+                $('#printInvoiceModal').modal('show');
+            });
+        </script>
+        @endpush
+    @endif
 @endsection
 
 @push('addon-script')

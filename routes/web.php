@@ -141,7 +141,7 @@ Route::resource('spareparts', SparepartController::class);
 // Export PDF/Excel
 Route::get('/supplier/export-pdf', [SupplierController::class, 'exportPDF'])->name('supplier.export-pdf');
 Route::get('/customer/export-pdf', [CustomerController::class, 'exportPDF'])->name('customer.export-pdf');
-Route::get('/transactions/{transaction}/invoice/pdf', [App\Http\Controllers\TransactionController::class, 'exportPdf'])->name('transaction.exportPdf');
+Route::get('/transactions/{transaction}/invoice/pdf', [TransactionController::class, 'exportPdf'])->name('transaction.exportPdf');
 Route::get('/report/transactions/export-excel', [ReportController::class, 'exportExcel'])->name('report.transaction.export.excel');
 Route::get('/report/purchase/export-excel', [ReportController::class, 'exportPurchaseExcel'])->name('report.purchase.export');
 Route::get('/report/exportPDF-sparepart', [ReportController::class, 'exportPdfSparepartStock'])->name('report.exportPDF-sparepart');

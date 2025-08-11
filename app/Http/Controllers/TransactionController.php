@@ -122,7 +122,14 @@ class TransactionController extends Controller
 
             Log::info('Transaction successfully created', ['transaction_id' => $transaction->id]);
 
-            return redirect()->route('transaction.index')->with('success', 'Transaksi berhasil dibuat!');
+            if ($transaction->status === 'completed') {
+                return redirect()->route('transaction.index')
+                    ->with('success', 'Transaksi berhasil dibuat!')
+                    ->with('print_invoice', $transaction->id);
+            } else {
+                return redirect()->route('transaction.index')
+                    ->with('success', 'Transaksi berhasil dibuat!');
+            }
         } catch (ValidationException $e) {
             Log::warning('Validation failed', ['errors' => $e->errors()]);
             return redirect()->back()->withErrors($e->errors())->withInput();
