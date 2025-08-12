@@ -148,7 +148,10 @@ Route::get('/report/exportPDF-sparepart', [ReportController::class, 'exportPdfSp
 Route::get('/report/pergerakan-stok', [LogController::class, 'logPergerakanStok'])->name('report.pergerakan-stok');
 
 Route::get('/export-sparepart-log', [LogController::class, 'exportSparepartLog'])->name('logs.export-sparepart-log');
-
+// export import sparepart
+Route::get('sparepart/export', [SparepartController::class, 'export'])->name('sparepart.export');
+Route::get('sparepart/download-template', [SparepartController::class, 'downloadTemplate'])->name('sparepart.download-template');
+Route::post('sparepart/import', [SparepartController::class, 'import'])->name('sparepart.import');
 
 // direct blade route
 Route::get('/report/sparepart-report', [ReportController::class, 'stockReport'])->name('report.sparepart-report');

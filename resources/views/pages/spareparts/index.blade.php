@@ -14,6 +14,47 @@
 
 @section('content')
     <div class="card">
+        <div class="card-header mb-4 d-flex justify-content-end">
+            
+
+                <a href="{{ route('sparepart.download-template') }}" class="btn btn-outline-info me-2">Unduh Template
+                </a>
+                <span class="block text-muted font-thin w-full">Unduh template untuk mengimpor data sparepart.</span>
+
+           
+            <a href="{{ route('sparepart.export') }}" class="btn btn-outline-success me-2">Export  </a>
+            {{-- IMPORTMODAL TRIGGER --}}
+            <button type="button" class="btn btn-outline-warning me-2" data-bs-toggle="modal"
+                data-bs-target="#importModal">
+                Import
+            </button>
+
+            <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="importModalLabel">Import Data Sparepart</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form action="{{ route('sparepart.import') }}" method="POST" enctype="multipart/form-data">
+                            @csrf
+                            <div class="modal-body">
+                                <p>Unduh Template, isi dengan data yang sesuai, dan unggah di sini.</p>
+                                <div class="mb-3">
+                                    <label for="fileInput" class="form-label">Pilih File Excel</label>
+                                    <input type="file" name="file" class="form-control" id="fileInput" required>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                                <button type="submit" class="btn btn-outline-warning">Import Data</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {{-- IMPORTMODAL END --}}
+        </div>
         <div class="card-body">
             @if (session('success'))
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -52,7 +93,8 @@
                                 <td>{{ $sparepart->name }}</td>
                                 <td>{{ $sparepart->category->name ?? 'N/A' }}</td>
                                 <td>
-                                    <span class="status-badge {{ $sparepart->available_stock > 0 ? 'available' : 'unavailable' }}">
+                                    <span
+                                        class="status-badge {{ $sparepart->available_stock > 0 ? 'available' : 'unavailable' }}">
                                         {{ number_format($sparepart->available_stock) }}
                                     </span>
                                 </td>
@@ -61,7 +103,9 @@
                                         // Ambil item pembelian dengan tanggal kedaluwarsa terdekat yang stoknya > 0 DAN belum kedaluwarsa.
                                         $nearestValidExpiredItem = $sparepart->purchaseOrderItems
                                             ->filter(function ($item) {
-                                                return $item->expired_date && Carbon::parse($item->expired_date)->isFuture() && ($item->quantity - $item->sold_quantity) > 0;
+                                                return $item->expired_date &&
+                                                    Carbon::parse($item->expired_date)->isFuture() &&
+                                                    $item->quantity - $item->sold_quantity > 0;
                                             })
                                             ->sortBy('expired_date')
                                             ->first();
@@ -108,9 +152,9 @@
                                                 data-bs-target="#delete-sparepart-{{ $sparepart->id }}">
                                                 Hapus
                                             </button>
-                                            <x-modal.delete-confirm id="delete-sparepart-{{ $sparepart->id }}"
-                                                :route="route('spareparts.destroy', $sparepart->id)" item="{{ $sparepart->name }}"
-                                                title="Hapus Sparepart?" description="Data sparepart yang dihapus tidak bisa dikembalikan." />
+                                            <x-modal.delete-confirm id="delete-sparepart-{{ $sparepart->id }}" :route="route('spareparts.destroy', $sparepart->id)"
+                                                item="{{ $sparepart->name }}" title="Hapus Sparepart?"
+                                                description="Data sparepart yang dihapus tidak bisa dikembalikan." />
                                         @endcan
                                     @else
                                         <span class="text-muted">Tidak ada aksi</span>
@@ -134,7 +178,7 @@
         </div>
     </div>
 @endsection
- 
+
 
 
 @push('addon-script')
@@ -155,7 +199,7 @@
         //     });
         // });
 
-         $(document).ready(function() {
+        $(document).ready(function() {
             $('#sparepart-table').DataTable();
         });
     </script>

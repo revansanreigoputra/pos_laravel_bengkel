@@ -1,13 +1,17 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use Maatwebsite\Excel\Facades\Excel; 
 use App\Models\Sparepart;
 use App\Models\Category;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-
+use App\Exports\SparepartExport;
+use App\Imports\SparepartImport;
+use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use App\Exports\SparepartTemplate;
 class SparepartController extends Controller
 {
     /**
@@ -41,10 +45,10 @@ class SparepartController extends Controller
         $spareparts->whereHas('purchaseOrderItems', function ($query) {
             // Kita ingin menampilkan sparepart jika ada SETIDAKNYA SATU batch yang masih valid.
             $query->whereRaw('quantity - sold_quantity > 0') // Stok tersisa
-                  ->orWhere('expired_date', '>', Carbon::now()); // Tanggal kedaluwarsa belum lewat
+                ->orWhere('expired_date', '>', Carbon::now()); // Tanggal kedaluwarsa belum lewat
         })
-        // Tambahkan kondisi untuk sparepart yang belum memiliki item pembelian (stok 0) agar tetap tampil.
-        ->orWhereDoesntHave('purchaseOrderItems');
+            // Tambahkan kondisi untuk sparepart yang belum memiliki item pembelian (stok 0) agar tetap tampil.
+            ->orWhereDoesntHave('purchaseOrderItems');
 
         // Lakukan paginasi pada hasil query.
         $spareparts = $spareparts->paginate(10);
@@ -144,6 +148,10 @@ class SparepartController extends Controller
         return redirect()->route('spareparts.index')->with('success', 'Sparepart berhasil diperbarui!');
     }
 
+    public function show(Sparepart $sparepart)
+    {
+        return view('pages.spareparts.show', compact('sparepart'));
+    }
     /**
      * Remove the specified resource from storage.
      * Menghapus sumber daya yang ditentukan dari penyimpanan.
@@ -156,5 +164,38 @@ class SparepartController extends Controller
         } catch (\Exception $e) {
             return redirect()->route('spareparts.index')->with('error', 'Gagal menghapus sparepart: ' . $e->getMessage());
         }
+    }
+    // export import and template function
+    /**
+     * Download an Excel template for bulk sparepart uploads.
+     */
+   public function downloadTemplate()
+    {
+        return Excel::download(new SparepartTemplate, 'sparepart_template.xlsx');
+    }
+    /**
+     * Import spareparts from an Excel file.
+     */
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls'
+        ]);
+
+        try {
+            // Pass the import class to the Excel facade.
+            Excel::import(new SparepartImport, $request->file('file'));
+            return redirect()->route('spareparts.index')->with('success', 'Spareparts imported successfully!');
+        } catch (\Exception $e) {
+            return redirect()->route('spareparts.index')->with('error', 'Import failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Export all spareparts to an Excel file.
+     */
+    public function export()
+    {
+        return Excel::download(new SparepartExport, 'data_sparepart.xlsx');
     }
 }
