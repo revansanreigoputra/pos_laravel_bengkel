@@ -37,27 +37,26 @@ class LogController extends Controller
         $endDate = $request->input('end_date');
 
         if ($tipe == 'stok_saat_ini') {
-            $endDate = $request->input('end_date') ? \Carbon\Carbon::parse($request->input('end_date'))->endOfDay() : now();
+            $endDate = $request->input('end_date') ? Carbon::parse($request->input('end_date'))->endOfDay() : now();
 
-            $spareparts = \App\Models\Sparepart::with(['category', 'purchaseOrderItems'])->get();
+            $spareparts = Sparepart::with(['category', 'purchaseOrderItems'])->get();
             $data = $spareparts->map(function ($item, $idx) use ($endDate) {
-                // Ambil semua batch (purchaseOrderItems) sampai endDate
-                $batches = $item->purchaseOrderItems()
+                // Ambil semua batch (purchaseOrderItems) yang masuk sebelum/tanggal endDate
+                $validItems = $item->purchaseOrderItems()
                     ->whereHas('purchaseOrder', function ($q) use ($endDate) {
                         $q->where('order_date', '<=', $endDate);
                     })
                     ->get();
 
-                // Hitung stok tersedia: jumlahkan quantity - sold_quantity dari semua batch
-                $stokTersedia = $batches->sum(function ($batch) {
-                    return ($batch->quantity - $batch->sold_quantity);
-                });
+                // Hitung total masuk dan total keluar dari batch valid
+                $totalMasuk = $validItems->sum('quantity');
+                $totalKeluar = $validItems->sum('sold_quantity');
 
                 return [
                     'no' => $idx + 1,
                     'nama_sparepart' => $item->name,
                     'kategori' => $item->category->name ?? '-',
-                    'stok_tersedia' => $stokTersedia,
+                    'stok_tersedia' => $totalMasuk - $totalKeluar,
                 ];
             });
         } elseif ($tipe == 'stok_masuk') {
