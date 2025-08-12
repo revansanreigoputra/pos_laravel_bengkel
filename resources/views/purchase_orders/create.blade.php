@@ -32,8 +32,7 @@
                                                     Nomor Invoice
                                                 </label>
                                                 <input type="text" class="form-control @error('invoice_number') is-invalid @enderror"
-                                                       id="invoice_number" name="invoice_number"
-                                                       value="{{ old('invoice_number', 'PO-' . date('Ymd') . '-' . mt_rand(1000, 9999)) }}" readonly>
+                                                       id="invoice_number" name="invoice_number" placeholder="Masukkan Nomor Invoice" required>
                                                 @error('invoice_number')
                                                     <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
@@ -475,6 +474,26 @@
 
         // Hitung total awal saat halaman dimuat
         calculateOverallTotal();
+    });
+
+    $('#invoice_number').on('blur', function() {
+        var invoice = $(this).val();
+        if (invoice) {
+            $.post("{{ route('purchase_orders.checkInvoice') }}", {
+                invoice_number: invoice,
+                _token: '{{ csrf_token() }}'
+            }, function(res) {
+                if (res.exists) {
+                    $('#invoice_number').addClass('is-invalid');
+                    if (!$('#invoice_number').next('.invalid-feedback').length) {
+                        $('#invoice_number').after('<div class="invalid-feedback">Nomor invoice sudah digunakan.</div>');
+                    }
+                } else {
+                    $('#invoice_number').removeClass('is-invalid');
+                    $('#invoice_number').next('.invalid-feedback').remove();
+                }
+            });
+        }
     });
 </script>
 @endpush

@@ -170,3 +170,4 @@ Route::prefix('logs')->group(function () {
 // Route::get('/purchase-orders/spareparts/{id}/latest-price', [PurchaseOrderController::class, 'getLatestPrice'])->name('purchase_orders.latest_price');
 // Route::get('/api/spareparts/{id}/latest-price', [PurchaseOrderController::class, 'getLatestPrice'])->name('spareparts.latest-price');
 Route::get('/get-customer/{name}', [CustomerController::class, 'getCustomer']);
+Route::post('/purchase-orders/check-invoice', [PurchaseOrderController::class, 'checkInvoiceNumber'])->name('purchase_orders.checkInvoice');
