@@ -273,4 +273,13 @@ class PurchaseOrderController extends Controller
             return response()->json(['latest_price' => 0, 'order_date' => null]);
         }
     }
+
+    /**
+     * Cek apakah nomor invoice sudah ada
+     */
+    public function checkInvoiceNumber(Request $request)
+    {
+        $exists = PurchaseOrder::where('invoice_number', $request->invoice_number)->exists();
+        return response()->json(['exists' => $exists]);
+    }
 }
