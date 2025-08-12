@@ -95,7 +95,7 @@ class ServiceController extends Controller
             if ($service->transactionItems()->exists()) {
                 throw new Exception('Tidak dapat menghapus service yang sudah digunakan dalam transaksi.');
             }
-            
+
             $service->delete();
             DB::commit();
             return redirect()->route('service.index')->with('success', 'Service berhasil dihapus.');
@@ -103,6 +103,22 @@ class ServiceController extends Controller
             DB::rollBack();
             Log::error('Error deleting service: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Gagal menghapus service: ' . $e->getMessage());
+        }
+    }
+
+
+    public function changeStatus(Request $request, Service $service)
+    {
+        $request->validate([
+            'status' => 'required|in:aktif,nonaktif'
+        ]);
+
+        try {
+            $service->update(['status' => $request->status]);
+            return redirect()->route('service.index')->with('success', 'Status service berhasil diubah.');
+        } catch (Exception $e) {
+            Log::error('Error changing service status: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal mengubah status service: ' . $e->getMessage());
         }
     }
 }

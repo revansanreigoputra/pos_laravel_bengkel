@@ -75,7 +75,7 @@ class SparepartController extends Controller
     public function store(Request $request)
     {
         $validatedData = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:spareparts,name',
             'code_part' => 'nullable|string|unique:spareparts,code_part|max:255',
             'description' => 'nullable|string',
             'purchase_price' => 'nullable|numeric|min:0', // Harga beli

@@ -32,51 +32,81 @@ class LogController extends Controller
 
     public function logSparepart(Request $request)
     {
-        $startDate = $request->input('start_date') ? Carbon::parse($request->start_date)->startOfDay() : Carbon::now()->startOfMonth();
-        $endDate = $request->input('end_date') ? Carbon::parse($request->end_date)->endOfDay() : Carbon::now()->endOfMonth();
-        $jenis = $request->input('jenis');
+        $tipe = $request->input('tipe', 'stok_saat_ini');
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
 
-        // Barang Masuk (Purchase)
-        $barangMasuk = \App\Models\PurchaseOrderItem::with(['purchaseOrder.supplier', 'sparepart'])
-            ->whereHas('purchaseOrder', fn($q) => $q->whereBetween('order_date', [$startDate, $endDate]))
-            ->get()
-            ->map(function ($item) {
+        if ($tipe == 'stok_saat_ini') {
+            $endDate = $request->input('end_date') ? \Carbon\Carbon::parse($request->input('end_date'))->endOfDay() : now();
+
+            $spareparts = \App\Models\Sparepart::with(['category', 'purchaseOrderItems'])->get();
+            $data = $spareparts->map(function ($item, $idx) use ($endDate) {
+                // Ambil semua batch (purchaseOrderItems) sampai endDate
+                $batches = $item->purchaseOrderItems()
+                    ->whereHas('purchaseOrder', function ($q) use ($endDate) {
+                        $q->where('order_date', '<=', $endDate);
+                    })
+                    ->get();
+
+                // Hitung stok tersedia: jumlahkan quantity - sold_quantity dari semua batch
+                $stokTersedia = $batches->sum(function ($batch) {
+                    return ($batch->quantity - $batch->sold_quantity);
+                });
+
                 return [
-                    'no_invoice' => $item->purchaseOrder->invoice_number ?? '-',
-                    'supplier' => $item->purchaseOrder->supplier->name ?? '-',
-                    'tanggal_masuk' => $item->purchaseOrder->order_date ? $item->purchaseOrder->order_date->format('Y-m-d') : '-',
-                    'jenis' => 'Barang Masuk',
-                    'sparepart' => $item->sparepart->name ?? '-',
-                    'quantity' => $item->quantity,
+                    'no' => $idx + 1,
+                    'nama_sparepart' => $item->name,
+                    'kategori' => $item->category->name ?? '-',
+                    'stok_tersedia' => $stokTersedia,
                 ];
             });
-
-        // Barang Keluar (Transaction)
-        $barangKeluar = \App\Models\TransactionItem::with(['transaction.customer', 'sparepart'])
-            ->where('item_type', 'sparepart')
-            ->whereHas('transaction', fn($q) => $q->whereBetween('transaction_date', [$startDate, $endDate]))
-            ->get()
-            ->map(function ($item) {
+        } elseif ($tipe == 'stok_masuk') {
+            // Stok masuk
+            $query = \App\Models\PurchaseOrderItem::with(['sparepart.category', 'purchaseOrder']);
+            if ($startDate && $endDate) {
+                $query->whereHas('purchaseOrder', function ($q) use ($startDate, $endDate) {
+                    $q->whereBetween('order_date', [
+                        \Carbon\Carbon::parse($startDate)->startOfDay(),
+                        \Carbon\Carbon::parse($endDate)->endOfDay()
+                    ]);
+                });
+            }
+            $barangMasuk = $query->get()->map(function ($item, $idx) {
                 return [
-                    'no_invoice' => $item->transaction->invoice_number ?? '-',
-                    'customer' => $item->transaction->customer->name ?? '-',
-                    'tanggal_keluar' => $item->transaction->transaction_date ? $item->transaction->transaction_date->format('Y-m-d') : '-',
-                    'jenis' => 'Barang Keluar',
-                    'sparepart' => $item->sparepart->name ?? '-',
-                    'quantity' => $item->quantity,
+                    'no' => $idx + 1,
+                    'tanggal' => $item->purchaseOrder->order_date ? $item->purchaseOrder->order_date->format('Y-m-d') : '-',
+                    'nama_sparepart' => $item->sparepart->name ?? '-',
+                    'kategori' => $item->sparepart->category->name ?? '-',
+                    'jumlah_masuk' => $item->quantity,
                 ];
             });
-
-        // Filter sesuai pilihan
-        if ($jenis == 'masuk') {
-            $data = $barangMasuk->values();
-        } elseif ($jenis == 'keluar') {
-            $data = $barangKeluar->values();
+            $data = $barangMasuk;
+        } elseif ($tipe == 'stok_keluar') {
+            // Stok keluar
+            $query = \App\Models\TransactionItem::with(['sparepart.category', 'transaction'])->where('item_type', 'sparepart');
+            if ($startDate && $endDate) {
+                $query->whereHas('transaction', function ($q) use ($startDate, $endDate) {
+                    $q->whereBetween('transaction_date', [
+                        \Carbon\Carbon::parse($startDate)->startOfDay(),
+                        \Carbon\Carbon::parse($endDate)->endOfDay()
+                    ]);
+                });
+            }
+            $barangKeluar = $query->get()->map(function ($item, $idx) {
+                return [
+                    'no' => $idx + 1,
+                    'tanggal' => $item->transaction->transaction_date ? $item->transaction->transaction_date->format('Y-m-d') : '-',
+                    'nama_sparepart' => $item->sparepart->name ?? '-',
+                    'kategori' => $item->sparepart->category->name ?? '-',
+                    'jumlah_keluar' => $item->quantity,
+                ];
+            });
+            $data = $barangKeluar;
         } else {
-            $data = $barangMasuk->concat($barangKeluar)->values();
+            $data = collect();
         }
 
-        return view('logs.sparepart', compact('data'));
+        return view('logs.sparepart', compact('data', 'tipe'));
     }
 
     public function logSparepartDetail(Request $request)

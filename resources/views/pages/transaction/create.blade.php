@@ -228,7 +228,7 @@
                                                             </optgroup>
                                                             <optgroup label="🔩 Sparepart">
                                                                 @foreach ($spareparts as $sparepart)
-                                                                    @if ($sparepart->available_stock > 0)
+                                                                    @if ($sparepart->available_stock > 0 && $sparepart->final_selling_price > 0)
                                                                         <option value="sparepart-{{ $sparepart->id }}"
                                                                             data-price="{{ $sparepart->final_selling_price }}"
                                                                             data-available-stock="{{ $sparepart->available_stock }}">
@@ -591,7 +591,7 @@
         // Fungsi untuk mengupdate opsi yang dinonaktifkan di semua select
         function updateDisabledOptions() {
             const selectedItems = getSelectedItems();
-            
+
             $('.item-select').each(function() {
                 const currentValue = $(this).val();
                 $(this).find('option').each(function() {
@@ -678,7 +678,7 @@
 
             newRow.find('.item-select').removeClass('select2-hidden-accessible').next('.select2-container').remove();
             initializeSelect2(newRow.find('.item-select'));
-            
+
             // Update opsi yang dinonaktifkan
             updateDisabledOptions();
 
@@ -756,7 +756,7 @@
 
                 const fullId = selectedOption.val();
                 const selectedItems = getSelectedItems();
-                
+
                 // Cek apakah item sudah dipilih di row lain
                 if (fullId) {
                     const duplicateItems = selectedItems.filter(item => item === fullId);
@@ -786,7 +786,7 @@
                 qtyInput.val(1).trigger('input');
                 stockWarning.hide();
                 qtyInput.removeClass('is-invalid');
-                
+
                 if ($('.stock-warning:visible').length === 0) {
                     $('#submitTransactionBtn').prop('disabled', false);
                 }
@@ -802,6 +802,22 @@
 
             // Hitung total awal saat halaman dimuat
             calculateOverallTotal();
+        });
+
+        $('#createTransactionForm').on('submit', function(e) {
+            let valid = true;
+            $('.item-row').each(function() {
+                const price = parseFloat($(this).find('.price-input').val()) || 0;
+                const itemType = $(this).find('.item-type-input').val();
+                if (itemType === 'sparepart' && price <= 0) {
+                    valid = false;
+                    $(this).find('.price-input').addClass('is-invalid');
+                    alert('Sparepart dengan harga jual 0 tidak bisa dijual!');
+                }
+            });
+            if (!valid) {
+                e.preventDefault();
+            }
         });
     </script>
 @endpush
