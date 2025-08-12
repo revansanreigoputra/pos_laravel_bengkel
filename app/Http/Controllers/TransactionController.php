@@ -61,7 +61,7 @@ class TransactionController extends Controller
                     'address' => $validatedData['customer_address']
                 ]
             );
-            
+
             Log::info('Customer resolved or created', ['customer_id' => $customer->id]);
 
             // Persiapkan data transaksi
@@ -147,167 +147,167 @@ class TransactionController extends Controller
      * Perbarui transaksi yang ada.
      */
     public function update(Request $request, $id)
-{
-    DB::beginTransaction();
-    try {
-        $validatedData = $request->validate([
-            'invoice_number' => 'required|string|unique:transactions,invoice_number,' . $id,
-            'transaction_date' => 'required|date',
-            'customer_name' => 'required|string',
-            'customer_phone' => 'required|string',
-            'customer_email' => 'nullable|email',
-            'customer_address' => 'nullable|string',
-            'vehicle_number' => 'nullable|string',
-            'vehicle_model' => 'nullable|string',
-            'payment_method' => 'required|string',
-            'status' => 'required|string|in:pending,completed,canceled',
-            'global_discount' => 'nullable|numeric|min:0',
-            'total_price' => 'required|numeric|min:0',
-            'items' => 'required|array|min:1',
-            'items.*.item_full_id' => 'required|string',
-            'items.*.item_type' => 'required|string|in:service,sparepart',
-            'items.*.item_id' => 'required|integer',
-            'items.*.quantity' => 'required|integer|min:1',
-            'items.*.price' => 'required|numeric|min:0',
-            'items.*.id' => 'nullable|exists:transaction_items,id'
-        ]);
+    {
+        DB::beginTransaction();
+        try {
+            $validatedData = $request->validate([
+                'invoice_number' => 'required|string|unique:transactions,invoice_number,' . $id,
+                'transaction_date' => 'required|date',
+                'customer_name' => 'required|string',
+                'customer_phone' => 'required|string',
+                'customer_email' => 'nullable|email',
+                'customer_address' => 'nullable|string',
+                'vehicle_number' => 'nullable|string',
+                'vehicle_model' => 'nullable|string',
+                'payment_method' => 'required|string',
+                'status' => 'required|string|in:pending,completed,canceled',
+                'global_discount' => 'nullable|numeric|min:0',
+                'total_price' => 'required|numeric|min:0',
+                'items' => 'required|array|min:1',
+                'items.*.item_full_id' => 'required|string',
+                'items.*.item_type' => 'required|string|in:service,sparepart',
+                'items.*.item_id' => 'required|integer',
+                'items.*.quantity' => 'required|integer|min:1',
+                'items.*.price' => 'required|numeric|min:0',
+                'items.*.id' => 'nullable|exists:transaction_items,id'
+            ]);
 
-        $transaction = Transaction::with('items')->findOrFail($id);
-        
-        // Update data customer
-        $customer = Customer::updateOrCreate(
-            ['phone' => $validatedData['customer_phone']],
-            [
-                'name' => $validatedData['customer_name'],
-                'email' => $validatedData['customer_email'],
-                'address' => $validatedData['customer_address']
-            ]
-        );
+            $transaction = Transaction::with('items')->findOrFail($id);
 
-        // Simpan item lama untuk penyesuaian stok
-        $oldItems = $transaction->items->keyBy('id');
+            // Update data customer
+            $customer = Customer::updateOrCreate(
+                ['phone' => $validatedData['customer_phone']],
+                [
+                    'name' => $validatedData['customer_name'],
+                    'email' => $validatedData['customer_email'],
+                    'address' => $validatedData['customer_address']
+                ]
+            );
 
-        // Update data transaksi utama
-        $transaction->update([
-            'invoice_number' => $validatedData['invoice_number'],
-            'transaction_date' => $validatedData['transaction_date'],
-            'customer_id' => $customer->id,
-            'vehicle_number' => $validatedData['vehicle_number'],
-            'vehicle_model' => $validatedData['vehicle_model'],
-            'payment_method' => $validatedData['payment_method'],
-            'status' => $validatedData['status'],
-            'discount_amount' => $validatedData['global_discount'] ?? 0,
-            'total_price' => $validatedData['total_price']
-        ]);
+            // Simpan item lama untuk penyesuaian stok
+            $oldItems = $transaction->items->keyBy('id');
 
-        // Proses item-item transaksi
-        $existingItemIds = [];
-        
-        foreach ($validatedData['items'] as $itemData) {
-            $itemType = $itemData['item_type'];
-            $itemId = $itemData['item_id'];
-            $quantity = $itemData['quantity'];
-            
-            if (isset($itemData['id'])) {
-                // Update item yang sudah ada
-                $item = $oldItems->get($itemData['id']);
-                
-                if ($item) {
-                    // Kembalikan stok jika item adalah sparepart dan quantity berubah
-                    if ($item->item_type === 'sparepart' && $item->quantity != $quantity) {
-                        $this->adjustSparepartStock($item->item_id, $item->quantity, false); // Kembalikan stok lama
-                        $this->adjustSparepartStock($itemId, $quantity, true); // Kurangi stok baru
+            // Update data transaksi utama
+            $transaction->update([
+                'invoice_number' => $validatedData['invoice_number'],
+                'transaction_date' => $validatedData['transaction_date'],
+                'customer_id' => $customer->id,
+                'vehicle_number' => $validatedData['vehicle_number'],
+                'vehicle_model' => $validatedData['vehicle_model'],
+                'payment_method' => $validatedData['payment_method'],
+                'status' => $validatedData['status'],
+                'discount_amount' => $validatedData['global_discount'] ?? 0,
+                'total_price' => $validatedData['total_price']
+            ]);
+
+            // Proses item-item transaksi
+            $existingItemIds = [];
+
+            foreach ($validatedData['items'] as $itemData) {
+                $itemType = $itemData['item_type'];
+                $itemId = $itemData['item_id'];
+                $quantity = $itemData['quantity'];
+
+                if (isset($itemData['id'])) {
+                    // Update item yang sudah ada
+                    $item = $oldItems->get($itemData['id']);
+
+                    if ($item) {
+                        // Kembalikan stok jika item adalah sparepart dan quantity berubah
+                        if ($item->item_type === 'sparepart' && $item->quantity != $quantity) {
+                            $this->adjustSparepartStock($item->item_id, $item->quantity, false); // Kembalikan stok lama
+                            $this->adjustSparepartStock($itemId, $quantity, true); // Kurangi stok baru
+                        }
+
+                        $item->update([
+                            'item_type' => $itemType,
+                            'item_id' => $itemId,
+                            'quantity' => $quantity,
+                            'price' => $itemData['price']
+                        ]);
+                        $existingItemIds[] = $item->id;
                     }
-                    
-                    $item->update([
+                } else {
+                    // Tambahkan item baru
+                    $newItem = $transaction->items()->create([
                         'item_type' => $itemType,
                         'item_id' => $itemId,
                         'quantity' => $quantity,
                         'price' => $itemData['price']
                     ]);
-                    $existingItemIds[] = $item->id;
-                }
-            } else {
-                // Tambahkan item baru
-                $newItem = $transaction->items()->create([
-                    'item_type' => $itemType,
-                    'item_id' => $itemId,
-                    'quantity' => $quantity,
-                    'price' => $itemData['price']
-                ]);
-                $existingItemIds[] = $newItem->id;
-                
-                // Kurangi stok jika item adalah sparepart
-                if ($itemType === 'sparepart') {
-                    $this->adjustSparepartStock($itemId, $quantity, true);
+                    $existingItemIds[] = $newItem->id;
+
+                    // Kurangi stok jika item adalah sparepart
+                    if ($itemType === 'sparepart') {
+                        $this->adjustSparepartStock($itemId, $quantity, true);
+                    }
                 }
             }
-        }
 
-        // Hapus item yang tidak ada dalam request dan kembalikan stok jika perlu
-        $itemsToDelete = $transaction->items()->whereNotIn('id', $existingItemIds)->get();
-        
-        foreach ($itemsToDelete as $item) {
-            if ($item->item_type === 'sparepart') {
-                $this->adjustSparepartStock($item->item_id, $item->quantity, false);
+            // Hapus item yang tidak ada dalam request dan kembalikan stok jika perlu
+            $itemsToDelete = $transaction->items()->whereNotIn('id', $existingItemIds)->get();
+
+            foreach ($itemsToDelete as $item) {
+                if ($item->item_type === 'sparepart') {
+                    $this->adjustSparepartStock($item->item_id, $item->quantity, false);
+                }
+                $item->delete();
             }
-            $item->delete();
-        }
 
-        DB::commit();
+            DB::commit();
 
-        return redirect()->route('transaction.index')->with('success', 'Transaksi berhasil diperbarui.');
-    } catch (\Exception $e) {
-        DB::rollBack();
-        Log::error('Failed to update transaction: ' . $e->getMessage());
-        return redirect()->back()->with('error', 'Gagal memperbarui transaksi: ' . $e->getMessage());
-    }
-}
-
-// Helper function untuk menyesuaikan stok sparepart
-private function adjustSparepartStock($sparepartId, $quantity, $isSold)
-{
-    $sparepart = Sparepart::find($sparepartId);
-    if (!$sparepart) return;
-
-    if ($isSold) {
-        // Kurangi stok sparepart
-        $sparepart->decrement('available_stock', $quantity);
-
-        // Tambahkan sold_quantity ke batch (purchase_order_items) FEFO/FIFO
-        $qty = $quantity;
-        $batches = $sparepart->purchaseOrderItems()
-            ->whereRaw('quantity - sold_quantity > 0')
-            ->orderByRaw('CASE WHEN expired_date IS NULL THEN 1 ELSE 0 END, expired_date ASC, created_at ASC')
-            ->get();
-
-        foreach ($batches as $batch) {
-            $available = $batch->quantity - $batch->sold_quantity;
-            $take = min($available, $qty);
-            $batch->increment('sold_quantity', $take);
-            $qty -= $take;
-            if ($qty <= 0) break;
-        }
-    } else {
-        // Kembalikan stok sparepart
-        $sparepart->increment('available_stock', $quantity);
-
-        // Kembalikan sold_quantity ke batch (purchase_order_items) FEFO/FIFO reverse
-        $qty = $quantity;
-        $batches = $sparepart->purchaseOrderItems()
-            ->where('sold_quantity', '>', 0)
-            ->orderByRaw('CASE WHEN expired_date IS NULL THEN 1 ELSE 0 END, expired_date DESC, created_at DESC')
-            ->get();
-
-        foreach ($batches as $batch) {
-            $sold = $batch->sold_quantity;
-            $take = min($sold, $qty);
-            $batch->decrement('sold_quantity', $take);
-            $qty -= $take;
-            if ($qty <= 0) break;
+            return redirect()->route('transaction.index')->with('success', 'Transaksi berhasil diperbarui.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to update transaction: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal memperbarui transaksi: ' . $e->getMessage());
         }
     }
-}
+
+    // Helper function untuk menyesuaikan stok sparepart
+    private function adjustSparepartStock($sparepartId, $quantity, $isSold)
+    {
+        $sparepart = Sparepart::find($sparepartId);
+        if (!$sparepart) return;
+
+        if ($isSold) {
+            // Kurangi stok sparepart
+            $sparepart->decrement('available_stock', $quantity);
+
+            // Tambahkan sold_quantity ke batch (purchase_order_items) FEFO/FIFO
+            $qty = $quantity;
+            $batches = $sparepart->purchaseOrderItems()
+                ->whereRaw('quantity - sold_quantity > 0')
+                ->orderByRaw('CASE WHEN expired_date IS NULL THEN 1 ELSE 0 END, expired_date ASC, created_at ASC')
+                ->get();
+
+            foreach ($batches as $batch) {
+                $available = $batch->quantity - $batch->sold_quantity;
+                $take = min($available, $qty);
+                $batch->increment('sold_quantity', $take);
+                $qty -= $take;
+                if ($qty <= 0) break;
+            }
+        } else {
+            // Kembalikan stok sparepart
+            $sparepart->increment('available_stock', $quantity);
+
+            // Kembalikan sold_quantity ke batch (purchase_order_items) FEFO/FIFO reverse
+            $qty = $quantity;
+            $batches = $sparepart->purchaseOrderItems()
+                ->where('sold_quantity', '>', 0)
+                ->orderByRaw('CASE WHEN expired_date IS NULL THEN 1 ELSE 0 END, expired_date DESC, created_at DESC')
+                ->get();
+
+            foreach ($batches as $batch) {
+                $sold = $batch->sold_quantity;
+                $take = min($sold, $qty);
+                $batch->decrement('sold_quantity', $take);
+                $qty -= $take;
+                if ($qty <= 0) break;
+            }
+        }
+    }
 
 
 
@@ -337,7 +337,7 @@ private function adjustSparepartStock($sparepartId, $quantity, $isSold)
     {
         // Eager load purchaseOrderItems untuk available_stock
         $spareparts = Sparepart::with('purchaseOrderItems')->get();
-        $services = Service::all();
+        $services = Service::where('status', 'aktif')->get();
         $customer2 = Customer::all(['name', 'phone', 'email', 'address']);
         return view('pages.transaction.create', compact('spareparts', 'services', 'customer2'));
     }
@@ -352,7 +352,7 @@ private function adjustSparepartStock($sparepartId, $quantity, $isSold)
     {
         $transaction->load('items.sparepart.purchaseOrderItems', 'items.service'); // Eager load untuk edit
         $spareparts = Sparepart::with('purchaseOrderItems')->get();
-        $services = Service::all();
+        $services = Service::where('status', 'aktif')->get();
         return view('pages.transaction.edit', compact('transaction', 'spareparts', 'services'));
     }
 
