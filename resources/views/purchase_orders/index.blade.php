@@ -34,6 +34,7 @@
                 <table id="purchaseOrderTable" class="table table-striped table-bordered">
                     <thead>
                         <tr>
+                            <th>No</th>
                             <th>No PO</th>
                             <th>Supplier</th>
                             <th>Tanggal</th>
@@ -46,6 +47,7 @@
                     <tbody>
                         @forelse ($purchaseOrders as $order)
                             <tr>
+                                <td>{{ $loop->iteration }}</td>
                                 <td>{{ $order->invoice_number }}</td>
                                 <td>{{ $order->supplier->name ?? 'N/A' }}</td>
                                 <td>

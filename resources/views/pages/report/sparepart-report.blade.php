@@ -278,12 +278,26 @@
             {{-- date filter --}}
             <form action="{{ route('report.sparepart-report') }}" method="GET" class="mb-4 filter-form">
                 <div class="row g-3 align-items-end">
-                    <div class="col-md-4">
+                    <div class="col-md-3">
+                        <label for="payment_method" class="form-label">Metode Pembayaran</label>
+                        <select name="payment_method" id="payment_method" class="form-select">
+                            <option value="">-- Semua Metode --</option>
+                            <option value="cash" {{ request('payment_method') == 'cash' ? 'selected' : '' }}>Cash
+                            </option>
+                            <option value="transfer" {{ request('payment_method') == 'transfer' ? 'selected' : '' }}>
+                                Transfer
+                            </option>
+                            <option value="credit" {{ request('payment_method') == 'credit' ? 'selected' : '' }}>Credit
+                            </option>
+                            <!-- Tambahkan metode lain jika ada -->
+                        </select>
+                    </div>
+                    <div class="col-md-3">
                         <label for="start_date" class="form-label">Dari Tanggal</label>
                         <input type="date" class="form-control" id="start_date" name="start_date"
                             value="{{ $startDate }}">
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label for="end_date" class="form-label">Sampai Tanggal</label>
                         <input type="date" class="form-control" id="end_date" name="end_date"
                             value="{{ $endDate }}">

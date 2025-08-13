@@ -15,14 +15,23 @@
 @section('content')
     <div class="card">
         <div class="card-header mb-4 d-flex justify-content-end">
-            
 
-                <a href="{{ route('sparepart.download-template') }}" class="btn btn-outline-info me-2">Unduh Template
-                </a>
-                <span class="block text-muted font-thin w-full">Unduh template untuk mengimpor data sparepart.</span>
+            <a href="{{ route('sparepart.download-template') }}" class="btn btn-outline-info me-2">Unduh Template
+            </a>
+            <span class="block text-muted font-thin w-full">Unduh template untuk mengimpor data sparepart.</span>
 
-           
-            <a href="{{ route('sparepart.export') }}" class="btn btn-outline-success me-2">Export  </a>
+            <form action="{{ route('spareparts.index') }}" method="GET" class="d-flex align-items-center">
+                <select name="category_id" class="form-select me-2" onchange="this.form.submit()">
+                    <option value="">-- Semua Kategori --</option>
+                    @foreach ($categories as $category)
+                        <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
+                            {{ $category->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </form>
+
+            <a href="{{ route('sparepart.export') }}" class="btn btn-outline-success me-2">Export </a>
             {{-- IMPORTMODAL TRIGGER --}}
             <button type="button" class="btn btn-outline-warning me-2" data-bs-toggle="modal"
                 data-bs-target="#importModal">

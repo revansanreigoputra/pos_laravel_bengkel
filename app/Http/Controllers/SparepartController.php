@@ -1,7 +1,8 @@
 <?php
 
 namespace App\Http\Controllers;
-use Maatwebsite\Excel\Facades\Excel; 
+
+use Maatwebsite\Excel\Facades\Excel;
 use App\Models\Sparepart;
 use App\Models\Category;
 use App\Models\Supplier;
@@ -12,6 +13,7 @@ use App\Imports\SparepartImport;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use App\Exports\SparepartTemplate;
+
 class SparepartController extends Controller
 {
     /**
@@ -27,33 +29,37 @@ class SparepartController extends Controller
         $spareparts->with([
             'category',
             'supplier',
-            // Load purchaseOrderItems untuk mendapatkan stok dan tanggal kedaluwarsa
             'purchaseOrderItems' => function ($query) {
-                // Urutkan berdasarkan tanggal pembuatan terbaru untuk harga beli terbaru
                 $query->latest();
             }
         ]);
 
-        // Tambahkan filter pencarian berdasarkan nama sparepart jika ada input pencarian.
+        // Filter berdasarkan kategori jika dipilih
+        if ($request->has('category_id') && $request->category_id != '') {
+            $spareparts->where('category_id', $request->category_id);
+        }
+
+        // Filter pencarian
         if ($request->has('search') && !empty($request->search)) {
             $spareparts->where('name', 'like', '%' . $request->search . '%');
         }
 
-        // Terapkan filter utama:
-        // 1. Ambil sparepart yang memiliki purchaseOrderItems.
-        // 2. Di dalam purchaseOrderItems, cek item mana yang stoknya belum habis atau tanggalnya belum kedaluwarsa.
-        $spareparts->whereHas('purchaseOrderItems', function ($query) {
-            // Kita ingin menampilkan sparepart jika ada SETIDAKNYA SATU batch yang masih valid.
-            $query->whereRaw('quantity - sold_quantity > 0') // Stok tersisa
-                ->orWhere('expired_date', '>', Carbon::now()); // Tanggal kedaluwarsa belum lewat
-        })
-            // Tambahkan kondisi untuk sparepart yang belum memiliki item pembelian (stok 0) agar tetap tampil.
-            ->orWhereDoesntHave('purchaseOrderItems');
+        // Logika untuk menampilkan sparepart yang memiliki stok valid
+        $spareparts->where(function ($query) {
+            $query->whereHas('purchaseOrderItems', function ($q) {
+                $q->where(function ($q2) {
+                    $q2->whereRaw('quantity - sold_quantity > 0')
+                        ->orWhere('expired_date', '>', Carbon::now());
+                });
+            })->orWhereDoesntHave('purchaseOrderItems');
+        });
 
-        // Lakukan paginasi pada hasil query.
-        $spareparts = $spareparts->paginate(10);
+        // Urutkan dan paginasi
+        $spareparts = $spareparts->orderBy('name')->paginate(10);
 
-        return view('pages.spareparts.index', compact('spareparts'));
+        $categories = Category::orderBy('name')->get();
+
+        return view('pages.spareparts.index', compact('spareparts', 'categories'));
     }
 
 
@@ -169,7 +175,7 @@ class SparepartController extends Controller
     /**
      * Download an Excel template for bulk sparepart uploads.
      */
-   public function downloadTemplate()
+    public function downloadTemplate()
     {
         return Excel::download(new SparepartTemplate, 'sparepart_template.xlsx');
     }

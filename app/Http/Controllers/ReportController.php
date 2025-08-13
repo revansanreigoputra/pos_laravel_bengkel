@@ -45,27 +45,26 @@ class ReportController extends Controller
      */
     public function transactionReport(Request $request)
     {
-        $start = $request->start_date;
-        $end = $request->end_date;
-        $status = $request->status;
+        $query = Transaction::query();
 
-        $query = Transaction::query()
-            ->with(['customer', 'items.sparepart', 'items.service']);
-
-        if ($start && $end) {
+        if ($request->start_date && $request->end_date) {
             $query->whereBetween('transaction_date', [
-                Carbon::parse($start)->startOfDay(),
-                Carbon::parse($end)->endOfDay()
+                Carbon::parse($request->start_date)->startOfDay(),
+                Carbon::parse($request->end_date)->endOfDay()
             ]);
         }
 
-        if ($status) {
-            $query->where('status', $status);
+        if ($request->status) {
+            $query->where('status', $request->status);
         }
 
-        $transactions = $query->latest()->get();
+        if ($request->payment_method) {
+            $query->where('payment_method', $request->payment_method);
+        }
 
-        return view('pages.report.transaction', compact('transactions', 'start', 'end', 'status'));
+        $transactions = $query->with(['customer'])->get();
+
+        return view('pages.report.transaction', compact('transactions'));
     }
 
 
@@ -80,12 +79,13 @@ class ReportController extends Controller
         // Get the date range from the request
         $startDate = $request->get('start_date');
         $endDate = $request->get('end_date');
+        $paymentMethod = $request->get('payment_method'); // Tambahkan ini
 
         // Start a query on the Sparepart model
         $query = Sparepart::query();
 
         // Eager load the purchaseOrderItems relationship
-        $query->with(['purchaseOrderItems' => function ($itemQuery) use ($startDate, $endDate) {
+        $query->with(['purchaseOrderItems' => function ($itemQuery) use ($startDate, $endDate, $paymentMethod) {
             $itemQuery->orderBy('expired_date', 'asc')
                 ->orderBy('created_at', 'asc');
 
@@ -93,6 +93,13 @@ class ReportController extends Controller
             if ($startDate && $endDate) {
                 $itemQuery->whereDate('created_at', '>=', $startDate)
                     ->whereDate('created_at', '<=', $endDate);
+            }
+
+            // Filter berdasarkan metode pembayaran
+            if ($paymentMethod) {
+                $itemQuery->whereHas('purchaseOrder', function ($q) use ($paymentMethod) {
+                    $q->where('payment_method', $paymentMethod);
+                });
             }
         }]);
 
@@ -125,7 +132,7 @@ class ReportController extends Controller
             $spareparts = $query->paginate(10);
         }
 
-        return view('pages.report.sparepart-report', compact('spareparts', 'activeTab', 'startDate', 'endDate'));
+        return view('pages.report.sparepart-report', compact('spareparts', 'activeTab', 'startDate', 'endDate', 'paymentMethod'));
     }
     /**
      * Laporan stok sparepart: export PDF report based on the selected tab and filters.
@@ -167,7 +174,7 @@ class ReportController extends Controller
             'reportTitle' => $reportTitle,
         ]);
 
-        $timestamp = Carbon::now()->format('Y-m-d_H-i-s'); 
+        $timestamp = Carbon::now()->format('Y-m-d_H-i-s');
         $fileName = "{$timestamp}_Laporan sparepart {$tab}.pdf";
         return $pdf->download($fileName);
     }
