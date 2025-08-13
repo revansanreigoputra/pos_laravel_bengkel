@@ -161,7 +161,8 @@
                     <table class="table table-striped table-bordered" id="transactionReportTable">
                         <thead>
                             <tr>
-                                <th>Invoice</th>
+                                <th>No</th>
+                                <th>No Invoice</th>
                                 <th>Pelanggan</th>
                                 <th>No. Kendaraan</th>
                                 <th>Model Kendaraan</th>
@@ -176,6 +177,7 @@
                         <tbody>
                             @forelse ($transactions as $transaction)
                                 <tr>
+                                    <td>{{ $loop->iteration }}</td>
                                     <td>{{ $transaction->invoice_number }}</td>
                                     {{-- <td>{{ $transaction->customer_name }}</td> --}}
                                     <td>{{ $transaction->customer->name ?? 'N/A' }}</td>
@@ -234,25 +236,9 @@
 @endsection
 
 @push('addon-script')
-    <script>
+        <script>
         $(document).ready(function() {
-            $('#transactionReportTable').DataTable({
-                "paging": true,
-                "lengthChange": true,
-                "searching": true,
-                "ordering": true,
-                "info": true,
-                "autoWidth": false,
-                "responsive": true,
-                "columnDefs": [{
-                        "orderable": false,
-                        "targets": [9]
-                    } // Kolom "Items" tidak bisa diurutkan
-                ]
-                order: [
-                    [5, 'desc']
-                ]
-            });
+            $('#transactionReportTable').DataTable();
         });
     </script>
 @endpush

@@ -153,7 +153,8 @@
                 <table class="table table-striped table-bordered" id="purchaseReportTable">
                     <thead>
                         <tr>
-                            <th>No.PO</th>
+                            <th>No</th>
+                            <th>No Invoice</th>
                             <th>Supplier</th>
                             <th>Tanggal Transaksi</th>
                             <th>Total Harga</th>
@@ -164,6 +165,7 @@
                     <tbody>
                         @forelse ($purchaseOrders as $order)
                             <tr>
+                                <td>{{ $loop->iteration }}</td>
                                 <td>{{ $order->invoice_number }}</td>
                                 <td>
                                     @if($order->supplier)
