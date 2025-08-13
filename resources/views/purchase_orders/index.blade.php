@@ -3,9 +3,12 @@
 @section('title', 'Daftar Pesanan Pembelian')
 
 @section('action')
-    <a href="{{ route('purchase_orders.create') }}" class="btn btn-primary">
-        Tambah Pembelian
-    </a>
+    @can('purchase_order.create')
+        {{-- Only show button if user has permission --}}
+        <a href="{{ route('purchase_orders.create') }}" class="btn btn-primary">
+            Tambah Pembelian
+        </a>
+    @endcan
 @endsection
 
 @section('content')
@@ -65,23 +68,34 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <a href="{{ route('purchase_orders.show', $order->id) }}" class="btn btn-sm btn-info">Lihat</a>
-                                    <a href="{{ route('purchase_orders.edit', $order->id) }}" class="btn btn-sm btn-warning">Edit</a>
-                                    <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#delete-order-{{ $order->id }}">
-                                        Hapus
-                                    </button>
-                                    <x-modal.delete-confirm
-                                        id="delete-order-{{ $order->id }}"
-                                        :route="route('purchase_orders.destroy', $order->id)"
-                                        item="{{ $order->invoice_number }}"
-                                        title="Hapus Pesanan Pembelian?"
-                                        description="Data pesanan pembelian yang dihapus tidak bisa dikembalikan."
-                                    />
+                                    <a href="{{ route('purchase_orders.show', $order->id) }}"
+                                        class="btn btn-sm btn-info">Lihat</a>
+
+                                    @can('purchase_order.edit')
+                                        {{-- Edit button permission --}}
+                                        <a href="{{ route('purchase_orders.edit', $order->id) }}"
+                                            class="btn btn-sm btn-warning">Edit</a>
+                                    @endcan
+
+                                    @can('purchase_order.delete')
+                                        {{-- Delete button permission --}}
+                                        <button class="btn btn-sm btn-danger" data-bs-toggle="modal"
+                                            data-bs-target="#delete-order-{{ $order->id }}">
+                                            Hapus
+                                        </button>
+                                    @endcan
+
+                                    @can('purchase_order.delete')
+                                        {{-- Delete modal permission --}}
+                                        <x-modal.delete-confirm id="delete-order-{{ $order->id }}" :route="route('purchase_orders.destroy', $order->id)"
+                                            item="{{ $order->invoice_number }}" title="Hapus Pesanan Pembelian?"
+                                            description="Data pesanan pembelian yang dihapus tidak bisa dikembalikan." />
+                                    @endcan
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center text-muted">Belum ada pesanan pembelian.</td>
+                                <td colspan="8" class="text-center text-muted">Belum ada pesanan pembelian.</td>
                             </tr>
                         @endforelse
                     </tbody>
