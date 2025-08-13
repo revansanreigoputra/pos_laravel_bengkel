@@ -413,10 +413,10 @@
                                                         {{ old('status') == 'completed' ? 'selected' : '' }}>
                                                         Selesai
                                                     </option>
-                                                    <option value="cancelled"
+                                                    {{-- <option value="cancelled"
                                                         {{ old('status') == 'cancelled' ? 'selected' : '' }}>
                                                         Dibatalkan
-                                                    </option>
+                                                    </option> --}}
                                                 </select>
                                                 @error('status')
                                                     <div class="invalid-feedback">{{ $message }}</div>

@@ -60,6 +60,7 @@ class TransactionsExport implements FromCollection, WithHeadings, WithMapping, W
         return [
             'Invoice',
             'Pelanggan',
+            'No. telepon',
             'No. Kendaraan',
             'Model Kendaraan',
             'Tanggal Transaksi',
@@ -87,7 +88,8 @@ class TransactionsExport implements FromCollection, WithHeadings, WithMapping, W
 
         return [
             $transaction->invoice_number,
-            $transaction->customer_name,
+            $transaction->customer->name,
+            $transaction->customer->phone ?? '-',
             $transaction->vehicle_number,
             $transaction->vehicle_model ?? '-',
             Carbon::parse($transaction->transaction_date)->format('d-m-Y'),

@@ -3,6 +3,7 @@
 @section('title', 'Tambah Pesanan Pembelian Baru')
 
 @section('content')
+    @can('purchase_order.create')
     <div class="container-fluid">
         <div class="row">
             <div class="col-12">
@@ -312,6 +313,7 @@
             </div>
         </div>
     </div>
+    @endcan
 @endsection
 
 @push('addon-script')

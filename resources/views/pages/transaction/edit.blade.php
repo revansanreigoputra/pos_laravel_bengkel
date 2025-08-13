@@ -447,9 +447,9 @@
                                                     <option value="completed" {{ old('status', $transaction->status) == 'completed' ? 'selected' : '' }}>
                                                         Selesai
                                                     </option>
-                                                    <option value="canceled" {{ old('status', $transaction->status) == 'canceled' ? 'selected' : '' }}>
+                                                    {{-- <option value="canceled" {{ old('status', $transaction->status) == 'canceled' ? 'selected' : '' }}>
                                                         Dibatalkan
-                                                    </option>
+                                                    </option> --}}
                                                 </select>
                                                 @error('status')
                                                     <div class="invalid-feedback">{{ $message }}</div>
