@@ -2,28 +2,36 @@
 
 namespace App\Exports;
 
-use Illuminate\Contracts\View\View;
-use Maatwebsite\Excel\Concerns\FromView;
+use Maatwebsite\Excel\Concerns\Exportable;
+use Maatwebsite\Excel\Concerns\WithMultipleSheets;
+use App\Exports\Sheets\StokSaatIniSheet;
+use App\Exports\Sheets\StokMasukSheet;
+use App\Exports\Sheets\StokKeluarSheet;
 
-class SparepartLogExport implements FromView
+class SparepartLogExport implements WithMultipleSheets
 {
-    protected $spareparts;
+    use Exportable;
+
+    protected $tipe;
     protected $startDate;
     protected $endDate;
 
-    public function __construct($spareparts, $startDate, $endDate)
+    public function __construct($tipe, $startDate, $endDate)
     {
-        $this->spareparts = $spareparts;
+        $this->tipe = $tipe;
         $this->startDate = $startDate;
         $this->endDate = $endDate;
     }
 
-    public function view(): View
+    public function sheets(): array
     {
-        return view('exports.sparepart-log', [
-            'spareparts' => $this->spareparts,
-            'startDate' => $this->startDate,
-            'endDate' => $this->endDate,
-        ]);
+        $sheets = [];
+
+        // Always add all three sheets
+        $sheets[] = new StokSaatIniSheet($this->startDate, $this->endDate);
+        $sheets[] = new StokMasukSheet($this->startDate, $this->endDate);
+        $sheets[] = new StokKeluarSheet($this->startDate, $this->endDate);
+        
+        return $sheets;
     }
 }

@@ -146,7 +146,7 @@ Route::get('/report/transactions/export-excel', [ReportController::class, 'expor
 Route::get('/report/purchase/export-excel', [ReportController::class, 'exportPurchaseExcel'])->name('report.purchase.export');
 Route::get('/report/exportPDF-sparepart', [ReportController::class, 'exportPdfSparepartStock'])->name('report.exportPDF-sparepart');
 Route::get('/report/pergerakan-stok', [LogController::class, 'logPergerakanStok'])->name('report.pergerakan-stok');
-
+Route::get('report/export-sparepart-report', [ReportController::class, 'exportSparepartReport'])->name('report.export-sparepart-report');
 Route::get('/export-sparepart-log', [LogController::class, 'exportSparepartLog'])->name('logs.export-sparepart-log');
 // export import sparepart
 Route::get('sparepart/export', [SparepartController::class, 'export'])->name('sparepart.export');
@@ -168,6 +168,10 @@ Route::prefix('logs')->group(function () {
     Route::get('stok', [\App\Http\Controllers\LogController::class, 'logPergerakanStok'])->name('logs.stok');
     Route::get('logs/sparepart', [\App\Http\Controllers\LogController::class, 'logSparepart'])->name('logs.sparepart');
     Route::get('/logs/sparepart-detail', [LogController::class, 'logSparepartDetail'])->name('logs.sparepart.detail');
+    // cetak pdf route
+   Route::get('logs/penjualan/pdf', [LogController::class, 'exportPdfPenjualan'])->name('logs.penjualan.pdf');
+    Route::get('logs/pembelian/pdf', [LogController::class, 'exportPdfPembelian'])->name('logs.pembelian.pdf');
+    Route::get('logs/stok/export', [LogController::class, 'exportExcelLogSparepart'])->name('logs.stok.export');
 });
 
 // Route::get('/purchase-orders/spareparts/{id}/latest-price', [PurchaseOrderController::class, 'getLatestPrice'])->name('purchase_orders.latest_price');

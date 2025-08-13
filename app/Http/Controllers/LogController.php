@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use Barryvdh\DomPDF\Facade\Pdf; 
 use App\Models\PurchaseOrder;
 use App\Models\Transaction;
 use App\Models\Sparepart;
@@ -9,22 +9,45 @@ use App\Models\PurchaseOrderItem;
 use App\Models\TransactionItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-
+use App\Exports\SparepartLogExport;
+use Maatwebsite\Excel\Facades\Excel;
 class LogController extends Controller
 {
-    public function logPembelian()
+    public function logPembelian(Request $request)
     {
-        $purchaseOrders = PurchaseOrder::with(['supplier', 'items.sparepart'])->latest()->paginate(10);
-        return view('logs.pembelian', compact('purchaseOrders'));
-    }
+        $status = $request->get('status');
+        $startDate = $request->get('start_date');
+        $endDate = $request->get('end_date');
 
+        // Start a query on the PurchaseOrder model with eager loading
+        $query = PurchaseOrder::with(['supplier', 'items.sparepart'])->latest();
+
+        // Apply status filter if it exists
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        // Apply date range filter if both start and end dates are provided
+        if ($startDate && $endDate) {
+            $query->whereBetween('order_date', [
+                Carbon::parse($startDate)->startOfDay(),
+                Carbon::parse($endDate)->endOfDay()
+            ]);
+        }
+
+        // Paginate the results
+        $purchaseOrders = $query->paginate(10);
+
+        // Pass the filter values back to the view to maintain form state
+        return view('logs.pembelian', compact('purchaseOrders', 'status', 'startDate', 'endDate'));
+    }
     public function logPenjualan()
     {
         $transactions = Transaction::with(['customer', 'items.sparepart', 'items.service'])->latest()->paginate(10);
         return view('logs.penjualan', compact('transactions'));
     }
 
-    public function logPergerakanStok()
+    public function logPergerakanStok(Request $request)
     {
         $spareparts = Sparepart::with(['purchaseOrderItems', 'transactionItems'])->paginate(10);
         return view('logs.stok', compact('spareparts'));
@@ -152,5 +175,84 @@ class LogController extends Controller
             'startDate' => $startDate,
             'endDate' => $endDate,
         ]);
+    }
+
+    // cetak pdf function
+
+    /**
+     * Export purchase log data to PDF based on filters.
+     */
+    public function exportPdfPembelian(Request $request)
+    {
+        $status = $request->get('status');
+        $startDate = $request->get('start_date');
+        $endDate = $request->get('end_date');
+
+        $query = PurchaseOrder::with(['supplier', 'items.sparepart'])->latest();
+
+        // Apply filters (same logic as in the main function)
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('order_date', [
+                Carbon::parse($startDate)->startOfDay(),
+                Carbon::parse($endDate)->endOfDay()
+            ]);
+        }
+
+        $purchaseOrders = $query->get(); // Get all records, not just one page
+
+        $pdf = PDF::loadView('logs.pdf.pembelian-pdf', compact('purchaseOrders', 'status', 'startDate', 'endDate'));
+
+        $fileName = 'Laporan_Pembelian_' . Carbon::now()->format('d F Y') . '.pdf';
+
+        return $pdf->download($fileName);
+    }
+
+    /**
+     * Export sales log data to PDF based on filters.
+     */
+    public function exportPdfPenjualan(Request $request, PDF $pdf)
+    {
+        $status = $request->get('status');
+        $startDate = $request->get('start_date');
+        $endDate = $request->get('end_date');
+
+        $query = Transaction::with(['customer', 'items.sparepart', 'items.service'])->latest();
+ 
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('transaction_date', [
+                Carbon::parse($startDate)->startOfDay(),
+                Carbon::parse($endDate)->endOfDay()
+            ]);
+        }
+
+        $transactions = $query->get(); // Get all records, not just one page
+
+        // Load the data into the PDF view
+          $pdf = Pdf::loadView('logs.pdf.penjualan-pdf', compact('transactions', 'status', 'startDate', 'endDate'));
+
+    $fileName = 'Laporan_Penjualan_' . Carbon::now()->format('d F Y') . '.pdf';
+
+    return $pdf->download($fileName);
+    }
+     // EXCEL EXPORT RIWAYAT STOK
+     public function exportExcelLogSparepart(Request $request)
+    {
+        $startDate = $request->get('start_date');
+        $endDate = $request->get('end_date');
+
+        // The `$tipe` variable is no longer needed to control which sheet is exported,
+        // but it can still be useful for the filename.
+        $tipe = $request->get('tipe', 'Semua');
+
+        $fileName = 'Laporan_Stok_' . $tipe . '_' . Carbon::now()->format('d F Y') . '.xlsx';
+
+        // The export class will now always produce all three sheets,
+        // but the data in each sheet will still be filtered by the date range.
+        return Excel::download(new SparepartLogExport($tipe, $startDate, $endDate), $fileName);
     }
 }

@@ -11,8 +11,8 @@ use App\Models\Sparepart;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\TransactionsExport;
-use App\Exports\PurchaseOrdersExport;
-
+use App\Exports\PurchaseOrdersExport; 
+use App\Exports\SparepartReportExport;
 class ReportController extends Controller
 {
     /**
@@ -329,4 +329,16 @@ class ReportController extends Controller
             'purchase_orders.xlsx'
         );
     }
+    // excel export in sparepart report
+    public function ExportSparepartReport(Request $request)
+    {
+        $startDate = $request->get('start_date');
+        $endDate = $request->get('end_date');
+
+        $timestamp = Carbon::now()->format('Y-m-d_H-i-s');
+        $fileName = "{$timestamp}_Laporan Stok Sparepart.xlsx";
+
+        return Excel::download(new SparepartReportExport($startDate, $endDate), $fileName);
+    }
+    
 }
