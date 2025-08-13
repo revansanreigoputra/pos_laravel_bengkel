@@ -9,9 +9,18 @@ use App\Models\Service;
 use Illuminate\Support\Facades\DB;
 use Exception;
 use Illuminate\Support\Carbon;
+use App\Services\NotificationService;
 
 class TransactionService
 {
+
+    protected NotificationService $notificationService;
+
+    public function __construct(NotificationService $notificationService) // <-- tambahkan
+    {
+        $this->notificationService = $notificationService;
+    }
+
     /**
      * Membuat transaksi dan mengurangi stok sparepart berdasarkan quantity - sold_quantity.
      */
@@ -101,6 +110,39 @@ class TransactionService
             $transaction->update(['total_price' => $totalPrice]);
 
             DB::commit();
+
+            // === NOTIFIKASI (tambahan) ===
+            $customerName = optional($transaction->customer)->name ?? 'Kustomer';
+            $this->notificationService->saleCreated($transaction->invoice_number, $customerName);
+
+            // === CEK STOK MENIPIS/HABIS ===
+            // Ambil semua sparepart yang ikut terjual pada transaksi ini
+            $soldSparepartIds = $transaction->items()
+                ->where('item_type', 'sparepart')
+                ->pluck('item_id')
+                ->unique();
+
+            foreach ($soldSparepartIds as $sid) {
+                $sp = Sparepart::find($sid);
+                if (!$sp) continue;
+
+                // Hitung sisa stok dari batch (konsisten dgn logika kamu)
+                $availableAfter = PurchaseOrderItem::where('sparepart_id', $sp->id)
+                    ->selectRaw('COALESCE(SUM(quantity - sold_quantity),0) as available_stock')
+                    ->where(function ($q) {
+                        $q->where('expired_date', '>=', Carbon::today())
+                            ->orWhereNull('expired_date');
+                    })
+                    ->value('available_stock');
+
+                // Jika model punya kolom min_stock gunakan, kalau tidak cukup cek <=0
+                $minStock = $sp->min_stock ?? null;
+                $thresholdHit = $minStock !== null ? ($availableAfter <= $minStock) : ($availableAfter <= 0);
+
+                if ($thresholdHit) {
+                    $this->notificationService->stockLow($sp->name, (int)$availableAfter, $minStock);
+                }
+            }
 
             return $transaction;
         } catch (Exception $e) {

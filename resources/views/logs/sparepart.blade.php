@@ -5,7 +5,7 @@
 @section('content')
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <h3 class="card-title">* Lengkapi filter pencarian
+            <h3 class="card-title">Lengkapi filter pencarian
                 <br>
                 <span class="text-muted small">untuk memilah data laporan </span>
 

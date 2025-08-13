@@ -105,14 +105,8 @@ class ReportController extends Controller
 
         // Apply filters based on the active tab
         if ($activeTab === 'available') {
-            // Filter for available stock
-            $spareparts = $query->whereHas('purchaseOrderItems', function ($itemQuery) {
-                $itemQuery->whereRaw('quantity - sold_quantity > 0')
-                    ->where(function ($q) {
-                        $q->whereNull('expired_date')
-                            ->orWhere('expired_date', '>', Carbon::today());
-                    });
-            })->orWhereDoesntHave('purchaseOrderItems')->paginate(10); // Also include spareparts with no items
+            // Tampilkan semua sparepart termasuk yang stok 0 untuk konsistensi dengan index
+            $spareparts = $query->paginate(10);
         } elseif ($activeTab === 'expired') {
             // Filter for expired stock
             $spareparts = $query->whereHas('purchaseOrderItems', function ($itemQuery) {

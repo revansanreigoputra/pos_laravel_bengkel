@@ -15,6 +15,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\PurchaseOrderController;     // Import controller baru
 use App\Http\Controllers\PurchaseOrdersItemsController; // Import controller baru
 use App\Http\Controllers\LogController;
+use App\Http\Controllers\NotificationController;
 
 use Illuminate\Support\Facades\Route;
 
@@ -43,6 +44,14 @@ Route::middleware('auth')->group(function () {
         Route::middleware('permission:category.store')->post('/', [CategoryController::class, 'store'])->name('category.store');
         Route::middleware('permission:category.update')->put('/{category}', [CategoryController::class, 'update'])->name('category.update');
         Route::middleware('permission:category.delete')->delete('/{category}', [CategoryController::class, 'destroy'])->name('category.destroy');
+    });
+
+    Route::middleware(['auth', 'verified'])->group(function () {
+        Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+        Route::post('/notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.readAll');
+        Route::post('/notifications/{id}/read', [NotificationController::class, 'read'])->name('notifications.read');
+        Route::delete('/notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+        Route::delete('/notifications', [NotificationController::class, 'destroyAll'])->name('notifications.destroyAll');
     });
 
     // Service
@@ -169,7 +178,7 @@ Route::prefix('logs')->group(function () {
     Route::get('logs/sparepart', [\App\Http\Controllers\LogController::class, 'logSparepart'])->name('logs.sparepart');
     Route::get('/logs/sparepart-detail', [LogController::class, 'logSparepartDetail'])->name('logs.sparepart.detail');
     // cetak pdf route
-   Route::get('logs/penjualan/pdf', [LogController::class, 'exportPdfPenjualan'])->name('logs.penjualan.pdf');
+    Route::get('logs/penjualan/pdf', [LogController::class, 'exportPdfPenjualan'])->name('logs.penjualan.pdf');
     Route::get('logs/pembelian/pdf', [LogController::class, 'exportPdfPembelian'])->name('logs.pembelian.pdf');
     Route::get('logs/stok/export', [LogController::class, 'exportExcelLogSparepart'])->name('logs.stok.export');
 });

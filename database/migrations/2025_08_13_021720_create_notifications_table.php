@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('notifications', function (Blueprint $table) {
             $table->id();
-            $table->string('type'); // stock_alert, purchase, sale, etc.
+            $table->string('type'); // stock_alert, purchase, sale.
             $table->morphs('notifiable'); // Untuk relasi ke user/role lain
             $table->text('message');
             $table->timestamp('read_at')->nullable();

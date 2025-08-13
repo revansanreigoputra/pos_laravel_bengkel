@@ -6,9 +6,17 @@ use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use Illuminate\Support\Facades\DB;
 use Exception;
+use App\Services\NotificationService;
 
 class PurchaseOrderService
 {
+    protected NotificationService $notificationService;
+
+    public function __construct(NotificationService $notificationService) 
+    {
+        $this->notificationService = $notificationService;
+    }
+
     /**
      * Membuat purchase order dan item-nya.
      *
@@ -28,6 +36,15 @@ class PurchaseOrderService
             }
 
             DB::commit();
+
+            // === NOTIFIKASI (tambahan) ===
+            $supplierName = optional($purchaseOrder->supplier)->name ?? 'Supplier';
+            $this->notificationService->purchaseCreated(
+                $purchaseOrder->invoice_number,
+                $supplierName,
+                $purchaseOrder->status ?? null
+            );
+
             return $purchaseOrder;
         } catch (Exception $e) {
             DB::rollBack();
@@ -43,6 +60,6 @@ class PurchaseOrderService
      */
     public function revertPurchaseOrderItems(PurchaseOrder $purchaseOrder): void
     {
-        
+        //
     }
 }

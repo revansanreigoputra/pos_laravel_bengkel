@@ -4,7 +4,7 @@
         <div class="container container-tight py-4">
             <div class="text-center mb-5">
                 <div class="brand-logo">
-                    <span class="brand-text fs-1 fw-bold">Laravel POS</span>
+                    <span class="brand-text fs-1 fw-bold">Laravel Bengkel</span>
                 </div>
             </div>
             <form method="POST" action="{{ route('login') }}" class="card card-md shadow-lg">

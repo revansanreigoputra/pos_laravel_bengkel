@@ -3,7 +3,6 @@
 @section('title', 'Laporan Pembelian Sparepart')
 
 @section('styles')
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
     <style>
         /* Styles untuk tampilan normal */
         .table ul {
@@ -386,7 +385,7 @@
 @push('addon-script')
     <script>
         $(document).ready(function() {
-            $('#transactionReportTable').DataTable();
+            $('#purchaseReportTable').DataTable();
         });
 
         function printReport() {

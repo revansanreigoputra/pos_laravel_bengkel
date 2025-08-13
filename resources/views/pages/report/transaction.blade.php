@@ -3,7 +3,6 @@
 @section('title', 'Laporan Penjualan')
 
 @section('styles')
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
     <style>
         /* Styles untuk tampilan normal */
         .table ul {

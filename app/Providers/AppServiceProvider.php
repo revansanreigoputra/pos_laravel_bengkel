@@ -11,6 +11,8 @@ use App\Repositories\Interface\SupplierRepositoryInterface;
 use App\Repositories\Interface\UserRepositoryInterface;
 use App\Repositories\RoleRepository;
 use App\Repositories\SupplierRepository;
+use Illuminate\Support\Facades\View;
+use App\Models\Notification;
 use App\Repositories\UserRepository;
 use App\Services\CategoryService;
 use App\Services\CustomerService;
@@ -23,6 +25,7 @@ use App\Services\RoleService;
 use App\Services\SupplierService;
 use App\Services\UserService;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Auth;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -54,6 +57,23 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        View::composer('*', function ($view) {
+            $user = Auth::user();
+            if ($user) {
+                // Ambil 2 notifikasi terbaru untuk navbar
+                $navbarNotifications = Notification::where('notifiable_type', get_class($user))
+                    ->where('notifiable_id', $user->id)
+                    ->latest()
+                    ->take(2) // ✅ batasi 2 data saja
+                    ->get();
+
+                $unreadCount = $navbarNotifications->whereNull('read_at')->count();
+
+                $view->with([
+                    'navbarNotifications' => $navbarNotifications,
+                    'unreadCount' => $unreadCount
+                ]);
+            }
+        });
     }
 }
