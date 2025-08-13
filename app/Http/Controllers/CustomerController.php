@@ -92,7 +92,12 @@ final class CustomerController extends Controller
      */
     public function destroy(string $id): \Illuminate\Http\RedirectResponse
     {
-        $this->customerService->deleteCustomer((int)$id);
+        $result = $this->customerService->deleteCustomer((int)$id);
+        
+        if (!$result) {
+            return redirect()->back()->withErrors('Data customer tidak bisa dihapus karena sudah memiliki transaksi.');
+        }
+        
         return redirect()->back()->withSuccess('Data customer berhasil dihapus');
     }
 

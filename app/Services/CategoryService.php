@@ -39,6 +39,13 @@ class CategoryService
 
     public function deleteCategory(int $id): bool
     {
+        $category = $this->getCategoryById($id);
+        
+        // Check if category has associated spareparts
+        if ($category->hasSpareparts()) {
+            throw new \Exception('Kategori ini sedang digunakan oleh sparepart dan tidak dapat dihapus.');
+        }
+        
         return $this->categoryRepository->delete($id);
     }
 }

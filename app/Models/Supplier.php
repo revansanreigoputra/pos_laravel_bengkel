@@ -27,4 +27,10 @@ class Supplier extends Model
     {
         return $this->hasMany(SupplierSparepartStock::class);
     }
+
+    // One-to-many: A supplier may have multiple purchase orders
+    public function purchaseOrders()
+    {
+        return $this->hasMany(PurchaseOrder::class);
+    }
 }

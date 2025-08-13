@@ -89,7 +89,11 @@ class CategoryController extends Controller
      */
     public function destroy(string $id)
     {
-        $this->categoryService->deleteCategory($id);
-        return redirect()->route('category.index')->withSuccess('Kategori berhasil dihapus.');
+        try {
+            $this->categoryService->deleteCategory($id);
+            return redirect()->route('category.index')->withSuccess('Kategori berhasil dihapus.');
+        } catch (\Exception $e) {
+            return redirect()->route('category.index')->withErrors($e->getMessage());
+        }
     }
 }

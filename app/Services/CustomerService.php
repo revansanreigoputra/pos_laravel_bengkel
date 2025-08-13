@@ -39,6 +39,13 @@ final class CustomerService
 
     public function deleteCustomer(int $id): bool
     {
+        $customer = $this->customerRepository->findById($id);
+        
+        // Check if customer has any transactions
+        if ($customer->transactions()->count() > 0) {
+            return false;
+        }
+        
         return $this->customerRepository->delete($id);
     }
 }

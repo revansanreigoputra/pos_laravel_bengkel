@@ -90,8 +90,18 @@ class SupplierController extends Controller
      */
     public function destroy(string $id)
     {
-        $this->supplierService->deleteSupplier($id);
-        return redirect()->back()->withSuccess('Data supplier berhasil dihapus');
+        // Check if the supplier has any associated purchase orders
+        $supplier = $this->supplierService->getSupplierById($id);
+        if ($supplier->purchaseOrders()->count() > 0) {
+            return redirect()->back()->withErrors('Supplier tidak dapat dihapus karena sudah memiliki transaksi pembelian.');
+        }
+
+        // Proceed with deletion if no transactions exist
+        if ($this->supplierService->deleteSupplier($id)) {
+            return redirect()->back()->withSuccess('Data supplier berhasil dihapus');
+        } else {
+            return redirect()->back()->withErrors('Gagal menghapus supplier.');
+        }
     }
 
     
