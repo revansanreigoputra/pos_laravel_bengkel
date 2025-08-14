@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\DB;
 use App\Models\JenisKendaraan;
 use Illuminate\Http\Request;
 
@@ -59,9 +60,27 @@ class JenisKendaraanController extends Controller
     /**
      * Menghapus data jenis kendaraan.
      */
-    public function destroy(JenisKendaraan $jenisKendaraan)
+    /**
+     * Menghapus data jenis kendaraan.
+     */
+     public function destroy(JenisKendaraan $jenisKendaraan)
     {
-        $jenisKendaraan->delete();
-        return redirect()->route('jenis-kendaraan.index')->with('success', 'Jenis kendaraan berhasil dihapus.');
+        try {
+            // Cek apakah jenis kendaraan ini sudah digunakan di tabel services.
+            if ($jenisKendaraan->services()->exists()) {
+                return redirect()->back()->withErrors('Jenis kendaraan tidak dapat dihapus karena sudah digunakan pada data service.');
+            }
+
+            // Jika tidak ada relasi, lanjutkan proses penghapusan
+            DB::beginTransaction();
+            $jenisKendaraan->delete();
+            DB::commit();
+
+            return redirect()->back()->withSuccess('Data Jenis Kendaraan berhasil dihapus');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->withErrors('Gagal menghapus jenis kendaraan: ' . $e->getMessage());
+        }
     }
 }

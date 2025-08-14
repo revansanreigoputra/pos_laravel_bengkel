@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\Sparepart;
 use App\Models\Category;
@@ -162,13 +162,30 @@ class SparepartController extends Controller
      * Remove the specified resource from storage.
      * Menghapus sumber daya yang ditentukan dari penyimpanan.
      */
-    public function destroy(Sparepart $sparepart)
+   public function destroy(Sparepart $sparepart)
     {
         try {
+            // 1. Cek penggunaan di transaksi pembelian (purchase orders) 
+            if ($sparepart->purchaseOrderItems()->count() > 0) {
+                return redirect()->back()->withErrors('Sparepart tidak dapat dihapus karena sudah memiliki transaksi pembelian.');
+            }
+
+            // 2. Cek penggunaan di transaksi penjualan 
+            if ($sparepart->transactionItems()->exists()) {
+                return redirect()->back()->withErrors('Sparepart tidak dapat dihapus karena sudah memiliki transaksi penjualan.');
+            }
+
+            // 3. Jika tidak ada di transaksi, lanjutkan proses hapus
+            DB::beginTransaction();
             $sparepart->delete();
-            return redirect()->route('spareparts.index')->with('success', 'Sparepart berhasil dihapus!');
+            DB::commit();
+
+           
+            return redirect()->back()->withSuccess('Data Sparepart berhasil dihapus');
+
         } catch (\Exception $e) {
-            return redirect()->route('spareparts.index')->with('error', 'Gagal menghapus sparepart: ' . $e->getMessage());
+            DB::rollBack();
+           return redirect()->back()->withErrors('Gagal menghapus supplier.');
         }
     }
     // export import and template function
