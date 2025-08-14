@@ -365,11 +365,15 @@ class TransactionController extends Controller
     public function exportPdf(Transaction $transaction)
     {
         $transaction->load(['customer', 'items.service', 'items.sparepart']);
+        
+        // Ambil pengaturan bengkel
+        $settings = \App\Models\BengkelSetting::getSettings();
+        
         $data = [
             'transaction' => $transaction,
-            'nama_bengkel' => 'BengkelKu',
-            'alamat_bengkel' => 'Jl. Contoh No. 123, Godean, Yogyakarta',
-            'telepon_bengkel' => '0812-3456-7890',
+            'nama_bengkel' => $settings->nama_bengkel,
+            'alamat_bengkel' => $settings->alamat_bengkel,
+            'telepon_bengkel' => $settings->telepon_bengkel,
             'tanggal_cetak' => Carbon::now()->isoFormat('D MMMM YYYY, HH:mm:ss'),
         ];
 

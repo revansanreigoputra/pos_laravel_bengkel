@@ -97,7 +97,7 @@
                 <div
                     class="dropdown-menu dropdown-menu-end dropdown-menu-arrow position-md-absolute mobile-dropup w-full w-md-auto min-w-md-200px end-0 start-auto mb-2 mb-md-0">
                     <a href="{{ route('profile.edit') }}" class="dropdown-item">Profile</a>
-                    {{-- <a href="#" class="dropdown-item">Settings</a> --}}
+                    <a href="{{ route('settings.index') }}" class="dropdown-item">Pengaturan Bengkel</a>
                     <div class="dropdown-divider"></div>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf

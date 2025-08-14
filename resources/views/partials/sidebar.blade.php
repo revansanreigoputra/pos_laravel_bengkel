@@ -6,9 +6,12 @@
         </button>
 
         <div class="navbar-brand navbar-brand-autodark">
-            <a href="#" class="d-flex align-items-center">
-                <img src="{{ asset('assets/logo.png') }}" alt="Logo BengkelKu" class="me-2" style="height: 50px;">
-                <span>BengkelKu</span>
+            <a href="{{ route('dashboard') }}" class="d-flex align-items-center">
+                @php
+                    $settings = \App\Models\BengkelSetting::getSettings();
+                @endphp
+                <img src="{{ $settings->logo_url }}" alt="{{ $settings->nama_bengkel }}" class="me-2" style="height: 50px;">
+                <span>{{ $settings->nama_bengkel }}</span>
             </a>
         </div>
 

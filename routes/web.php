@@ -16,6 +16,7 @@ use App\Http\Controllers\PurchaseOrderController;     // Import controller baru
 use App\Http\Controllers\PurchaseOrdersItemsController; // Import controller baru
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\SettingController;
 
 use Illuminate\Support\Facades\Route;
 
@@ -32,6 +33,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
+    Route::put('/settings', [SettingController::class, 'update'])->name('settings.update');
+
 
     // Role & Permission
     Route::middleware('permission:role.view')->get('/roles', [RoleController::class, 'index'])->name('roles.index');
