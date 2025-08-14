@@ -46,7 +46,8 @@
                     <table id="penjualan-table" class="table table-bordered table-striped">
                         <thead>
                             <tr>
-                                <th>No. Invoice</th>
+                                <th>No</th>
+                                <th>No Invoice</th>
                                 <th>Pelanggan</th>
                                 <th>Tanggal Transaksi</th>
                                 <th>Metode Pembayaran</th>
@@ -57,6 +58,7 @@
                         <tbody>
                             @foreach ($transactions as $trx)
                                 <tr>
+                                    <td>{{ $loop->iteration }}</td>
                                     <td>{{ $trx->invoice_number }}</td>
                                     <td>{{ $trx->customer->name ?? '-' }}</td>
                                     <td>{{ $trx->transaction_date->format('d-m-Y') }}</td>

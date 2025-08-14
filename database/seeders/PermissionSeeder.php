@@ -94,6 +94,8 @@ class PermissionSeeder extends Seeder
             'purchase_order_item.update',
             'purchase_order_item.delete',
             'report.stock',
+            'manual-book-kasir.view',
+            'manual-book-admin.view',
         ];
 
         foreach ($permissions as $permission) {
@@ -128,6 +130,7 @@ class PermissionSeeder extends Seeder
             // Jika kasir perlu melihat pesanan pembelian (tapi tidak mengelola)
             'purchase_order.view',
             'purchase_order_item.view',
+            'manual-book-kasir.view',
         ];
         $kasirRole->syncPermissions($kasirPermissions);
     }

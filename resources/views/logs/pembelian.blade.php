@@ -58,7 +58,8 @@
                     <table id="pembelian-table" class="table table-bordered table-striped">
                         <thead>
                             <tr>
-                                <th>No. Invoice</th>
+                                <th>No</th>
+                                <th>No Invoice</th>
                                 <th>Supplier</th>
                                 <th>Tanggal Order</th>
                                 <th>Metode Pembayaran</th>
@@ -70,6 +71,7 @@
                         <tbody>
                             @foreach ($purchaseOrders as $order)
                                 <tr>
+                                    <td>{{ $loop->iteration }}</td>
                                     <td>{{ $order->invoice_number }}</td>
                                     <td>{{ $order->supplier->name }}</td>
                                     <td>{{ $order->order_date->format('d-m-Y') }}</td>
