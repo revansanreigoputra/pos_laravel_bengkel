@@ -148,7 +148,6 @@ class TransactionController extends Controller
      */
     public function update(Request $request, $id)
     {
-        DB::beginTransaction();
         try {
             $validatedData = $request->validate([
                 'invoice_number' => 'required|string|unique:transactions,invoice_number,' . $id,
@@ -184,11 +183,8 @@ class TransactionController extends Controller
                 ]
             );
 
-            // Simpan item lama untuk penyesuaian stok
-            $oldItems = $transaction->items->keyBy('id');
-
-            // Update data transaksi utama
-            $transaction->update([
+            // Prepare transaction data
+            $transactionData = [
                 'invoice_number' => $validatedData['invoice_number'],
                 'transaction_date' => $validatedData['transaction_date'],
                 'customer_id' => $customer->id,
@@ -198,114 +194,25 @@ class TransactionController extends Controller
                 'status' => $validatedData['status'],
                 'discount_amount' => $validatedData['global_discount'] ?? 0,
                 'total_price' => $validatedData['total_price']
-            ]);
+            ];
 
-            // Proses item-item transaksi
-            $existingItemIds = [];
-
+            // Prepare items data
+            $itemsData = [];
             foreach ($validatedData['items'] as $itemData) {
-                $itemType = $itemData['item_type'];
-                $itemId = $itemData['item_id'];
-                $quantity = $itemData['quantity'];
-
-                if (isset($itemData['id'])) {
-                    // Update item yang sudah ada
-                    $item = $oldItems->get($itemData['id']);
-
-                    if ($item) {
-                        // Kembalikan stok jika item adalah sparepart dan quantity berubah
-                        if ($item->item_type === 'sparepart' && $item->quantity != $quantity) {
-                            $this->adjustSparepartStock($item->item_id, $item->quantity, false); // Kembalikan stok lama
-                            $this->adjustSparepartStock($itemId, $quantity, true); // Kurangi stok baru
-                        }
-
-                        $item->update([
-                            'item_type' => $itemType,
-                            'item_id' => $itemId,
-                            'quantity' => $quantity,
-                            'price' => $itemData['price']
-                        ]);
-                        $existingItemIds[] = $item->id;
-                    }
-                } else {
-                    // Tambahkan item baru
-                    $newItem = $transaction->items()->create([
-                        'item_type' => $itemType,
-                        'item_id' => $itemId,
-                        'quantity' => $quantity,
-                        'price' => $itemData['price']
-                    ]);
-                    $existingItemIds[] = $newItem->id;
-
-                    // Kurangi stok jika item adalah sparepart
-                    if ($itemType === 'sparepart') {
-                        $this->adjustSparepartStock($itemId, $quantity, true);
-                    }
-                }
+                $itemsData[] = [
+                    'item_type' => $itemData['item_type'],
+                    'item_id' => $itemData['item_id'],
+                    'quantity' => $itemData['quantity'],
+                ];
             }
 
-            // Hapus item yang tidak ada dalam request dan kembalikan stok jika perlu
-            $itemsToDelete = $transaction->items()->whereNotIn('id', $existingItemIds)->get();
-
-            foreach ($itemsToDelete as $item) {
-                if ($item->item_type === 'sparepart') {
-                    $this->adjustSparepartStock($item->item_id, $item->quantity, false);
-                }
-                $item->delete();
-            }
-
-            DB::commit();
+            // Use TransactionService to update the transaction
+            $this->transactionService->updateTransaction($transaction, $transactionData, $itemsData);
 
             return redirect()->route('transaction.index')->with('success', 'Transaksi berhasil diperbarui.');
         } catch (\Exception $e) {
-            DB::rollBack();
             Log::error('Failed to update transaction: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Gagal memperbarui transaksi: ' . $e->getMessage());
-        }
-    }
-
-    // Helper function untuk menyesuaikan stok sparepart
-    private function adjustSparepartStock($sparepartId, $quantity, $isSold)
-    {
-        $sparepart = Sparepart::find($sparepartId);
-        if (!$sparepart) return;
-
-        if ($isSold) {
-            // Kurangi stok sparepart
-            $sparepart->decrement('available_stock', $quantity);
-
-            // Tambahkan sold_quantity ke batch (purchase_order_items) FEFO/FIFO
-            $qty = $quantity;
-            $batches = $sparepart->purchaseOrderItems()
-                ->whereRaw('quantity - sold_quantity > 0')
-                ->orderByRaw('CASE WHEN expired_date IS NULL THEN 1 ELSE 0 END, expired_date ASC, created_at ASC')
-                ->get();
-
-            foreach ($batches as $batch) {
-                $available = $batch->quantity - $batch->sold_quantity;
-                $take = min($available, $qty);
-                $batch->increment('sold_quantity', $take);
-                $qty -= $take;
-                if ($qty <= 0) break;
-            }
-        } else {
-            // Kembalikan stok sparepart
-            $sparepart->increment('available_stock', $quantity);
-
-            // Kembalikan sold_quantity ke batch (purchase_order_items) FEFO/FIFO reverse
-            $qty = $quantity;
-            $batches = $sparepart->purchaseOrderItems()
-                ->where('sold_quantity', '>', 0)
-                ->orderByRaw('CASE WHEN expired_date IS NULL THEN 1 ELSE 0 END, expired_date DESC, created_at DESC')
-                ->get();
-
-            foreach ($batches as $batch) {
-                $sold = $batch->sold_quantity;
-                $take = min($sold, $qty);
-                $batch->decrement('sold_quantity', $take);
-                $qty -= $take;
-                if ($qty <= 0) break;
-            }
         }
     }
 
