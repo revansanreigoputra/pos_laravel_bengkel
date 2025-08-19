@@ -14,7 +14,7 @@
                             <path d="M9 17v1a3 3 0 0 0 6 0v-1"></path>
                         </svg>
                         @if (isset($unreadCount) && $unreadCount > 0)
-                            <span class="badge bg-red text-white">{{ $unreadCount }}</span>
+                            <span class="badge bg-red text-white badge-notif">{{ $unreadCount }}</span>
                         @endif
                     </a>
                     <div
@@ -187,5 +187,23 @@
             width: auto !important;
             /* Kembali ke lebar default */
         }
+    }
+
+    .badge-notif {
+        font-size: 0.65rem;
+        /* kecilin teks */
+        padding: 2px 5px;
+        /* kecilin padding */
+        line-height: 1;
+        /* rapetin tinggi */
+        border-radius: 50%;
+        /* biar lebih bulat */
+        min-width: 18px;
+        /* jaga ukuran minimum */
+        height: 18px;
+        /* biar konsisten bulat */
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
     }
 </style>
