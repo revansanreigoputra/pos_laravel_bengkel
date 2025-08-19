@@ -642,13 +642,21 @@
         }
 
         // Fungsi untuk menambahkan item baru
+        // Fungsi untuk menambahkan item baru
         function addItemRow() {
             itemIndex++;
-            const originalRow = $('#items-container').find('.item-row[data-item-index="0"]').first();
-            const newRow = originalRow.clone(true);
+            // Ambil template HTML kosong dari DOM atau string
+            const templateRow = $('#items-container').find('.item-row[data-item-index="0"]').first().clone(
+            false); // Kloning tanpa event handler
+            const newRow = templateRow.clone();
 
             newRow.attr('data-item-index', itemIndex);
 
+            // Hapus Select2 dari template yang dikloning
+            newRow.find('.item-select').removeClass('select2-hidden-accessible').next('.select2-container').remove();
+            newRow.find('.item-select').empty().html($('#item-0').html()); // Salin opsi dari elemen pertama
+
+            // Ganti nama input dan id
             newRow.find('[name^="items[0]"]').each(function() {
                 const oldName = $(this).attr('name');
                 const newName = oldName.replace(/items\[0\]/, `items[${itemIndex}]`);
@@ -660,29 +668,21 @@
                 }
             });
 
-            newRow.find(
-                'label[for^="item-0"], label[for^="price-0"], label[for^="qty-0"], label[for^="item_subtotal_display-0"]'
-            ).each(function() {
-                const oldFor = $(this).attr('for');
-                if (oldFor) {
-                    const newFor = oldFor.replace(/-\d+$/, `-${itemIndex}`);
-                    $(this).attr('for', newFor);
-                }
-            });
-
+            // Reset nilai input
             newRow.find('input').val('');
             newRow.find('.qty-input').val(1);
             newRow.find('.price-input').val(0);
             newRow.find('.item-subtotal-display').val('Rp 0');
             newRow.find('.stock-warning').hide();
 
-            newRow.find('.item-select').removeClass('select2-hidden-accessible').next('.select2-container').remove();
+            // Tambahkan baris baru ke DOM
+            $('#items-container').append(newRow);
+
+            // Inisialisasi Select2 pada elemen baru setelah ditambahkan ke DOM
             initializeSelect2(newRow.find('.item-select'));
 
-            // Update opsi yang dinonaktifkan
+            // Panggil fungsi-fungsi lainnya
             updateDisabledOptions();
-
-            $('#items-container').append(newRow);
             calculateOverallTotal();
         }
 
