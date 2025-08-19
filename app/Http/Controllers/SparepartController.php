@@ -44,12 +44,22 @@ class SparepartController extends Controller
             $spareparts->where('name', 'like', '%' . $request->search . '%');
         }
 
-        // Logika untuk menampilkan sparepart yang memiliki stok valid
+        // Filter untuk hanya menampilkan sparepart dengan stok > 0
+        $spareparts->whereHas('purchaseOrderItems', function ($q) {
+            $q->selectRaw('sparepart_id, SUM(quantity - sold_quantity) as available_stock')
+              ->groupBy('sparepart_id')
+              ->havingRaw('SUM(quantity - sold_quantity) > 0');
+        })->orWhereDoesntHave('purchaseOrderItems');
+        
+        // Tambahan filter untuk memastikan sparepart dengan purchase_order_items yang valid saja
         $spareparts->where(function ($query) {
             $query->whereHas('purchaseOrderItems', function ($q) {
                 $q->where(function ($q2) {
                     $q2->whereRaw('quantity - sold_quantity > 0')
-                        ->orWhere('expired_date', '>', Carbon::now());
+                       ->where(function ($q3) {
+                           $q3->whereNull('expired_date')
+                              ->orWhere('expired_date', '>', Carbon::now());
+                       });
                 });
             })->orWhereDoesntHave('purchaseOrderItems');
         });
