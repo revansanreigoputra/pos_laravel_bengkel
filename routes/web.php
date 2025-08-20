@@ -1,5 +1,5 @@
 <?php
-
+use App\Http\Controllers\InventoryReportController;
 use App\Http\Controllers\SparepartController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CategoryController;
@@ -161,6 +161,9 @@ Route::get('/report/exportPDF-sparepart', [ReportController::class, 'exportPdfSp
 Route::get('/report/pergerakan-stok', [LogController::class, 'logPergerakanStok'])->name('report.pergerakan-stok');
 Route::get('report/export-sparepart-report', [ReportController::class, 'exportSparepartReport'])->name('report.export-sparepart-report');
 Route::get('/export-sparepart-log', [LogController::class, 'exportSparepartLog'])->name('logs.export-sparepart-log');
+Route::get('/report/exportpdf-purchase', [ReportController::class, 'exportpdfPurchaseReport'])->name('report.exportpdf-purchase');
+Route::get('/report/exportpdf-transaction', [ReportController::class, 'exportpdfTransactionReport'])->name('report.exportpdf-transaction');
+
 // export import sparepart
 Route::get('sparepart/export', [SparepartController::class, 'export'])->name('sparepart.export');
 Route::get('sparepart/download-template', [SparepartController::class, 'downloadTemplate'])->name('sparepart.download-template');
@@ -171,7 +174,7 @@ Route::get('/report/sparepart-report', [ReportController::class, 'stockReport'])
 Route::get('/reports/export-excel', [ReportController::class, 'exportExcel'])->name('reports.export-excel');
 
 
-use App\Http\Controllers\InventoryReportController;
+
 
 Route::get('/inventory/report', [InventoryReportController::class, 'index'])->name('inventory.report');
 

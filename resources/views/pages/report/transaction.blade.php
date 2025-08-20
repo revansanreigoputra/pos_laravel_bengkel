@@ -16,16 +16,55 @@
         }
 
         /* Penyesuaian lebar kolom */
-        .table th:nth-child(1), .table td:nth-child(1) { width: 5%; }
-        .table th:nth-child(2), .table td:nth-child(2) { width: 12%; }
-        .table th:nth-child(3), .table td:nth-child(3) { width: 15%; }
-        .table th:nth-child(4), .table td:nth-child(4) { width: 10%; }
-        .table th:nth-child(5), .table td:nth-child(5) { width: 12%; }
-        .table th:nth-child(6), .table td:nth-child(6) { width: 10%; }
-        .table th:nth-child(7), .table td:nth-child(7) { width: 10%; }
-        .table th:nth-child(8), .table td:nth-child(8) { width: 8%; }
-        .table th:nth-child(9), .table td:nth-child(9) { width: 10%; }
-        .table th:nth-child(10), .table td:nth-child(10) { width: 8%; }
+        .table th:nth-child(1),
+        .table td:nth-child(1) {
+            width: 5%;
+        }
+
+        .table th:nth-child(2),
+        .table td:nth-child(2) {
+            width: 12%;
+        }
+
+        .table th:nth-child(3),
+        .table td:nth-child(3) {
+            width: 15%;
+        }
+
+        .table th:nth-child(4),
+        .table td:nth-child(4) {
+            width: 10%;
+        }
+
+        .table th:nth-child(5),
+        .table td:nth-child(5) {
+            width: 12%;
+        }
+
+        .table th:nth-child(6),
+        .table td:nth-child(6) {
+            width: 10%;
+        }
+
+        .table th:nth-child(7),
+        .table td:nth-child(7) {
+            width: 10%;
+        }
+
+        .table th:nth-child(8),
+        .table td:nth-child(8) {
+            width: 8%;
+        }
+
+        .table th:nth-child(9),
+        .table td:nth-child(9) {
+            width: 10%;
+        }
+
+        .table th:nth-child(10),
+        .table td:nth-child(10) {
+            width: 8%;
+        }
 
         .filter-form .col-md-4 {
             display: flex;
@@ -193,9 +232,9 @@
         <h2>PT. BENGKEL OTOMOTIF</h2>
         <div class="print-info">
             <p>
-                Periode: 
+                Periode:
                 @if (request('start_date') && request('end_date'))
-                    {{ \Carbon\Carbon::parse(request('start_date'))->format('d F Y') }} - 
+                    {{ \Carbon\Carbon::parse(request('start_date'))->format('d F Y') }} -
                     {{ \Carbon\Carbon::parse(request('end_date'))->format('d F Y') }}
                 @else
                     Semua Data
@@ -232,18 +271,20 @@
     <div class="card">
         <div class="card-header">
             <h3 class="card-title">Laporan Penjualan</h3>
-            <div class="card-actions d-flex flex-column flex-md-row">
-                <button class="btn btn-outline-primary mb-2 mb-md-0 me-md-2" onclick="printReport()">
+            <div class="card-actions d-flex flex-column flex-md-row gap-3">
+                <a href="{{ route('report.exportpdf-transaction', array_merge(request()->query(), ['export_type' => 'pdf', 'export_title' => 'Laporan Transaksi Penjualan'])) }}"
+                    class="btn btn-outline-success">
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
                         stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
                         stroke-linejoin="round">
                         <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                        <path d="M17 17h2a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-14a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h2"></path>
-                        <path d="M17 9v-4a2 2 0 0 0 -2 -2h-6a2 2 0 0 0 -2 2v4"></path>
-                        <path d="M7 13m0 2a2 2 0 0 1 2 -2h6a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2h-6a2 2 0 0 1 -2 -2z"></path>
+                        <path d="M10 8v8m-2 -2l2 2l2 -2"></path>
+                        <path d="M12 21h-6a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z"></path>
+                        <path d="M14 3v4a1 1 0 0 0 1 1h4"></path>
+                        <path d="M5 12h14"></path>
                     </svg>
-                    Cetak Laporan
-                </button>
+                    Export PDF
+                </a>
                 <a href="{{ route('report.transaction.export.excel', array_merge(request()->query(), ['export_title' => 'Laporan_Transaksi_Selesai'])) }}"
                     class="btn btn-outline-success">
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
@@ -278,18 +319,23 @@
                         <label for="status" class="form-label">Status</label>
                         <select name="status" id="status" class="form-select">
                             <option value="">-- Semua Status --</option>
-                            <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Selesai</option>
+                            <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Selesai
+                            </option>
                             <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
-                            <option value="canceled" {{ request('status') == 'canceled' ? 'selected' : '' }}>Dibatalkan</option>
+                            <option value="canceled" {{ request('status') == 'canceled' ? 'selected' : '' }}>Dibatalkan
+                            </option>
                         </select>
                     </div>
                     <div class="col-md-2">
                         <label for="payment_method" class="form-label">Metode Pembayaran</label>
                         <select name="payment_method" id="payment_method" class="form-select">
                             <option value="">-- Semua Metode --</option>
-                            <option value="cash" {{ request('payment_method') == 'cash' ? 'selected' : '' }}>Cash</option>
-                            <option value="transfer" {{ request('payment_method') == 'transfer' ? 'selected' : '' }}>Transfer</option>
-                            <option value="e-wallet" {{ request('payment_method') == 'e-wallet' ? 'selected' : '' }}>E-Wallet</option>
+                            <option value="cash" {{ request('payment_method') == 'cash' ? 'selected' : '' }}>Cash
+                            </option>
+                            <option value="transfer" {{ request('payment_method') == 'transfer' ? 'selected' : '' }}>
+                                Transfer</option>
+                            <option value="e-wallet" {{ request('payment_method') == 'e-wallet' ? 'selected' : '' }}>
+                                E-Wallet</option>
                         </select>
                     </div>
                     <div class="col-md-2 d-flex justify-content-end align-items-end">
@@ -329,9 +375,13 @@
                                 <td>Rp {{ number_format($transaction->discount_amount, 0, ',', '.') }}</td>
                                 <td>Rp {{ number_format($transaction->total_price, 0, ',', '.') }}</td>
                                 <td>
-                                    <span class="badge 
-                                        {{ $transaction->status == 'completed' ? 'bg-success' : 
-                                           ($transaction->status == 'pending' ? 'bg-warning' : 'bg-danger') }} 
+                                    <span
+                                        class="badge 
+                                        {{ $transaction->status == 'completed'
+                                            ? 'bg-success'
+                                            : ($transaction->status == 'pending'
+                                                ? 'bg-warning'
+                                                : 'bg-danger') }} 
                                         text-white">
                                         {{ ucfirst($transaction->status) }}
                                     </span>
@@ -359,15 +409,19 @@
                 </tr>
                 <tr>
                     <td style="border: 1px solid #000; padding: 5px;"><strong>Total Pendapatan:</strong></td>
-                    <td style="border: 1px solid #000; padding: 5px;">Rp {{ number_format($transactions->sum('total_price'), 0, ',', '.') }}</td>
+                    <td style="border: 1px solid #000; padding: 5px;">Rp
+                        {{ number_format($transactions->sum('total_price'), 0, ',', '.') }}</td>
                 </tr>
                 <tr>
                     <td style="border: 1px solid #000; padding: 5px;"><strong>Total Diskon:</strong></td>
-                    <td style="border: 1px solid #000; padding: 5px;">Rp {{ number_format($transactions->sum('discount_amount'), 0, ',', '.') }}</td>
+                    <td style="border: 1px solid #000; padding: 5px;">Rp
+                        {{ number_format($transactions->sum('discount_amount'), 0, ',', '.') }}</td>
                 </tr>
                 <tr>
                     <td style="border: 1px solid #000; padding: 5px;"><strong>Pendapatan Bersih:</strong></td>
-                    <td style="border: 1px solid #000; padding: 5px;">Rp {{ number_format($transactions->sum('total_price') - $transactions->sum('discount_amount'), 0, ',', '.') }}</td>
+                    <td style="border: 1px solid #000; padding: 5px;">Rp
+                        {{ number_format($transactions->sum('total_price') - $transactions->sum('discount_amount'), 0, ',', '.') }}
+                    </td>
                 </tr>
             </table>
             <p style="margin-top: 20px; font-size: 10px; color: #666;">
@@ -387,13 +441,13 @@
         function printReport() {
             // Simpan title asli
             var originalTitle = document.title;
-            
+
             // Set title untuk print
             document.title = 'Laporan Penjualan - ' + new Date().toLocaleDateString('id-ID');
-            
+
             // Print
             window.print();
-            
+
             // Restore title asli
             document.title = originalTitle;
         }

@@ -11,8 +11,9 @@ use App\Models\Sparepart;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\TransactionsExport;
-use App\Exports\PurchaseOrdersExport; 
+use App\Exports\PurchaseOrdersExport;
 use App\Exports\SparepartReportExport;
+
 class ReportController extends Controller
 {
     /**
@@ -168,7 +169,7 @@ class ReportController extends Controller
             'reportTitle' => $reportTitle,
         ]);
 
-        $timestamp = Carbon::now()->format('Y-m-d_H-i-s');
+        $timestamp = Carbon::now()->format('Ymd');
         $fileName = "{$timestamp}_Laporan sparepart {$tab}.pdf";
         return $pdf->download($fileName);
     }
@@ -329,10 +330,100 @@ class ReportController extends Controller
         $startDate = $request->get('start_date');
         $endDate = $request->get('end_date');
 
-        $timestamp = Carbon::now()->format('Y-m-d_H-i-s');
+        $timestamp = Carbon::now()->format('Y-m-d');
         $fileName = "{$timestamp}_Laporan Stok Sparepart.xlsx";
 
         return Excel::download(new SparepartReportExport($startDate, $endDate), $fileName);
     }
-    
+    public function exportpdfPurchaseReport(Request $request)
+    {
+        // Mengambil filter dari URL
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+        $status = $request->input('status');
+        $paymentMethod = $request->input('payment_method');
+        $exportTitle = $request->input('export_title', 'Laporan Pembelian Sparepart');
+        $exportType = $request->input('export_type', 'pdf'); // Tambahkan parameter export_type
+
+        // Query data berdasarkan filter
+        $purchaseOrders = PurchaseOrder::query();
+
+        if ($startDate) {
+            $purchaseOrders->whereDate('order_date', '>=', $startDate);
+        }
+        if ($endDate) {
+            $purchaseOrders->whereDate('order_date', '<=', $endDate);
+        }
+        if ($status) {
+            $purchaseOrders->where('status', $status);
+        }
+        if ($paymentMethod) {
+            $purchaseOrders->where('payment_method', $paymentMethod);
+        }
+
+        $purchaseOrders = $purchaseOrders->with('supplier')->get();
+
+        // Data yang akan dikirim ke view
+        $data = [
+            'reportTitle' => $exportTitle,
+            'purchaseOrders' => $purchaseOrders,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'status' => $status,
+            'paymentMethod' => $paymentMethod,
+        ];
+
+        // Cek tipe ekspor
+        if ($exportType == 'pdf') {
+            $pdf = Pdf::loadView('pages.report.exportpdf-purchase', $data);
+            return $pdf->download($exportTitle . '_' . Carbon::now()->format('d F Y') . '.pdf');
+        }
+    }
+    // fungsi export pdf transaksi
+    public function exportpdfTransactionReport(Request $request)
+{
+    // Mengambil filter dari URL
+    $startDate = $request->input('start_date');
+    $endDate = $request->input('end_date');
+    $status = $request->input('status');
+    $paymentMethod = $request->input('payment_method');
+    $exportTitle = $request->input('export_title', 'Laporan Transaksi Penjualan');
+    $exportType = $request->input('export_type', 'pdf');
+
+    // Query data berdasarkan filter
+    $transactions = Transaction::query();
+
+    if ($startDate) {
+        $transactions->whereDate('transaction_date', '>=', $startDate);
+    }
+    if ($endDate) {
+        $transactions->whereDate('transaction_date', '<=', $endDate);
+    }
+    if ($status) {
+        $transactions->where('status', $status);
+    }
+    if ($paymentMethod) {
+        $transactions->where('payment_method', $paymentMethod);
+    }
+
+    $transactions = $transactions->with('customer')->get();
+
+    // Data yang akan dikirim ke view
+    $data = [
+        'reportTitle' => $exportTitle,
+        'transactions' => $transactions,
+        'startDate' => $startDate,
+        'endDate' => $endDate,
+        'status' => $status,
+        'paymentMethod' => $paymentMethod,
+    ];
+
+    // Cek tipe ekspor
+    if ($exportType == 'pdf') {
+        $pdf = Pdf::loadView('pages.report.exportpdf-transaction', $data);
+        return $pdf->download($exportTitle . '_' . Carbon::now()->format('d F Y') . '.pdf');
+    }
+
+    return redirect()->back();
+}
 }
