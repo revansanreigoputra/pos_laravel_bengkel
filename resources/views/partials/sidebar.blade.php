@@ -10,7 +10,10 @@
                 @php
                     $settings = \App\Models\BengkelSetting::getSettings();
                 @endphp
-                <img src="{{ $settings->logo_url }}" alt="{{ $settings->nama_bengkel }}" class="me-2" style="height: 50px;">
+                <!--logo ngambil dari database-->
+                <!--<img src="{{ $settings->logo_url }}" class="me-2" style="height: 50px;">-->
+                <!--bukan dari databse-->
+                <img src="{{ asset('assets/logo.png') }}" alt="Logo BengkelKu" class="me-2" style="height: 50px;">
                 <span>{{ $settings->nama_bengkel }}</span>
             </a>
         </div>
@@ -263,7 +266,7 @@
                             <div class="dropdown-menu-columns">
                                 <div class="dropdown-menu-column">
                                     @can('manual-book-admin.view')
-                                    <a class="dropdown-item" href="{{ asset('assets/Manual Book Admin.pdf') }}"
+                                    <a class="dropdown-item" href="{{ asset('assets/manualbook-admin.pdf') }}"
                                     target="_blank">
                                     Manual Book Admin
                                 </a>
