@@ -263,7 +263,7 @@
                             <div class="dropdown-menu-columns">
                                 <div class="dropdown-menu-column">
                                     @can('manual-book-admin.view')
-                                    <a class="dropdown-item" href="{{ asset('assets/manualbook-admin.pdf') }}"
+                                    <a class="dropdown-item" href="{{ asset('assets/Manual Book Admin.pdf') }}"
                                     target="_blank">
                                     Manual Book Admin
                                 </a>
