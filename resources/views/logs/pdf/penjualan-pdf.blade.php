@@ -55,10 +55,11 @@
 </head>
 <body>
     <div class="header">
-        <h1>BENGKELKU</h1>
+        <h2>{{ \App\Models\BengkelSetting::getSettings()->nama_bengkel }}</h2>
         <h4>Laporan Penjualan</h4>
-        @if($startDate && $endDate)
-            <p>Periode: {{ Carbon\Carbon::parse($startDate)->format('d M Y') }} - {{ Carbon\Carbon::parse($endDate)->format('d M Y') }}</p>
+        @if ($startDate && $endDate)
+            <p>Periode: {{ Carbon\Carbon::parse($startDate)->format('d M Y') }} -
+                {{ Carbon\Carbon::parse($endDate)->format('d M Y') }}</p>
         @endif
     </div>
 

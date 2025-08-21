@@ -272,19 +272,22 @@ class TransactionController extends Controller
     public function exportPdf(Transaction $transaction)
     {
         $transaction->load(['customer', 'items.service', 'items.sparepart']);
-        
+
         // Ambil pengaturan bengkel
         $settings = \App\Models\BengkelSetting::getSettings();
-        
+
         $data = [
-            'transaction' => $transaction,
-            'nama_bengkel' => $settings->nama_bengkel,
-            'alamat_bengkel' => $settings->alamat_bengkel,
+            'transaction'     => $transaction,
+            'settings'        => $settings,
+            'nama_bengkel'    => $settings->nama_bengkel,
+            'alamat_bengkel'  => $settings->alamat_bengkel,
             'telepon_bengkel' => $settings->telepon_bengkel,
-            'tanggal_cetak' => Carbon::now()->isoFormat('D MMMM YYYY, HH:mm:ss'),
+            'tanggal_cetak'   => Carbon::now()->isoFormat('D MMMM YYYY, HH:mm:ss'),
         ];
 
-        $pdf = PDF::loadView('pages.transaction.invoice_pdf', $data);
+        $pdf = PDF::loadView('pages.transaction.invoice_pdf', $data)
+            ->setPaper('A4', 'portrait');
+
         return $pdf->download('invoice-' . $transaction->invoice_number . '.pdf');
     }
     public function getLatestTransactions(Request $request)

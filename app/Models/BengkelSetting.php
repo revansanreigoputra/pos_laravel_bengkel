@@ -2,43 +2,54 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class BengkelSetting extends Model
 {
-    use HasFactory;
-
     protected $table = 'bengkel_settings';
 
+    // Primary key
+    protected $primaryKey = 'id';
+
+    // Kolom yang bisa diisi
     protected $fillable = [
         'nama_bengkel',
         'alamat_bengkel',
         'telepon_bengkel',
         'email_bengkel',
         'logo_path',
-        'created_at',
-        'updated_at'
     ];
 
-    /**
-     * Get the full URL for the logo
-     */
-    public function getLogoUrlAttribute()
-    {
-        return $this->logo_path ? asset('storage/' . $this->logo_path) : asset('assets/logo.png');
-    }
+    // Kalau tidak ada timestamps di tabel
+    public $timestamps = false;
 
     /**
-     * Get the default settings
+     * Helper untuk ambil data settings
      */
     public static function getSettings()
     {
-        return self::first() ?? self::create([
-            'nama_bengkel' => 'BengkelKu',
-            'alamat_bengkel' => 'Jl. Contoh No. 123, Godean, Yogyakarta',
-            'telepon_bengkel' => '0812-3456-7890',
-            'email_bengkel' => 'info@bengkelku.com',
-        ]);
+        return self::first();
+    }
+
+    /**
+     * Helper untuk ambil logo (langsung URL lengkap)
+     */
+    public function getLogoUrlAttribute()
+    {
+        if ($this->logo_path) {
+            return asset('storage/' . $this->logo_path);
+        }
+        return asset('images/default-logo.png'); // fallback kalau belum ada logo
+    }
+
+    /**
+     * Helper untuk ambil path logo untuk PDF
+     */
+    public function getLogoPathForPdfAttribute()
+    {
+        if ($this->logo_path) {
+            return public_path('storage/' . $this->logo_path);
+        }
+        return public_path('images/default-logo.png');
     }
 }

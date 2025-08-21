@@ -16,7 +16,7 @@
                 @method('PUT')
                 
                 <!-- Logo Bengkel -->
-                {{-- <div>
+                <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Logo Bengkel</label>
                     <div class="flex flex-col sm:flex-row items-center gap-4">
                         <div class="flex-shrink-0">
@@ -42,7 +42,7 @@
                             <p class="mt-1 text-xs text-gray-500">Format: JPG, PNG, GIF. Maksimal 2MB</p>
                         </div>
                     </div>
-                </div> --}}
+                </div>
 
                 <!-- Nama Bengkel -->
                 <div>

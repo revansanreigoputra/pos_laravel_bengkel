@@ -83,7 +83,7 @@
 <body>
 
     <div class="header">
-        <h2>BENGKELKU</h2>
+        <h2>{{ \App\Models\BengkelSetting::getSettings()->nama_bengkel }}</h2>
         <h4>Laporan Pembelian Sparepart</h4>
     </div>
 
