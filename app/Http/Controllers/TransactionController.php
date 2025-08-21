@@ -258,7 +258,12 @@ class TransactionController extends Controller
     public function edit(Transaction $transaction)
     {
         $transaction->load('items.sparepart.purchaseOrderItems', 'items.service'); // Eager load untuk edit
-        $spareparts = Sparepart::with('purchaseOrderItems')->get();
+        // $spareparts = Sparepart::with('purchaseOrderItems')->get();
+         $spareparts = Sparepart::where('available_stock', '>', 0)
+                           ->where('selling_price', '>', 0)
+                           ->with('purchaseOrderItems')
+                           ->get();
+
         $services = Service::where('status', 'aktif')->get();
         return view('pages.transaction.edit', compact('transaction', 'spareparts', 'services'));
     }
