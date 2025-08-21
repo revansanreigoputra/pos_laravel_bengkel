@@ -259,8 +259,8 @@ class TransactionController extends Controller
     {
         $transaction->load('items.sparepart.purchaseOrderItems', 'items.service'); // Eager load untuk edit
         // $spareparts = Sparepart::with('purchaseOrderItems')->get();
-         $spareparts = Sparepart::where('available_stock', '>', 0)
-                           ->where('selling_price', '>', 0)
+         $spareparts = Sparepart::where('selling_price', '>', 0)
+                        //    ->where('selling_price', '>', 0)
                            ->with('purchaseOrderItems')
                            ->get();
 
