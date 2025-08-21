@@ -63,7 +63,7 @@ class ReportController extends Controller
             $query->where('payment_method', $request->payment_method);
         }
 
-        $transactions = $query->with(['customer'])->get();
+        $transactions = $query->with(['customer'])->orderByDesc('transaction_date')->get();
 
         return view('pages.report.transaction', compact('transactions'));
     }

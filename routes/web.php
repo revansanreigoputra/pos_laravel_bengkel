@@ -132,25 +132,6 @@ require __DIR__ . '/auth.php';
 // Sparepart (resource route) - Mengubah URI menjadi plural untuk konsistensi
 Route::resource('spareparts', SparepartController::class);
 
-// Rute 'stock-handle' yang lama telah dihapus atau dikomentari
-// karena fungsionalitasnya kini ditangani oleh 'purchase_orders' dan 'purchase_order_items'
-// Route::get('/stock-handle/{stock}/download-invoice', [SupplierSparepartStockController::class, 'downloadInvoice'])->name('stock-handle.download-invoice');
-// Route::resource('stock-handle', SupplierSparepartStockController::class)
-//     ->parameters([
-//         'stock-handle' => 'stock'
-//     ])
-//     ->names([
-//         'index' => 'stock-handle.index',
-//         'create' => 'stock-handle.create',
-//         'store' => 'stock-handle.store',
-//         'show' => 'stock-handle.show',
-//         'edit' => 'stock-handle.edit',
-//         'update' => 'stock-handle.update',
-//         'destroy' => 'stock-handle.destroy',
-//     ]);
-// Route::post('/stock-handle/quick-store', [SupplierSparepartStockController::class, 'quickStore'])->name('stock-handle.quick-store');
-
-
 // Export PDF/Excel
 Route::get('/supplier/export-pdf', [SupplierController::class, 'exportPDF'])->name('supplier.export-pdf');
 Route::get('/customer/export-pdf', [CustomerController::class, 'exportPDF'])->name('customer.export-pdf');
@@ -197,3 +178,6 @@ Route::post('/purchase-orders/check-invoice', [PurchaseOrderController::class, '
 
 Route::post('/service/{service}/change-status', [ServiceController::class, 'changeStatus'])->name('service.changeStatus');
 Route::get('/service/{service}/modal-edit', [ServiceController::class, 'edit'])->name('service.modal-edit');
+
+// additional route index service
+Route::get('/service/index', [ServiceController::class, 'index'])->name('service.index');

@@ -60,7 +60,7 @@
                                 </div>
 
                                 <div class="modal-footer">
-                                    <button type="button" class="btn me-auto" data-bs-dismiss="modal">Tutup</button>
+                                    <a  href="{{ route('service.index') }}" class="btn me-auto">Tutup</a>
                                     <button type="submit" class="btn btn-primary">Simpan</button>
                                 </div>
                             </div>

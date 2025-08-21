@@ -14,12 +14,12 @@
 @section('content')
     <div class="card">
         <div class="card-body">
-            @if (session('success'))
+            {{-- @if (session('success'))
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     {{ session('success') }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
-            @endif
+            @endif --}}
 
             {{-- Filter Status Pesanan --}}
             <div class="mb-3 d-flex justify-content-end align-items-center">
