@@ -80,7 +80,7 @@
 <body>
 
 <div class="header">
-    <h2>PT. BENGKEL OTOMOTIF</h2>
+    <h2>{{ \App\Models\BengkelSetting::getSettings()->nama_bengkel }}</h2>
     <h4>Laporan Transaksi Penjualan</h4>
 </div>
 

@@ -61,10 +61,10 @@
  </head>
 
  <body>
-     <div class="header">
-         <h2>BENGKELKU</h2>
-         <h4 >{{ $reportTitle }}</h4>
-     </div>
+    <div class="header">
+        <h2>{{ \App\Models\BengkelSetting::getSettings()->nama_bengkel }}</h2>
+        <h4 >{{ $reportTitle }}</h4>
+    </div>
      <p>Rentang data: {{ $startDate ?? 'Semua' }} - {{ $endDate ?? ' ' }}</p>
 
      {{-- Conditional rendering for each tab --}}

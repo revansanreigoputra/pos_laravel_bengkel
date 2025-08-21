@@ -13,46 +13,47 @@ class SettingController extends Controller
      */
     public function index()
     {
-        $settings = BengkelSetting::getSettings();
+        // Ambil data pengaturan pertama (karena cuma ada satu row)
+        $settings = BengkelSetting::first();
+
         return view('pages.settings.index', compact('settings'));
     }
 
     /**
-     * Update pengaturan bengkel
+     * Update data pengaturan
      */
     public function update(Request $request)
     {
         $request->validate([
             'nama_bengkel' => 'required|string|max:255',
-            'alamat_bengkel' => 'nullable|string|max:500',
-            'telepon_bengkel' => 'nullable|string|max:50',
+            'alamat_bengkel' => 'nullable|string',
+            'telepon_bengkel' => 'nullable|string|max:20',
             'email_bengkel' => 'nullable|email|max:255',
-            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'logo' => 'nullable|image|mimes:png,jpg,jpeg,svg|max:2048',
         ]);
 
-        $settings = BengkelSetting::getSettings();
+        // Ambil atau buat data settings
+        $settings = BengkelSetting::firstOrNew(['id' => 1]);
 
-        // Handle logo upload
+        $settings->nama_bengkel   = $request->nama_bengkel;
+        $settings->alamat_bengkel = $request->alamat_bengkel;
+        $settings->telepon_bengkel = $request->telepon_bengkel;
+        $settings->email_bengkel  = $request->email_bengkel;
+
+        // Handle upload logo
         if ($request->hasFile('logo')) {
-            // Delete old logo if exists
-            if ($settings->logo_path) {
-                Storage::delete('public/' . $settings->logo_path);
+            // Hapus logo lama jika ada
+            if ($settings->logo_path && Storage::disk('public')->exists($settings->logo_path)) {
+                Storage::disk('public')->delete($settings->logo_path);
             }
 
-            // Store new logo
-            $logoPath = $request->file('logo')->store('logos', 'public');
-            $settings->logo_path = $logoPath;
+            // Simpan logo baru
+            $path = $request->file('logo')->store('logos', 'public');
+            $settings->logo_path = $path;
         }
 
-        // Update other settings
-        $settings->update([
-            'nama_bengkel' => $request->nama_bengkel,
-            'alamat_bengkel' => $request->alamat_bengkel,
-            'telepon_bengkel' => $request->telepon_bengkel,
-            'email_bengkel' => $request->email_bengkel,
-        ]);
+        $settings->save();
 
-        return redirect()->route('settings.index')
-            ->with('success', 'Pengaturan bengkel berhasil diperbarui!');
+        return redirect()->back()->with('success', 'Pengaturan berhasil diperbarui.');
     }
 }

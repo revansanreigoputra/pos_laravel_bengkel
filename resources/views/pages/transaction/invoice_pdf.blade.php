@@ -162,8 +162,8 @@
                     <table>
                         <tr>
                             <td class="title text-left">
-                                <img src="{{ public_path('assets/logo.png') }}" class="logo">
-                                <h1 class="company-name-header">{{ $nama_bengkel ?? 'Nama Bengkel Anda' }}</h1>
+                                <img src="{{ $settings->logo_path_for_pdf }}" alt="Logo Bengkel" style="height: 50px;">
+                                <h1 class="company-name-header">{{ $settings->nama_bengkel ?? 'Nama Bengkel Anda' }}</h1>
                             </td>
 
                             <td class="text-right">

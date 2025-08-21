@@ -12,8 +12,9 @@
                 @endphp
                 <!--logo ngambil dari database-->
                 <!--<img src="{{ $settings->logo_url }}" class="me-2" style="height: 50px;">-->
+                <img src="{{ $settings->logo_url }}" alt="Logo Bengkel" style="height: 50px;">
                 <!--bukan dari databse-->
-                <img src="{{ asset('assets/logo.png') }}" alt="Logo BengkelKu" class="me-2" style="height: 50px;">
+                {{-- <img src="{{ asset('assets/logo.png') }}" alt="Logo BengkelKu" class="me-2" style="height: 50px;"> --}}
                 <span>{{ $settings->nama_bengkel }}</span>
             </a>
         </div>
