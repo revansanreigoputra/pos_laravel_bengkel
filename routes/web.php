@@ -181,3 +181,7 @@ Route::get('/service/{service}/modal-edit', [ServiceController::class, 'edit'])-
 
 // additional route index service
 Route::get('/service/index', [ServiceController::class, 'index'])->name('service.index');
+
+Route::fallback(function () {
+    return view('errors.404');
+});
