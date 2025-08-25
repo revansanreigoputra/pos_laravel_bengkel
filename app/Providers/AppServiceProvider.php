@@ -13,6 +13,7 @@ use App\Repositories\RoleRepository;
 use App\Repositories\SupplierRepository;
 use Illuminate\Support\Facades\View;
 use App\Models\Notification;
+use App\Models\BengkelSetting;
 use App\Repositories\UserRepository;
 use App\Services\CategoryService;
 use App\Services\CustomerService;
@@ -59,6 +60,10 @@ class AppServiceProvider extends ServiceProvider
     {
         View::composer('*', function ($view) {
             $user = Auth::user();
+            $settings = BengkelSetting::first();
+
+            $viewData = [];
+
             if ($user) {
                 // Ambil 2 notifikasi terbaru untuk navbar
                 $navbarNotifications = Notification::where('notifiable_type', get_class($user))
@@ -69,11 +74,23 @@ class AppServiceProvider extends ServiceProvider
 
                 $unreadCount = $navbarNotifications->whereNull('read_at')->count();
 
-                $view->with([
-                    'navbarNotifications' => $navbarNotifications,
-                    'unreadCount' => $unreadCount
-                ]);
+                $viewData['navbarNotifications'] = $navbarNotifications;
+                $viewData['unreadCount'] = $unreadCount;
             }
+
+            if ($settings && $settings->logo_path) {
+                $viewData['logo_path'] = asset('storage/' . $settings->logo_path);
+            } else {
+                $viewData['logo_path'] = asset('assets/logo.png');
+            }
+
+            if ($settings) {
+                $viewData['nama_bengkel'] = $settings->nama_bengkel;
+            } else {
+                $viewData['nama_bengkel'] = 'Bengkel POS'; // Default title
+            }
+
+            $view->with($viewData);
         });
     }
 }
