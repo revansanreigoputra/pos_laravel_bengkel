@@ -4,7 +4,7 @@
 
 @extends('layouts.master')
 
-@section('title', 'Laporan Sparepart')
+@section('title', 'Laporan Stok Sparepart Hari Ini')
 
 @section('styles')
     <style>

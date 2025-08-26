@@ -2,6 +2,30 @@
 
 @section('title', 'Detail Barang Masuk & Keluar Sparepart')
 
+@section('styles')
+    <style>
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.7rem;
+            white-space: nowrap;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .status-badge.available {
+            background-color: #e6f7ed;
+            color: #28a745;
+        }
+
+        .status-badge.zero-stock {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+    </style>
+@endsection
+
 @section('content')
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
@@ -89,7 +113,13 @@
                                     <td>{{ $row['no'] }}</td>
                                     <td>{{ $row['nama_sparepart'] }}</td>
                                     <td>{{ $row['kategori'] }}</td>
-                                    <td>{{ $row['stok_tersedia'] }}</td>
+                                    <td>
+                                        @if($row['stok_tersedia'] > 0)
+                                            <span class="status-badge available">{{ $row['stok_tersedia'] }}</span>
+                                        @else
+                                            <span class="status-badge zero-stock">{{ $row['stok_tersedia'] }}</span>
+                                        @endif
+                                    </td>
                                 @elseif($tipe == 'stok_masuk')
                                     <td>{{ $row['no'] }}</td>
                                     <td>{{ $row['tanggal'] }}</td>
