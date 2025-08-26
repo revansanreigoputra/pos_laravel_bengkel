@@ -604,15 +604,52 @@
         }
 
         // Fungsi untuk menginisialisasi Select2
+        function getFullText(data) {
+            if (data.loading) return data.text || '';
+            const raw = (data.text || (data.element ? $(data.element).text() : '') || '');
+            // collapse newlines/tabs/multiple spaces → single space, then trim
+            return raw.replace(/\s+/g, ' ').trim();
+        }
+
+        function truncateLabel(str, limit = 25) {
+            return str.length > limit ? str.slice(0, limit) + '...' : str;
+        }
+
         function initializeSelect2(element) {
             $(element).select2({
                 theme: "bootstrap-5",
-                width: $(element).data('width') ? $(element).data('width') : ($(element).hasClass('w-100') ?
-                    '100%' : 'style'),
+                width: '100%', // avoid narrow container
                 placeholder: $(element).data('placeholder') || '-- Pilih Item --',
                 allowClear: Boolean($(element).data('allow-clear')),
+
+                // Dropdown list: show FULL text
+                templateResult: function(data) {
+                    return getFullText(data); // full, normalized
+                },
+
+                // Selected value: truncate to 15 chars + "..."
+                templateSelection: function(data) {
+                    if (!data.id) return '-- Pilih Item --';
+                    const full = getFullText(data);
+                    return truncateLabel(full, 25); // e.g. "Layanan Servi..."
+                },
+
+                // we return plain strings; this keeps them as-is
+                escapeMarkup: function(m) {
+                    return m;
+                }
             });
         }
+
+        // function initializeSelect2(element) {
+        //     $(element).select2({
+        //         theme: "bootstrap-5",
+        //         width: $(element).data('width') ? $(element).data('width') : ($(element).hasClass('w-100') ?
+        //             '100%' : 'style'),
+        //         placeholder: $(element).data('placeholder') || '-- Pilih Item --',
+        //         allowClear: Boolean($(element).data('allow-clear')),
+        //     });
+        // }
 
         // Fungsi untuk menghitung subtotal item
         function calculateItemSubtotal(itemRow) {
@@ -647,7 +684,7 @@
             itemIndex++;
             // Ambil template HTML kosong dari DOM atau string
             const templateRow = $('#items-container').find('.item-row[data-item-index="0"]').first().clone(
-            false); // Kloning tanpa event handler
+                false); // Kloning tanpa event handler
             const newRow = templateRow.clone();
 
             newRow.attr('data-item-index', itemIndex);

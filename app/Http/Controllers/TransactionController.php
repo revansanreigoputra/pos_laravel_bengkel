@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use Illuminate\Support\Str;
 use App\Models\Customer;
 use App\Models\Transaction;
 use App\Models\Sparepart; // Pastikan Sparepart diimpor
