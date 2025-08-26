@@ -16,12 +16,11 @@ class ServiceController extends Controller
      */
     public function index()
     {
-        $services = Service::with('jenisKendaraan')->get();
+        $services = Service::with('jenisKendaraan')->orderBy('created_at', 'desc')->get();
         $jenisKendaraans = JenisKendaraan::all();
 
         return view('pages.service.index', compact('services', 'jenisKendaraans'));
     }
-
     public function create()
     {
         $jenisKendaraans = JenisKendaraan::all();
@@ -34,12 +33,22 @@ class ServiceController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'nama' => 'required|string|max:255',
+            'nama' => 'required|string|max:255|unique:services,nama',
             'jenis_kendaraan_id' => 'required|exists:jenis_kendaraans,id',
             'durasi_estimasi' => 'required|string|max:100',
             'harga_standar' => 'required|numeric|min:0',
             'status' => 'required|in:aktif,nonaktif',
             'deskripsi' => 'nullable|string',
+        ], [
+            'nama.unique' => 'Nama service ini sudah ada. Mohon gunakan nama lain.',
+            'nama.required' => 'Nama service harus diisi.',
+            'jenis_kendaraan_id.required' => 'Jenis kendaraan harus dipilih.',
+            'jenis_kendaraan_id.exists' => 'Jenis kendaraan yang dipilih tidak valid.',
+            'durasi_estimasi.required' => 'Durasi estimasi harus diisi.',
+            'harga_standar.required' => 'Harga standar harus diisi.',
+            'harga_standar.numeric' => 'Harga standar harus berupa angka.',
+            'status.required' => 'Status harus dipilih.',
+            'status.in' => 'Status yang dipilih tidak valid.',
         ]);
 
         try {
@@ -66,12 +75,22 @@ class ServiceController extends Controller
     public function update(Request $request, Service $service)
     {
         $request->validate([
-            'nama' => 'required|string|max:255',
+            'nama' => 'required|string|max:255|unique:services,nama,' . $service->id,
             'jenis_kendaraan_id' => 'required|exists:jenis_kendaraans,id',
             'durasi_estimasi' => 'required|string|max:100',
             'harga_standar' => 'required|numeric|min:0',
             'status' => 'required|in:aktif,nonaktif',
             'deskripsi' => 'nullable|string',
+        ], [
+            'nama.unique' => 'Nama service ini sudah ada. Mohon gunakan nama lain.',
+            'nama.required' => 'Nama service harus diisi.',
+            'jenis_kendaraan_id.required' => 'Jenis kendaraan harus dipilih.',
+            'jenis_kendaraan_id.exists' => 'Jenis kendaraan yang dipilih tidak valid.',
+            'durasi_estimasi.required' => 'Durasi estimasi harus diisi.',
+            'harga_standar.required' => 'Harga standar harus diisi.',
+            'harga_standar.numeric' => 'Harga standar harus berupa angka.',
+            'status.required' => 'Status harus dipilih.',
+            'status.in' => 'Status yang dipilih tidak valid.',
         ]);
 
         try {
@@ -82,30 +101,28 @@ class ServiceController extends Controller
             return redirect()->back()->with('error', 'Gagal memperbarui service: ' . $e->getMessage())->withInput();
         }
     }
-
     /**
      * Hapus data dari database.
      * Menambahkan validasi untuk mencegah penghapusan service yang sudah terpakai.
-     */
-    public function destroy(Service $service)
+     */ public function destroy(Service $service)
     {
-        DB::beginTransaction();
         try {
-            // Periksa apakah service ini sudah pernah digunakan dalam transaksi
+            // Periksa apakah service sudah digunakan dalam transaksi
             if ($service->transactionItems()->exists()) {
-                throw new Exception('Tidak dapat menghapus service yang sudah digunakan dalam transaksi.');
+                return redirect()->back()->with('error', 'Service ini tidak dapat dihapus karena sudah digunakan dalam transaksi.');
             }
 
+            DB::beginTransaction();
             $service->delete();
             DB::commit();
+
             return redirect()->route('service.index')->with('success', 'Service berhasil dihapus.');
         } catch (Exception $e) {
             DB::rollBack();
             Log::error('Error deleting service: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Gagal menghapus service: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat mencoba menghapus service. Silakan coba lagi.');
         }
     }
-
 
     public function changeStatus(Request $request, Service $service)
     {

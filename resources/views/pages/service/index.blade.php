@@ -25,8 +25,8 @@
                             <th class="text-center">Status</th>
                             <th class="text-center">Deskripsi</th>
                             <th class="text-center">Aksi</th>
-                            </tr>
-                        </thead>
+                        </tr>
+                    </thead>
                     <tbody>
                         @foreach ($services as $index => $service)
                             <tr>
@@ -41,46 +41,47 @@
                                     <span
                                         class="badge bg-{{ $service->status === 'aktif' ? 'success' : 'secondary' }} text-white p-2">
                                         {{ ucfirst($service->status) }}
-                                        </span>
-                                    </td>
+                                    </span>
+                                </td>
                                 <td class="text-center">
                                     {{ Str::limit($service->deskripsi, 50) }}
-                                    </td>
-                                <td class="text-center">
-                                    @can('service.update')
-                                        <div class="d-flex justify-content-center gap-2">
-                                            <a
-                                                href="{{ route('service.modal-edit', $service->id) }}"
-                                                class="btn btn-sm btn-warning">
-                                                Edit
-                                                </a>
-                                            <form
-                                                action="{{ route('service.changeStatus', $service->id) }}" method="POST"
-                                                style="display:inline;">
-                                                @csrf
-                                                <select name="status"
-                                                    onchange="this.form.submit()"
-                                                    class="form-select form-select-sm d-inline w-auto">
-                                                    <option value="aktif"
-                                                        {{ $service->status == 'aktif' ? 'selected' : '' }}>
-                                                        Aktif</option>
-                                                    <option value="nonaktif"
-                                                        
-                                                        {{ $service->status == 'nonaktif' ? 'selected' : '' }}>Nonaktif
-                                                    </option>
-                                                    </select>
-                                                </form>
-                                            </div>
-                                    @endcan
-                                    
                                 </td>
-                                </tr>
+                                <td class="d-flex flex-wrap gap-2">
+                                    @can('service.update')
+                                        <a href="{{ route('service.modal-edit', $service->id) }}"
+                                            class="btn btn-sm btn-warning">
+                                            Edit
+                                        </a>
+                                        <form action="{{ route('service.changeStatus', $service->id) }}" method="POST"
+                                            style="display:inline;">
+                                            @csrf
+                                            <select name="status" onchange="this.form.submit()"
+                                                class="form-select form-select-sm d-inline w-auto">
+                                                <option value="aktif" {{ $service->status == 'aktif' ? 'selected' : '' }}>
+                                                    Aktif</option>
+                                                <option value="nonaktif"
+                                                    {{ $service->status == 'nonaktif' ? 'selected' : '' }}>Nonaktif
+                                                </option>
+                                            </select>
+                                        </form>
+                                    @endcan
+                                    @can('service.delete')
+                                        <button class="btn btn-sm btn-danger" data-bs-toggle="modal"
+                                            data-bs-target="#delete-service-{{ $service->id }}">
+                                            Hapus
+                                        </button>
+                                        <x-modal.delete-confirm id="delete-service-{{ $service->id }}" :route="route('service.destroy', $service->id)"
+                                            item="{{ $service->nama }}" title="Hapus Service?"
+                                            description="Service yang dihapus tidak bisa dikembalikan." />
+                                    @endcan
+                                </td>
+                            </tr>
                         @endforeach
-                        </tbody>
-                    </table>
-                </div>
+                    </tbody>
+                </table>
             </div>
         </div>
+    </div>
 @endsection
 
 @push('addon-script')
