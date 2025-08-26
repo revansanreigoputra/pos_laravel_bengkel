@@ -161,6 +161,71 @@
         </div>
     </div>
 
+    <!-- Monthly Financial Charts Section -->
+    <div class="row mt-4">
+        <div class="col-lg-6 mb-4">
+            <div class="card chart-card h-100 shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="me-2" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 3v18h18" />
+                            <path d="M9 17l3-3l4 4" />
+                            <path d="M13 13l2-2l3 3" />
+                        </svg>Grafik Pengeluaran Perbulan
+                    </h5>
+                    <a href="{{ route('report.purchase') }}" class="btn btn-sm btn-outline-warning text-white">
+                        Lihat Semua
+                    </a>
+                </div>
+                <div class="card-body">
+                    @if(isset($expenseCounts) && !empty($expenseCounts))
+                        <canvas id="monthlyExpenseChart" width="400" height="300"></canvas>
+                    @else
+                        <div class="d-flex flex-column align-items-center justify-content-center" style="height: 300px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted mb-3">
+                                <path d="M3 3v18h18" />
+                                <path d="M9 17l3-3l4 4" />
+                                <path d="M13 13l2-2l3 3" />
+                            </svg>
+                            <p class="text-muted">Tidak ada data pengeluaran tersedia</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 mb-4">
+            <div class="card chart-card h-100 shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="me-2" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 3v18h18" />
+                            <path d="M9 17l3-3l4 4" />
+                            <path d="M13 13l2-2l3 3" />
+                        </svg>Grafik Pendapatan Perbulan
+                    </h5>
+                    <a href="{{ route('report.transaction') }}" class="btn btn-sm btn-outline-success text-white">
+                        Lihat Semua
+                    </a>
+                </div>
+                <div class="card-body">
+                    @if(isset($incomeAmounts) && !empty($incomeAmounts))
+                        <canvas id="monthlyIncomeChart" width="400" height="300"></canvas>
+                    @else
+                        <div class="d-flex flex-column align-items-center justify-content-center" style="height: 300px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted mb-3">
+                                <path d="M3 3v18h18" />
+                                <path d="M9 17l3-3l4 4" />
+                                <path d="M13 13l2-2l3 3" />
+                            </svg>
+                            <p class="text-muted">Tidak ada data pendapatan tersedia</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Recent Transactions Section -->
     <div class="row mt-4">
         <div class="col-lg-6 mb-4">
@@ -607,8 +672,184 @@ $(document).ready(function() {
         });
     }
 
+    // --- Monthly Expense Chart ---
+    const expenseCtx = document.getElementById('monthlyExpenseChart');
+    if (expenseCtx && @json(isset($expenseCounts) && !empty($expenseCounts))) {
+        new Chart(expenseCtx, {
+            type: 'line',
+            data: {
+                labels: @json($months ?? []),
+                datasets: [{
+                    label: 'Total Pengeluaran',
+                    data: @json($expenseCounts ?? []),
+                    backgroundColor: 'rgba(255, 193, 7, 0.2)',
+                    borderColor: 'rgb(255, 193, 7)',
+                    borderWidth: 3,
+                    tension: 0.3,
+                    fill: true,
+                    pointBackgroundColor: 'rgb(255, 193, 7)',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff',
+                        borderColor: 'rgba(255, 193, 7, 0.5)',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                return `Pengeluaran: Rp ${new Intl.NumberFormat('id-ID').format(context.parsed.y)}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            font: {
+                                size: 11,
+                                weight: '500'
+                            },
+                            maxRotation: 45,
+                            minRotation: 0
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            font: {
+                                size: 11
+                            },
+                            callback: function(value) {
+                                return 'Rp ' + new Intl.NumberFormat('id-ID', {
+                                    notation: 'compact',
+                                    compactDisplay: 'short'
+                                }).format(value);
+                            }
+                        }
+                    }
+                },
+                animation: {
+                    duration: 1000,
+                    easing: 'easeInOutQuart'
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                }
+            }
+        });
+    }
+
+    // --- Monthly Income Chart ---
+    const incomeCtx = document.getElementById('monthlyIncomeChart');
+    if (incomeCtx && @json(isset($incomeAmounts) && !empty($incomeAmounts))) {
+        new Chart(incomeCtx, {
+            type: 'line',
+            data: {
+                labels: @json($months ?? []),
+                datasets: [{
+                    label: 'Total Pendapatan',
+                    data: @json($incomeAmounts ?? []),
+                    backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                    borderColor: 'rgb(40, 167, 69)',
+                    borderWidth: 3,
+                    tension: 0.3,
+                    fill: true,
+                    pointBackgroundColor: 'rgb(40, 167, 69)',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff',
+                        borderColor: 'rgba(40, 167, 69, 0.5)',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                return `Pendapatan: Rp ${new Intl.NumberFormat('id-ID').format(context.parsed.y)}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            font: {
+                                size: 11,
+                                weight: '500'
+                            },
+                            maxRotation: 45,
+                            minRotation: 0
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            font: {
+                                size: 11
+                            },
+                            callback: function(value) {
+                                return 'Rp ' + new Intl.NumberFormat('id-ID', {
+                                    notation: 'compact',
+                                    compactDisplay: 'short'
+                                }).format(value);
+                            }
+                        }
+                    }
+                },
+                animation: {
+                    duration: 1000,
+                    easing: 'easeInOutQuart'
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                }
+            }
+        });
+    }
+
     // Add loading states and error handling
-    const charts = ['sparepartStockChartData', 'monthlySalesChartData'];
+    const charts = ['sparepartStockChartData', 'monthlySalesChartData', 'monthlyExpenseChart', 'monthlyIncomeChart'];
     charts.forEach(chartId => {
         const canvas = document.getElementById(chartId);
         if (canvas) {
