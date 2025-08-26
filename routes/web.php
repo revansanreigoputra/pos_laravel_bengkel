@@ -66,6 +66,7 @@ Route::middleware('auth')->group(function () {
         Route::middleware('permission:service.delete')->delete('/{service}', [ServiceController::class, 'destroy'])->name('service.destroy');
         Route::middleware('permission:service.create')->get('/modal-create', [ServiceController::class, 'create'])->name('service.modal-create');
         Route::middleware('permission:service.edit')->get('/{service}/edit', [ServiceController::class, 'edit'])->name('service.edit');
+  
     });
 
     // Supplier
