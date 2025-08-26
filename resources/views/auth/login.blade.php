@@ -1,10 +1,15 @@
 @extends('layouts.auth')
 @section('content')
+    @php
+        $bengkelSetting = \App\Models\BengkelSetting::first();
+        $namaBengkel = $bengkelSetting ? $bengkelSetting->nama_bengkel : 'BengkelKu';
+    @endphp
+    
     <div class="page page-center bg-gradient">
         <div class="container container-tight py-4">
             <div class="text-center mb-5">
                 <div class="brand-logo">
-                    <span class="brand-text fs-1 fw-bold">Laravel Bengkel</span>
+                    <span class="brand-text fs-1 fw-bold">{{ $namaBengkel }}</span>
                 </div>
             </div>
             <form method="POST" action="{{ route('login') }}" class="card card-md shadow-lg">

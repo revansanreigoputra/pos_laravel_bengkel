@@ -171,7 +171,7 @@
                                 @can('report.sparepart-report')
                                     <a class="dropdown-item {{ request()->is('stok-sparepart') ? 'active' : '' }}"
                                         href="{{ route('report.sparepart-report') }}">
-                                        Laporan Stok Sparepart
+                                        Laporan Stok Hari Ini
                                     </a>
                                 @endcan
                             </div>
