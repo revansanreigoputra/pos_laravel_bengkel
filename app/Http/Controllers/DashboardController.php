@@ -10,9 +10,9 @@ use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Supplier;
 use App\Models\User;
-use App\Models\Transaction; // Tambahkan ini
-use App\Models\TransactionItem; // Tambahkan ini
-use Illuminate\Support\Facades\DB; // Tambahkan ini
+use App\Models\Transaction;
+use App\Models\TransactionItem;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -23,28 +23,47 @@ class DashboardController extends Controller
         $supplierCount = Supplier::count();
         $userCount = User::count();
 
-        // --- Data untuk Grafik Transaksi Bulanan ---
-        // Mengambil total transaksi per bulan selama 12 bulan terakhir
-        $monthlyTransactions = Transaction::select(
+        // --- Data untuk Grafik Pendapatan Bulanan ---
+        // Mengambil total pendapatan per bulan selama 12 bulan terakhir
+        $monthlyIncome = Transaction::select(
             DB::raw('DATE_FORMAT(transaction_date, "%Y-%m") as month'),
-            DB::raw('COUNT(*) as total_transactions')
+            DB::raw('SUM(total_price) as total_income')
         )
             ->where('transaction_date', '>=', now()->subMonths(11)->startOfMonth()) // 12 bulan terakhir
+            ->where('status', 'completed') // Hanya transaksi yang selesai
             ->groupBy('month')
             ->orderBy('month')
             ->get();
 
         $months = [];
-        $transactionCounts = [];
-        // Isi bulan yang kosong dengan 0 transaksi
+        $incomeAmounts = [];
+        // Isi bulan yang kosong dengan 0 pendapatan
         for ($i = 11; $i >= 0; $i--) {
             $month = now()->subMonths($i)->format('Y-m');
             $months[] = now()->subMonths($i)->translatedFormat('F Y'); // Nama bulan lengkap
-            $count = $monthlyTransactions->where('month', $month)->first();
-            $transactionCounts[] = $count ? $count->total_transactions : 0;
+            $income = $monthlyIncome->where('month', $month)->first();
+            $incomeAmounts[] = $income ? $income->total_income : 0;
         }
 
-        // --- Data untuk Grafik Penjualan Item Teratas ---
+    // --- Data untuk Grafik Pengeluaran Bulanan ---
+    $monthlyExpenses = PurchaseOrder::select(
+        DB::raw('DATE_FORMAT(order_date, "%Y-%m") as month'),
+        DB::raw('SUM(total_price) as total_expenses')
+    )
+        ->where('order_date', '>=', now()->subMonths(11)->startOfMonth()) // 12 bulan terakhir
+        ->groupBy('month')
+        ->orderBy('month')
+        ->get();
+
+    $expenseCounts = [];
+    // Isi bulan yang kosong dengan 0 pengeluaran
+    for ($i = 11; $i >= 0; $i--) {
+        $month = now()->subMonths($i)->format('Y-m');
+        $count = $monthlyExpenses->where('month', $month)->first();
+        $expenseCounts[] = $count ? $count->total_expenses : 0;
+    }
+
+    // --- Data untuk Grafik Penjualan Item Teratas ---
         $topSellingItems = TransactionItem::select(
             'item_type',
             'item_id',
@@ -86,7 +105,7 @@ class DashboardController extends Controller
         $availableStockCount = $allSpareparts->where('available_stock', '>', 0)->count();
         $emptyStockCount = $allSpareparts->where('available_stock', '<=', 0)->count();
 
-        // Anda perlu menghitung stok kadaluarsa dari purchaseOrderItems
+        // perlu menghitung stok kadaluarsa dari purchaseOrderItems
         $expiredStockCount = 0;
         foreach ($allSpareparts as $sparepart) {
             $expiredItems = $sparepart->purchaseOrderItems
@@ -141,12 +160,13 @@ class DashboardController extends Controller
             'customerCount',
             'supplierCount',
             'userCount',
-            'months',          // Untuk grafik transaksi bulanan
-            'transactionCounts', // Untuk grafik transaksi bulanan
-            'itemLabels',      // Untuk grafik item teratas
-            'itemQuantities',  // Untuk grafik item teratas
-            'recentPurchaseOrders', // Untuk tabel pesanan pembelian terbaru
-            'recentTransactions', // Untuk tabel transaksi terbaru
+            'months',          // grafik pendapatan bulanan
+            'incomeAmounts',   // grafik pendapatan bulanan
+            'expenseCounts',   // grafik pengeluaran bulanan
+            'itemLabels',      // grafik item teratas
+            'itemQuantities',  // grafik item teratas
+            'recentPurchaseOrders', // tabel pesanan pembelian terbaru
+            'recentTransactions', // tabel transaksi terbaru
             'sparepartStockChartData',
             'monthlySalesChartData'
         ));
