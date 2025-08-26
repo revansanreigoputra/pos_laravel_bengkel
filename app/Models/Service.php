@@ -25,4 +25,13 @@ class Service extends Model
     {
         return $this->belongsTo(JenisKendaraan::class);
     }
+
+    /**
+     * Relasi ke model TransactionItem
+     */
+    public function transactionItems()
+    {
+        return $this->hasMany(TransactionItem::class, 'item_id')
+            ->where('item_type', 'service');
+    }
 }
